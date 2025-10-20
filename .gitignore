@@ -1,0 +1,15 @@
+# Ignoruj wszystkie pliki .env
+.env
+.env.*
+!.env.example
+
+# Ignoruj node_modules w ka¿dym folderze
+**/node_modules
+
+# Ignoruj pliki produkcyjne
+**/dist
+**/build
+**/.next
+
+# Pliki systemowe
+.DS_Store

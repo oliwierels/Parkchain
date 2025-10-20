@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: parkchain_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: parkchain_db
+      POSTGRES_USER: parkchain_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-parkchain_secure_pass}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - parkchain_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parkchain_user -d parkchain_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: parkchain_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - parkchain_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parkchain_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://parkchain_user:${DB_PASSWORD:-parkchain_secure_pass}@postgres:5432/parkchain_db
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+    networks:
+      - parkchain_network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: parkchain_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+      VITE_MAPBOX_TOKEN: ${MAPBOX_ACCESS_TOKEN}
+      VITE_SOLANA_NETWORK: ${SOLANA_NETWORK:-devnet}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - parkchain_network
+    command: npm run dev
+
+  nginx:
+    image: nginx:alpine
+    container_name: parkchain_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - frontend_build:/usr/share/nginx/html
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - parkchain_network
+    profiles:
+      - production
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: parkchain_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@parkchain.io
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - parkchain_network
+    profiles:
+      - dev
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: parkchain_redis_commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - parkchain_network
+    profiles:
+      - dev
+
+  minio:
+    image: minio/minio:latest
+    container_name: parkchain_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - parkchain_network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  minio_data:
+    driver: local
+  uploads:
+    driver: local
+  frontend_build:
+    driver: local
+
+networks:
+  parkchain_network:
+    driver: bridge
