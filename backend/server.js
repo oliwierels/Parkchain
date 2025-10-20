@@ -115,6 +115,7 @@ app.post('/api/auth/login', async (req, res) => {
 // ============================================
 
 app.get('/api/lots', async (req, res) => {
+  console.log("Lots endpoint");
   try {
     const { city, lat, lng, radius } = req.query;
     
