@@ -72,19 +72,8 @@ export const parkingAPI = {
 };
 
 // Funkcje API dla rezerwacji
+// Funkcje API dla rezerwacji
 export const reservationAPI = {
-  // Pobierz wszystkie rezerwacje
-  getAllReservations: async () => {
-    try {
-      const response = await api.get('/reservations');
-      return response.data;
-    } catch (error) {
-      console.error('Błąd przy pobieraniu rezerwacji:', error);
-      throw error;
-    }
-  },
-
-  // Utwórz rezerwację
   createReservation: async (reservationData) => {
     try {
       const response = await api.post('/reservations', reservationData);
@@ -95,13 +84,48 @@ export const reservationAPI = {
     }
   },
 
-  // Pobierz rezerwacje użytkownika
-  getUserReservations: async (userId) => {
+  // NOWE - Pobierz moje rezerwacje
+  getMyReservations: async () => {
     try {
-      const response = await api.get(`/reservations/user/${userId}`);
+      const response = await api.get('/reservations/my');
+      return response.data.reservations;
+    } catch (error) {
+      console.error('Błąd przy pobieraniu rezerwacji:', error);
+      throw error;
+    }
+  },
+
+  // NOWE - Pobierz szczegóły rezerwacji
+  getReservationById: async (id) => {
+    try {
+      const response = await api.get(`/reservations/${id}`);
+      return response.data.reservation;
+    } catch (error) {
+      console.error('Błąd przy pobieraniu rezerwacji:', error);
+      throw error;
+    }
+  },
+
+  // NOWE - Anuluj rezerwację
+  cancelReservation: async (id) => {
+    try {
+      const response = await api.patch(`/reservations/${id}/cancel`);
       return response.data;
     } catch (error) {
-      console.error(`Błąd przy pobieraniu rezerwacji użytkownika ${userId}:`, error);
+      console.error('Błąd przy anulowaniu rezerwacji:', error);
+      throw error;
+    }
+  }
+};
+
+// NOWE - Funkcje API dla statystyk użytkownika
+export const userAPI = {
+  getStats: async () => {
+    try {
+      const response = await api.get('/users/stats');
+      return response.data.stats;
+    } catch (error) {
+      console.error('Błąd przy pobieraniu statystyk:', error);
       throw error;
     }
   }

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 
 function HomePage() {
   return (
+    // Cały layout i design pochodzi z obu wersji,
+    // ponieważ były identyczne.
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
@@ -12,11 +14,11 @@ function HomePage() {
             Znajdź parking <span className="text-parkchain-500">łatwiej</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Rezerwuj miejsca parkingowe z wyprzedzeniem i oszczędzaj czas. 
+            Rezerwuj miejsca parkingowe z wyprzedzeniem i oszczędzaj czas.
             Blockchain gwarantuje bezpieczeństwo transakcji.
           </p>
           <div className="flex justify-center gap-4">
-            <Link 
+            <Link
               to="/map"
               className="bg-parkchain-500 hover:bg-parkchain-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl"
             >

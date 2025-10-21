@@ -1,5 +1,3 @@
-// frontend/src/services/api.js
-
 import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
@@ -11,7 +9,65 @@ const api = axios.create({
   },
 });
 
+// WAŻNE: Interceptor - dodaj token do każdego żądania
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Reszta kodu...
+
 // Funkcje API dla parkingów
+// Wklej to do /src/services/api.js
+
+// Funkcje API dla rezerwacji
+export const reservationAPI = {
+  // Funkcja do obliczania ceny na backendzie
+  calculatePrice: async (priceData) => {
+    try {
+      // priceData powinno zawierać np. { lotId, startTime, endTime }
+      const response = await api.post('/reservations/calculate', priceData);
+      // Zakładam, że backend zwraca { calculatedPrice: 15.50 }
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy obliczaniu ceny:', error);
+      throw error;
+    }
+  },
+
+  // Funkcja do tworzenia rezerwacji
+  createReservation: async (reservationData) => {
+    try {
+      const response = await api.post('/reservations', reservationData);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy tworzeniu rezerwacji:', error);
+      throw error;
+    }
+  },
+
+  // Funkcja do pobierania rezerwacji użytkownika
+  getMyReservations: async () => {
+     try {
+       const response = await api.get('/reservations/my');
+       // Upewnij się, że backend zwraca listę rezerwacji
+       return response.data.reservations; 
+     } catch (error) {
+       console.error('Błąd przy pobieraniu moich rezerwacji:', error);
+       throw error;
+     }
+  }
+};
+
+// Reszta kodu (np. userAPI) leci poniżej...
 export const parkingAPI = {
   getAllParkings: async (filters = {}) => {
     try {
@@ -41,7 +97,6 @@ export const parkingAPI = {
     }
   },
 
-  // Dodaj nowy parking
   createParking: async (parkingData) => {
     try {
       const response = await api.post('/lots', parkingData);
@@ -54,28 +109,16 @@ export const parkingAPI = {
 };
 
 // Funkcje API dla rezerwacji
-export const reservationAPI = {
-  // Utwórz rezerwację
-  createReservation: async (reservationData) => {
+// Funkcje API dla statystyk użytkownika
+export const userAPI = {
+  getStats: async () => {
     try {
-      const response = await api.post('/reservations', reservationData);
-      return response.data;
+      const response = await api.get('/users/stats');
+      return response.data.stats;
     } catch (error) {
-      console.error('Błąd przy tworzeniu rezerwacji:', error);
-      throw error;
-    }
-  },
-
-  // Pobierz moje rezerwacje
-  getMyReservations: async () => {
-    try {
-      const response = await api.get('/reservations/me');
-      return response.data;
-    } catch (error) {
-      console.error('Błąd przy pobieraniu rezerwacji:', error);
+      console.error('Błąd przy pobieraniu statystyk:', error);
       throw error;
     }
   }
 };
-
 export default api;
