@@ -18,7 +18,7 @@ function Navbar() {
     <nav style={{
       backgroundColor: 'white',
       color: 'white',
-      height: '70px',
+      height: '100px',
       paddingLeft: '1rem',
       paddingRight: '1rem',
       borderBottom: '1px solid #e5e7eb' // Dodałem delikatną granicę
@@ -38,7 +38,7 @@ function Navbar() {
             src="/Parkchain-logo.png"
             alt="Parkchain Logo"
             style={{
-              height: '50px', // <-- POPRAWKA (było 200px)
+              height: '200px', // <-- POPRAWKA (było 200px)
               marginRight: '10px',
               display: 'block' // Dla pewności
             }}
