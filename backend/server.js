@@ -8,15 +8,21 @@ const multer = require('multer');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Database connection
+// Database connection - Pool dla większości endpointów
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+// Supabase connection - tylko dla /api/lots
+const supabase = createClient(
+  'https://rauhggtfprbbnrbfdpqg.supabase.co',
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdWhnZ3RmcHJiYm5yYmZkcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDgyMDksImV4cCI6MjA3NjU4NDIwOX0.o7AM8E3HVNklgqt0BKbEuxlQ0T8QP_Ky9vW0tm1zfWw');
 
 // Middleware
 app.use(helmet());
@@ -119,30 +125,22 @@ app.get('/api/lots', async (req, res) => {
   try {
     const { city, lat, lng, radius } = req.query;
     
-    let query = 'SELECT * FROM parking_lots WHERE status = $1';
-    let params = ['active'];
+    let query = supabase
+      .from('parking_lots')
+      .select('*')
+      .eq('status', 'active');
     
     if (city) {
-      query += ' AND city = $2';
-      params.push(city);
+      query = query.eq('city', city);
     }
     
-    // Add geospatial query if lat/lng provided
-    if (lat && lng) {
-      // Simple distance calculation (for production use PostGIS)
-      query += ` AND (
-        6371 * acos(
-          cos(radians($${params.length + 1})) * cos(radians(latitude)) *
-          cos(radians(longitude) - radians($${params.length + 2})) +
-          sin(radians($${params.length + 1})) * sin(radians(latitude))
-        )
-      ) <= $${params.length + 3}`;
-      params.push(lat, lng, radius || 5); // Default 5km radius
-    }
+    const { data, error } = await query;
     
-    const { rows } = await pool.query(query, params);
-    res.json({ lots: rows });
+    if (error) throw error;
+    
+    res.json({ lots: data || [] });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
 });

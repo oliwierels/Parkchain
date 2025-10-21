@@ -1,0 +1,110 @@
+// frontend/src/services/api.js
+
+import axios from 'axios';
+
+// URL backendu - zmień port jeśli Twój backend działa na innym
+const API_URL = 'http://localhost:8000/api';
+
+// Konfiguracja axios
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Funkcje API dla parkingów
+export const parkingAPI = {
+  // Pobierz wszystkie parkingi
+  getAllParkings: async () => {
+    try {
+      const response = await api.get('/parkings');
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy pobieraniu parkingów:', error);
+      throw error;
+    }
+  },
+
+  // Pobierz parking po ID
+  getParkingById: async (id) => {
+    try {
+      const response = await api.get(`/parkings/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Błąd przy pobieraniu parkingu ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Dodaj nowy parking
+  createParking: async (parkingData) => {
+    try {
+      const response = await api.post('/parkings', parkingData);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy tworzeniu parkingu:', error);
+      throw error;
+    }
+  },
+
+  // Aktualizuj parking
+  updateParking: async (id, parkingData) => {
+    try {
+      const response = await api.put(`/parkings/${id}`, parkingData);
+      return response.data;
+    } catch (error) {
+      console.error(`Błąd przy aktualizacji parkingu ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Usuń parking
+  deleteParking: async (id) => {
+    try {
+      const response = await api.delete(`/parkings/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Błąd przy usuwaniu parkingu ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+// Funkcje API dla rezerwacji
+export const reservationAPI = {
+  // Pobierz wszystkie rezerwacje
+  getAllReservations: async () => {
+    try {
+      const response = await api.get('/reservations');
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy pobieraniu rezerwacji:', error);
+      throw error;
+    }
+  },
+
+  // Utwórz rezerwację
+  createReservation: async (reservationData) => {
+    try {
+      const response = await api.post('/reservations', reservationData);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy tworzeniu rezerwacji:', error);
+      throw error;
+    }
+  },
+
+  // Pobierz rezerwacje użytkownika
+  getUserReservations: async (userId) => {
+    try {
+      const response = await api.get(`/reservations/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Błąd przy pobieraniu rezerwacji użytkownika ${userId}:`, error);
+      throw error;
+    }
+  }
+};
+
+export default api;
