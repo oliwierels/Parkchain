@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        'parkchain': {
-          500: '#6366F1',
-          600: '#4F46E5',
-          700: '#4338CA',
-        }
-      }
+        'parkchain-500': '#6366F1', 
+        'parkchain-600': '#4F46E5',
+      },
+      fontFamily: { // <-- DODAJ TĘ SEKCJĘ
+        sans: ['Inter', 'sans-serif'], // Mówi Tailwindowi, że 'font-sans' to 'Inter'
+      },
     },
   },
   plugins: [],
