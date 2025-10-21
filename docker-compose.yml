@@ -1,5 +1,3 @@
-# Usunąłem linię 'version: 3.8', ponieważ terminal pokazywał, że jest przestarzała.
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -8,13 +6,13 @@ services:
     environment:
       POSTGRES_DB: parkchain_db
       POSTGRES_USER: parkchain_user
-      # Poniższa linia została zahardkodowana i ma poprawne wcięcie:
       POSTGRES_PASSWORD: parkchain_secure_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Ta linia wczyta Twój schemat bazy przy pierwszym starcie
       - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - parkchain_network
@@ -34,6 +32,27 @@ services:
       - redis_data:/data
     networks:
       - parkchain_network
+
+  # --- TO JEST KLUCZOWA, BRAKUJĄCA CZĘŚĆ ---
+  backend:
+    build: ./backend  # Mówi Dockerowi, żeby zbudował obraz z folderu 'backend'
+    container_name: parkchain_backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # Udostępnia port 3000 Twojego serwera
+    environment:
+      # Podajemy backendowi adres do bazy 'postgres' w Dockerze
+      DATABASE_URL: "postgresql://parkchain_user:parkchain_secure_pass@postgres:5432/parkchain_db"
+      DB_SSL: "false" 
+      PORT: 3000
+      # Upewnij się, że Twój frontend działa na tym porcie
+      ALLOWED_ORIGINS: "http://localhost:5173" 
+    networks:
+      - parkchain_network
+    depends_on:
+      postgres:
+        # Backend poczeka, aż baza danych będzie gotowa
+        condition: service_healthy 
 
 volumes:
   postgres_data:

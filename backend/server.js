@@ -190,7 +190,7 @@ app.post('/api/reservations', async (req, res) => {
       .from('reservations')
       .insert([{
         lot_id,
-        user_id: 'null', // Tymczasowe
+        user_id: null, // Tymczasowe
         start_time,
         end_time,
         license_plate,

@@ -63,7 +63,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         license_plate: formData.licensePlate,
-        estimated_price: parseFloat(calculatedPrice)
+        price: parseFloat(calculatedPrice)
       };
 
       console.log('Wysyłam rezerwację:', reservationData);

@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "Parkchain DePIN Parking Platform - Backend API",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
