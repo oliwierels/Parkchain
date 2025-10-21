@@ -1,13 +1,19 @@
 // frontend/src/pages/HomePage.jsx
 
 import { Link } from 'react-router-dom';
+import { motion } from "framer-motion";
 
 function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        <div className="text-center">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: -20 }} // Zacznij przezroczysty i 20px wyżej
+          animate={{ opacity: 1, y: 0 }}    // Animuj do pełnej widoczności
+          transition={{ duration: 0.8 }}   // Czas trwania animacji
+        >
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Znajdź parking <span className="text-parkchain-500">łatwiej</span>
           </h1>
@@ -26,33 +32,51 @@ function HomePage() {
               Dowiedz się więcej
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Features */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+          <motion.div 
+            className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <div className="text-4xl mb-4">🗺️</div>
             <h3 className="text-xl font-bold mb-2">Interaktywna mapa</h3>
             <p className="text-gray-600">
               Zobacz wszystkie dostępne miejsca parkingowe w Twojej okolicy
             </p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+          </motion.div>
+          <motion.div 
+            className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <div className="text-4xl mb-4">🔒</div>
             <h3 className="text-xl font-bold mb-2">Bezpieczne płatności</h3>
             <p className="text-gray-600">
               Blockchain zapewnia transparentność i bezpieczeństwo transakcji
             </p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+          </motion.div>
+          <motion.div 
+            className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             <div className="text-4xl mb-4">⚡</div>
             <h3 className="text-xl font-bold mb-2">Szybka rezerwacja</h3>
             <p className="text-gray-600">
               Zarezerwuj miejsce w kilka sekund i zaoszczędź czas
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
