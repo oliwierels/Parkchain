@@ -28,7 +28,7 @@ const { Pool } = pg;
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Konfiguracja puli bazy danych
+// Konfiguracja puli baazy danych
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
