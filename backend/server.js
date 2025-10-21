@@ -1,129 +1,125 @@
-// Parkchain API Backend - Main Server
-// Node.js + Express + PostgreSQL
+// backend/server.js
 
-const express = require('express');
-const { Pool } = require('pg');
-const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { createClient } = require('@supabase/supabase-js');
+import express from 'express';
+import pg from 'pg';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import compression from 'compression';
+import { body, validationResult } from 'express-validator';
+import { createClient } from '@supabase/supabase-js';
+import { geocodeAddress } from './services/geocodingService.js';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Database connection - Pool dla większości endpointów
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
-// Supabase connection - tylko dla /api/lots
+// Supabase client
 const supabase = createClient(
   'https://rauhggtfprbbnrbfdpqg.supabase.co',
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdWhnZ3RmcHJiYm5yYmZkcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDgyMDksImV4cCI6MjA3NjU4NDIwOX0.o7AM8E3HVNklgqt0BKbEuxlQ0T8QP_Ky9vW0tm1zfWw');
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdWhnZ3RmcHJiYm5yYmZkcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDgyMDksImV4cCI6MjA3NjU4NDIwOX0.o7AM8E3HVNklgqt0BKbEuxlQ0T8QP_Ky9vW0tm1zfWw'
+);
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
+// --- NOWY IMPORT ---
+// Importujemy serwis geokodowania, który stworzyliśmy
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100
+// --- KONIEC NOWEGO IMPORTU ---
+
+dotenv.config();
+
+const { Pool } = pg;
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Konfiguracja puli bazy danych
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
-app.use('/api/', limiter);
 
-// File upload configuration
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
-      cb(null, true);
+// Testowanie połączenia z bazą
+db.connect((err, client, release) => {
+  if (err) {
+    console.error('Błąd połączenia z bazą danych:', err.stack);
+  } else {
+    console.log('Połączono z bazą danych PostgreSQL');
+    client.query('SELECT NOW()', (err, result) => {
+      release();
+      if (err) {
+        console.error('Błąd przy zapytaniu testowym:', err.stack);
+      } else {
+        console.log('Test query result:', result.rows[0].now);
+      }
+    });
+  }
+});
+
+// Middlewares
+app.use(express.json()); // Do parsowania JSON
+app.use(helmet()); // Podstawowe zabezpieczenia
+app.use(compression()); // Kompresja odpowiedzi
+app.use(morgan('dev')); // Logowanie żądań w trybie dev
+
+// Konfiguracja CORS (z naszej poprzedniej poprawki)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
     } else {
-      cb(new Error('Only images and videos allowed'));
+      callback(new Error('Niedozwolone przez CORS'));
     }
-  }
-});
-
-// Auth middleware
-const authenticate = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
-    
-    if (rows.length === 0) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-    
-    req.user = rows[0];
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// ============================================
-// AUTH ENDPOINTS
-// ============================================
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Obsługa zapytań pre-flight
 
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, fullName, role } = req.body;
-    
-    // In production, hash password with bcrypt
-    const { rows } = await pool.query(
-      'INSERT INTO users (email, full_name, role) VALUES ($1, $2, $3) RETURNING id, email, full_name, role',
-      [email, fullName, role || 'driver']
-    );
-    
-    const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    
-    // Initialize reputation
-    await pool.query(
-      'INSERT INTO user_reputation (user_id) VALUES ($1)',
-      [rows[0].id]
-    );
-    
-    res.status(201).json({ user: rows[0], token });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+// Prosta walidacja
+// Prosta walidacja
+const validateParkingLot = [
+  body('name').notEmpty().withMessage('Nazwa jest wymagana'),
+  body('address').notEmpty().withMessage('Adres jest wymagany'),
+  body('city').notEmpty().withMessage('Miasto jest wymagane'),
+  body('price_per_hour').isNumeric().withMessage('Cena musi być liczbą'),
+  body('total_spots').isNumeric().withMessage('Liczba miejsc musi być liczbą'),
+];
+
+const validateUser = [
+  body('email').isEmail().withMessage('Niepoprawny email'),
+  body('password').isLength({ min: 6 }).withMessage('Hasło musi mieć min. 6 znaków'),
+  body('username').notEmpty().withMessage('Nazwa użytkownika jest wymagana'),
+];
+
+// Funkcja pomocnicza do walidacji
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+  next();
+};
+
+// ===================================
+// API ROUTES
+// ===================================
+
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    
-    const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    
-    res.json({ user: rows[0], token });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+// -------------------
+// Parking Lots API
+// -------------------
 
-// ============================================
-// PARKING LOTS ENDPOINTS
-// ============================================
-
+// Get all parking lots (z filtrowaniem)
+// Get all parking lots (z filtrowaniem)
 app.get('/api/lots', async (req, res) => {
-  console.log("Lots endpoint");
+  console.log("Lots endpoint - używam Supabase");
   try {
-    const { city, lat, lng, radius } = req.query;
+    const { city } = req.query;
     
     let query = supabase
       .from('parking_lots')
@@ -136,358 +132,328 @@ app.get('/api/lots', async (req, res) => {
     
     const { data, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
     
     res.json({ lots: data || [] });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching parking lots:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-app.get('/api/lots/:lotId', async (req, res) => {
+// Get a single parking lot by ID
+app.get('/api/lots/:id', async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT * FROM parking_lots WHERE id = $1',
-      [req.params.lotId]
+    const { id } = req.params;
+    const { rows } = await db.query(
+      'SELECT * FROM parking_lots WHERE lot_id = $1',
+      [id]
     );
-    
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Lot not found' });
+      return res.status(404).json({ message: 'Parking lot not found' });
     }
-    
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching parking lot:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.get('/api/lots/:lotId/occupancy', async (req, res) => {
+// --- CAŁA PONIŻSZA SEKCJA `app.post` ZOSTAŁA ZASTĄPIONA --- //
+// <-- ZMIENIONE
+// Create a new parking lot (z Geokodowaniem)
+// Create a new parking lot (z Supabase)
+// Create a new parking lot (z Supabase)
+// Create a new parking lot (z Geokodowaniem)
+// ============================================
+// RESERVATIONS ENDPOINTS (Supabase)
+// ============================================
+
+// Create reservation
+// ============================================
+// RESERVATIONS ENDPOINTS (Supabase)
+// ============================================
+
+// Create reservation
+app.post('/api/reservations', async (req, res) => {
+  console.log("POST /api/reservations - tworzenie rezerwacji");
+  console.log("Otrzymane dane:", req.body);
+
   try {
-    const { rows } = await pool.query(
-      'SELECT capacity, current_occupancy FROM parking_lots WHERE id = $1',
-      [req.params.lotId]
+    const { lot_id, start_time, end_time, license_plate, price } = req.body;
+
+    // Dodaj rezerwację do Supabase
+    const { data, error } = await supabase
+      .from('reservations')
+      .insert([{
+        lot_id,
+        user_id: 'null', // Tymczasowe
+        start_time,
+        end_time,
+        license_plate,
+        price,
+        status: 'pending'
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(400).json({ message: error.message, error });
+    }
+
+    // Zwiększ zajętość parkingu
+    await supabase.rpc('increment_occupancy', { parking_id: lot_id });
+
+    console.log('✅ Rezerwacja utworzona:', data);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('❌ Error creating reservation:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+// Update a parking lot
+app.put('/api/lots/:id', validateParkingLot, handleValidationErrors, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      address,
+      city,
+      country,
+      latitude,
+      longitude,
+      price_per_hour,
+      total_spots,
+      available_spots,
+      description,
+      is_active
+    } = req.body;
+
+    // W przyszłości, jeśli adres się zmieni, tutaj też powinniśmy wywołać geokoder!
+    // Na razie prosta aktualizacja.
+    
+    const updatedLot = await db.query(
+      `UPDATE parking_lots
+       SET name = $1, address = $2, city = $3, country = $4, latitude = $5, longitude = $6,
+           price_per_hour = $7, total_spots = $8, available_spots = $9, description = $10, is_active = $11
+       WHERE lot_id = $12 RETURNING *`,
+      [
+        name, address, city, country, latitude, longitude,
+        price_per_hour, total_spots, available_spots, description, is_active,
+        id
+      ]
+    );
+
+    if (updatedLot.rows.length === 0) {
+      return res.status(404).json({ message: 'Parking lot not found' });
+    }
+    res.json(updatedLot.rows[0]);
+  } catch (error) {
+    console.error('Error updating parking lot:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete a parking lot (soft delete)
+app.delete('/api/lots/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Lepsze niż usuwanie jest deaktywowanie
+    const deletedLot = await db.query(
+      "UPDATE parking_lots SET is_active = false WHERE lot_id = $1 RETURNING *",
+      [id]
     );
     
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Lot not found' });
+    if (deletedLot.rows.length === 0) {
+      return res.status(404).json({ message: 'Parking lot not found' });
     }
+    res.status(200).json({ message: 'Parking lot deactivated', lot: deletedLot.rows[0] });
+  } catch (error) {
+    console.error('Error deleting parking lot:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+// -------------------
+// Users API
+// -------------------
+
+// Register a new user
+app.post('/api/users/register', validateUser, handleValidationErrors, async (req, res) => {
+  try {
+    const { username, email, password, first_name, last_name, phone } = req.body;
     
-    const { capacity, current_occupancy } = rows[0];
-    const occupancyRate = (current_occupancy / capacity) * 100;
+    // W produkcji: hashowanie hasła!
+    // const salt = await bcrypt.genSalt(10);
+    // const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = password; // Uproszczenie dla dev! TODO: Poprawić!
+
+    const newUser = await db.query(
+      `INSERT INTO users (username, email, password_hash, first_name, last_name, phone)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING user_id, username, email`,
+      [username, email, hashedPassword, first_name, last_name, phone]
+    );
+
+    res.status(201).json(newUser.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') { // Unikalny klucz
+      return res.status(400).json({ message: 'Email or username already exists' });
+    }
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Login user
+app.post('/api/users/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
     
-    res.json({
-      capacity,
-      occupied: current_occupancy,
-      available: capacity - current_occupancy,
-      occupancyRate: Math.round(occupancyRate),
-      status: occupancyRate > 90 ? 'full' : occupancyRate > 70 ? 'filling' : 'available'
+    // W produkcji: porównywanie hashowanych haseł!
+    // const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = (password === user.password_hash); // Uproszczenie! TODO: Poprawić!
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // W produkcji: generowanie tokena JWT
+    // const token = jwt.sign({ id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = `fake-jwt-token-for-${user.user_id}`; // Uproszczenie!
+
+    res.json({ 
+      token, 
+      user: { 
+        id: user.user_id, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role 
+      } 
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error logging in:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ============================================
-// RESERVATIONS ENDPOINTS
-// ============================================
-
-app.post('/api/reservations', authenticate, async (req, res) => {
+// Get user profile (TODO: Wymaga autentykacji middleware)
+app.get('/api/users/profile', async (req, res) => {
+  // TODO: Dodać middleware sprawdzające token JWT
+  const userId = '...'; // Pobrać z tokena
   try {
-    const { lotId, startTime, endTime, licensePlate } = req.body;
-    
-    // Check availability
-    const { rows: lotRows } = await pool.query(
-      'SELECT capacity, current_occupancy, hourly_rate FROM parking_lots WHERE id = $1',
-      [lotId]
+    const { rows } = await db.query(
+      'SELECT user_id, username, email, first_name, last_name, phone, solana_wallet, created_at FROM users WHERE user_id = $1',
+      [userId]
     );
-    
-    if (lotRows.length === 0) {
-      return res.status(404).json({ error: 'Lot not found' });
-    }
-    
-    const lot = lotRows[0];
-    if (lot.current_occupancy >= lot.capacity) {
-      return res.status(400).json({ error: 'Lot is full' });
-    }
-    
-    // Calculate price
-    const hours = (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
-    const price = hours * lot.hourly_rate;
-    
-    // Create reservation
-    const { rows } = await pool.query(
-      `INSERT INTO reservations 
-       (user_id, lot_id, start_time, end_time, license_plate, price, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending') 
-       RETURNING *`,
-      [req.user.id, lotId, startTime, endTime, licensePlate, price]
-    );
-    
-    // Update occupancy
-    await pool.query(
-      'UPDATE parking_lots SET current_occupancy = current_occupancy + 1 WHERE id = $1',
-      [lotId]
-    );
-    
-    // Webhook event
-    await pool.query(
-      `INSERT INTO webhook_events (event_type, payload) 
-       VALUES ('reservation.created', $1)`,
-      [JSON.stringify(rows[0])]
-    );
-    
-    res.status(201).json(rows[0]);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.get('/api/reservations/me', authenticate, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT r.*, pl.name as lot_name, pl.address 
-       FROM reservations r 
-       JOIN parking_lots pl ON r.lot_id = pl.id 
-       WHERE r.user_id = $1 
-       ORDER BY r.created_at DESC`,
-      [req.user.id]
-    );
-    
-    res.json({ reservations: rows });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ============================================
-// CROWDSCAN & INSPECTIONS ENDPOINTS
-// ============================================
-
-app.post('/api/lots/:lotId/scan', authenticate, upload.array('evidence', 5), async (req, res) => {
-  try {
-    const { reportedOccupancy, notes } = req.body;
-    const evidenceFiles = req.files;
-    
-    if (!evidenceFiles || evidenceFiles.length === 0) {
-      return res.status(400).json({ error: 'At least one photo/video required' });
-    }
-    
-    // Upload files to storage (S3, Cloudinary, etc.)
-    // For now, store as placeholder URLs
-    const evidenceUrls = evidenceFiles.map((file, i) => 
-      `https://storage.parkchain.io/${req.user.id}/${Date.now()}-${i}.${file.mimetype.split('/')[1]}`
-    );
-    
-    // Create inspection
-    const { rows } = await pool.query(
-      `INSERT INTO inspections 
-       (lot_id, reporter_id, reported_occupancy, evidence_urls, notes, status) 
-       VALUES ($1, $2, $3, $4, $5, 'queued') 
-       RETURNING *`,
-      [req.params.lotId, req.user.id, reportedOccupancy, evidenceUrls, notes]
-    );
-    
-    // Update user reputation
-    await pool.query(
-      `INSERT INTO user_reputation (user_id, reports_total) 
-       VALUES ($1, 1) 
-       ON CONFLICT (user_id) 
-       DO UPDATE SET reports_total = user_reputation.reports_total + 1`,
-      [req.user.id]
-    );
-    
-    // Webhook event
-    await pool.query(
-      `INSERT INTO webhook_events (event_type, payload) 
-       VALUES ('occupancy.verification_requested', $1)`,
-      [JSON.stringify(rows[0])]
-    );
-    
-    res.status(201).json({
-      inspection: rows[0],
-      message: 'Scan submitted successfully. Review in progress.'
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.get('/api/inspections/:eventId', authenticate, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT i.*, u.full_name as reporter_name, pl.name as lot_name 
-       FROM inspections i 
-       JOIN users u ON i.reporter_id = u.id 
-       JOIN parking_lots pl ON i.lot_id = pl.id 
-       WHERE i.id = $1`,
-      [req.params.eventId]
-    );
-    
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Inspection not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
-    
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.post('/api/inspections/:eventId/confirm', authenticate, async (req, res) => {
+
+// -------------------
+// Reservations API
+// -------------------
+
+// Create a reservation
+app.post('/api/reservations', async (req, res) => {
+  // TODO: Wymaga autentykacji
   try {
-    // Check if user is inspector
-    if (req.user.role !== 'inspector' && req.user.role !== 'operator') {
-      return res.status(403).json({ error: 'Only inspectors can confirm' });
-    }
-    
-    const { result, actualOccupancy, rewardAmount } = req.body;
-    
-    // Update inspection
-    const { rows } = await pool.query(
-      `UPDATE inspections 
-       SET status = 'confirmed', result = $1, actual_occupancy = $2, 
-           inspector_id = $3, reviewed_at = NOW() 
-       WHERE id = $4 
-       RETURNING *`,
-      [result, actualOccupancy, req.user.id, req.params.eventId]
+    const { lot_id, user_id, start_time, end_time, license_plate } = req.body;
+
+    // TODO: Sprawdzić, czy parking ma wolne miejsca (available_spots > 0)
+    // TODO: Obliczyć cenę
+    const estimated_price = 10; // Przykładowa cena
+
+    const newReservation = await db.query(
+      `INSERT INTO reservations (lot_id, user_id, start_time, end_time, license_plate, estimated_price, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING *`,
+      [lot_id, user_id, start_time, end_time, license_plate, estimated_price]
     );
+
+    // TODO: Zmniejszyć available_spots w tabeli parking_lots
     
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Inspection not found' });
-    }
-    
-    const inspection = rows[0];
-    
-    // Issue reward if confirmed as helpful
-    if (result === 'ok' || result === 'discrepancy') {
-      const { rows: rewardRows } = await pool.query(
-        `INSERT INTO rewards 
-         (user_id, inspection_id, type, amount, currency, status) 
-         VALUES ($1, $2, 'credit', $3, 'PLN', 'issued') 
-         RETURNING *`,
-        [inspection.reporter_id, inspection.id, rewardAmount || 2.50]
-      );
-      
-      // Webhook
-      await pool.query(
-        `INSERT INTO webhook_events (event_type, payload) 
-         VALUES ('incentive.issued', $1)`,
-        [JSON.stringify(rewardRows[0])]
-      );
-    }
-    
-    res.json({
-      inspection,
-      message: 'Inspection confirmed and reward issued'
-    });
+    res.status(201).json(newReservation.rows[0]);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error creating reservation:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ============================================
-// REWARDS ENDPOINTS
-// ============================================
-
-app.get('/api/rewards/me', authenticate, async (req, res) => {
+// Get reservations for a user
+app.get('/api/reservations', async (req, res) => {
+  // TODO: Wymaga autentykacji
+  const { user_id } = req.query; // Powinno być z tokena
   try {
-    const { rows } = await pool.query(
-      `SELECT r.*, i.lot_id 
-       FROM rewards r 
-       LEFT JOIN inspections i ON r.inspection_id = i.id 
-       WHERE r.user_id = $1 
-       ORDER BY r.created_at DESC`,
-      [req.user.id]
+    const { rows } = await db.query(
+      `SELECT r.*, p.name as parking_name, p.address as parking_address
+       FROM reservations r
+       JOIN parking_lots p ON r.lot_id = p.lot_id
+       WHERE r.user_id = $1
+       ORDER BY r.start_time DESC`,
+      [user_id]
     );
-    
-    const total = rows.reduce((sum, r) => sum + parseFloat(r.amount), 0);
-    const unclaimed = rows.filter(r => r.status === 'issued').length;
-    
-    res.json({
-      rewards: rows,
-      summary: {
-        total: total.toFixed(2),
-        unclaimed,
-        currency: 'PLN'
-      }
-    });
+    res.json(rows);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.post('/api/rewards/:rewardId/claim', authenticate, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rewards 
-       SET status = 'claimed', claimed_at = NOW() 
-       WHERE id = $1 AND user_id = $2 AND status = 'issued' 
-       RETURNING *`,
-      [req.params.rewardId, req.user.id]
-    );
-    
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Reward not found or already claimed' });
-    }
-    
-    res.json({
-      reward: rows[0],
-      message: 'Reward claimed successfully'
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+// ... inne trasy (cancel reservation, get reservation by id, etc.) ...
+
+
+// -------------------
+// Payments & Solana API
+// -------------------
+
+// (placeholder)
+app.post('/api/payments/solana/confirm', (req, res) => {
+  const { signature, reservation_id } = req.body;
+  // TODO: Weryfikacja transakcji na blockchainie Solana
+  console.log(`Weryfikacja płatności Solana: ${signature} dla rezerwacji ${reservation_id}`);
+  // TODO: Aktualizacja statusu rezerwacji na 'confirmed'
+  res.json({ status: 'verified', message: 'Payment confirmed' });
 });
 
-// ============================================
-// ANALYTICS ENDPOINTS
-// ============================================
 
-app.get('/api/analytics/kpi', authenticate, async (req, res) => {
-  try {
-    // Confirmation rate
-    const { rows: confirmRows } = await pool.query(
-      `SELECT ROUND(100.0 * SUM(CASE WHEN result != 'unknown' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 2) as confirmation_rate 
-       FROM inspections`
-    );
-    
-    // Average verification time
-    const { rows: timeRows } = await pool.query(
-      `SELECT AVG(EXTRACT(EPOCH FROM (reviewed_at - created_at)) / 60) as avg_minutes 
-       FROM inspections 
-       WHERE status = 'confirmed'`
-    );
-    
-    // Reward cost ratio
-    const { rows: costRows } = await pool.query(
-      `SELECT SUM(amount) as total_rewards FROM rewards WHERE status IN ('issued', 'claimed')`
-    );
-    
-    res.json({
-      confirmationRate: confirmRows[0].confirmation_rate || 0,
-      avgVerificationMinutes: Math.round(timeRows[0].avg_minutes || 0),
-      totalRewardsIssued: costRows[0].total_rewards || 0,
-      currency: 'PLN'
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// ===================================
+// Error Handling
+// ===================================
+
+// Obsługa 404
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Not Found' });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.1.0' });
-});
-
-// Error handler
+// Globalny error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ message: 'Something broke!', error: err.message });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Parkchain API running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+// ===================================
+// Start Server
+// ===================================
+
+app.listen(port, () => {
+  console.log(`Parkchain API running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
 });

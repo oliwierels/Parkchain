@@ -5,8 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
+import ReservationModal from '../components/ReservationModal';
 
-// Napraw ikony markerów
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -24,8 +24,9 @@ function MapPage() {
   const [parkings, setParkings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedParking, setSelectedParking] = useState(null);
+  const [showReservationModal, setShowReservationModal] = useState(false);
 
-  // Pobierz parkingi z API
   useEffect(() => {
     const fetchParkings = async () => {
       try {
@@ -35,33 +36,12 @@ function MapPage() {
         setError(null);
       } catch (err) {
         console.error('Nie udało się pobrać parkingów:', err);
-        setError('Nie udało się załadować parkingów. Sprawdź czy backend działa.');
-        // Fallback - użyj przykładowych danych jeśli API nie działa
-        setParkings([
-          {
-            id: 1,
-            name: "Parking Centrum",
-            latitude: 52.2297,
-            longitude: 19.1451,
-            price_per_hour: 15,
-            total_spots: 10,
-            available_spots: 5
-          },
-          {
-            id: 2,
-            name: "Parking Dworcowy",
-            latitude: 52.2330,
-            longitude: 19.1520,
-            price_per_hour: 12,
-            total_spots: 8,
-            available_spots: 3
-          }
-        ]);
+        setError('Nie udało się załadować parkingów.');
+        setParkings([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchParkings();
   }, []);
 
@@ -72,6 +52,18 @@ function MapPage() {
       }, 100);
     }
   }, []);
+
+  const handleReserveClick = (parking) => {
+    setSelectedParking(parking);
+    setShowReservationModal(true);
+  };
+
+  const handleReservationSuccess = () => {
+    alert('Rezerwacja utworzona!');
+    setShowReservationModal(false);
+    // Odśwież parkingi
+    parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
 
   if (loading) {
     return (
@@ -115,7 +107,7 @@ function MapPage() {
         style={{ width: '100%', height: '100%' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
@@ -135,18 +127,26 @@ function MapPage() {
                   {parking.name}
                 </h3>
                 
-                <div style={{ marginBottom: '8px' }}>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#6b7280',
+                  margin: '5px 0'
+                }}>
+                  {parking.address}
+                </p>
+                
+                <div style={{ marginBottom: '8px', marginTop: '8px' }}>
                   <span style={{ 
                     display: 'inline-block',
                     padding: '4px 12px',
                     borderRadius: '12px',
                     fontSize: '12px',
                     fontWeight: 'bold',
-                    backgroundColor: parking.available_spots > 0 ? '#d1fae5' : '#fee2e2',
-                    color: parking.available_spots > 0 ? '#065f46' : '#991b1b'
+                    backgroundColor: (parking.capacity - parking.current_occupancy) > 0 ? '#d1fae5' : '#fee2e2',
+                    color: (parking.capacity - parking.current_occupancy) > 0 ? '#065f46' : '#991b1b'
                   }}>
-                    {parking.available_spots > 0 
-                      ? `${parking.available_spots}/${parking.total_spots} miejsc dostępnych` 
+                    {(parking.capacity - parking.current_occupancy) > 0
+                      ? `${parking.capacity - parking.current_occupancy}/${parking.capacity} miejsc` 
                       : 'Brak miejsc'}
                   </span>
                 </div>
@@ -157,12 +157,12 @@ function MapPage() {
                   fontWeight: 'bold',
                   color: '#6366F1'
                 }}>
-                  {parking.price_per_hour} zł/godz
+                  {parking.hourly_rate} zł/godz
                 </p>
 
                 {parking.description && (
                   <p style={{
-                    fontSize: '14px',
+                    fontSize: '13px',
                     color: '#6b7280',
                     margin: '8px 0'
                   }}>
@@ -170,12 +170,9 @@ function MapPage() {
                   </p>
                 )}
 
-                {parking.available_spots > 0 && (
+                {(parking.capacity - parking.current_occupancy) > 0 && (
                   <button 
-                    onClick={() => {
-                      alert(`Rezerwacja parkingu: ${parking.name}`);
-                      // Tutaj później dodamy formularz rezerwacji
-                    }}
+                    onClick={() => handleReserveClick(parking)}
                     style={{
                       width: '100%',
                       backgroundColor: '#6366F1',
@@ -196,6 +193,14 @@ function MapPage() {
           </Marker>
         ))}
       </MapContainer>
+
+      {showReservationModal && selectedParking && (
+        <ReservationModal
+          parking={selectedParking}
+          onClose={() => setShowReservationModal(false)}
+          onSuccess={handleReservationSuccess}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 // frontend/src/components/Navbar.jsx
 
+import { Link } from 'react-router-dom';
+
 function Navbar() {
   return (
     <nav style={{
@@ -18,21 +20,28 @@ function Navbar() {
           ParkChain
         </h1>
 
-<div style={{ display: 'flex', gap: '20px' }}>
-  <a href="/" style={{ color: 'white', textDecoration: 'none' }}>Strona Główna</a>
-  <a href="/map" style={{ color: 'white', textDecoration: 'none' }}>Mapa</a>
-  <button style={{
-    backgroundColor: 'white',
-    color: '#6366F1',
-    padding: '8px 20px',
-    border: 'none',
-    borderRadius: '8px',
-    fontWeight: 'bold',
-    cursor: 'pointer'
-  }}>
-    Zaloguj się
-  </button>
-</div>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
+            Strona Główna
+          </Link>
+          <Link to="/map" style={{ color: 'white', textDecoration: 'none' }}>
+            Mapa
+          </Link>
+          <Link to="/add-parking" style={{ color: 'white', textDecoration: 'none' }}>
+            Dodaj parking
+          </Link>
+          <button style={{
+            backgroundColor: 'white',
+            color: '#6366F1',
+            padding: '8px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}>
+            Zaloguj się
+          </button>
+        </div>
       </div>
     </nav>
   );

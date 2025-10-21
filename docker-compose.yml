@@ -1,4 +1,4 @@
-version: '3.8'
+# Usunąłem linię 'version: 3.8', ponieważ terminal pokazywał, że jest przestarzała.
 
 services:
   postgres:
@@ -8,7 +8,8 @@ services:
     environment:
       POSTGRES_DB: parkchain_db
       POSTGRES_USER: parkchain_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-parkchain_secure_pass}
+      # Poniższa linia została zahardkodowana i ma poprawne wcięcie:
+      POSTGRES_PASSWORD: parkchain_secure_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
