@@ -10,6 +10,7 @@ import { body, validationResult } from 'express-validator';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import cron from 'node-cron';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
 
@@ -267,6 +268,9 @@ app.get('/api/lots/nearby', async (req, res) => {
 
     console.log(`🔍 Szukam parkingów w pobliżu: [${destinationLat}, ${destinationLng}]`);
 
+    // Aktualizuj statusy rezerwacji
+    await updateReservationStatuses();
+
     // Pobierz wszystkie parkingi
     const { data: parkings, error } = await supabase
       .from('parking_lots')
@@ -277,8 +281,20 @@ app.get('/api/lots/nearby', async (req, res) => {
       throw error;
     }
 
+    // Oblicz dostępność dla każdego parkingu
+    const now = new Date();
+    const parkingsWithAvailability = await Promise.all(
+      parkings.map(async (parking) => {
+        const availableSpots = await calculateAvailableSpots(parking.id, now);
+        return {
+          ...parking,
+          available_spots: availableSpots
+        };
+      })
+    );
+
     // Oceń i posortuj parkingi
-    const rankedParkings = parkings
+    const rankedParkings = parkingsWithAvailability
       .map(parking => rankParking(parking, destinationLat, destinationLng, parseFloat(maxDistance)))
       .filter(p => p !== null) // Usuń parkingi bez współrzędnych lub za daleko
       .sort((a, b) => a.score - b.score) // Sortuj według score (mniejszy = lepszy)
@@ -307,6 +323,9 @@ app.get('/api/lots', async (req, res) => {
   try {
     console.log('🔍 Fetching parking lots from Supabase...');
 
+    // Aktualizuj statusy rezerwacji przed pobraniem parkingów
+    await updateReservationStatuses();
+
     // Zwiększ limit dla dużej liczby parkingów (domyślnie Supabase ma limit 1000)
     const { data, error, count } = await supabase
       .from('parking_lots')
@@ -320,13 +339,26 @@ app.get('/api/lots', async (req, res) => {
     console.log('✅ Found parking lots:', data?.length);
     console.log('📊 Total count in database:', count);
 
+    // Oblicz dostępność dla każdego parkingu dynamicznie
     if (data && data.length > 0) {
-      console.log('📍 First parking:', data[0]);
-      const withCoords = data.filter(p => p.latitude && p.longitude).length;
-      console.log(`📍 Parkings with coordinates: ${withCoords}/${data.length}`);
-    }
+      const now = new Date();
+      const lotsWithAvailability = await Promise.all(
+        data.map(async (lot) => {
+          const availableSpots = await calculateAvailableSpots(lot.id, now);
+          return {
+            ...lot,
+            available_spots: availableSpots
+          };
+        })
+      );
 
-    res.json({ lots: data || [] });
+      const withCoords = lotsWithAvailability.filter(p => p.latitude && p.longitude).length;
+      console.log(`📍 Parkings with coordinates: ${withCoords}/${lotsWithAvailability.length}`);
+
+      res.json({ lots: lotsWithAvailability });
+    } else {
+      res.json({ lots: [] });
+    }
   } catch (error) {
     console.error('❌ Error fetching parking lots:', error);
     res.status(500).json({ error: error.message });
@@ -517,6 +549,87 @@ app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
 
 // ========== REZERWACJE ==========
 
+// Funkcja do obliczania dostępnych miejsc w danym czasie
+async function calculateAvailableSpots(lotId, checkTime = new Date()) {
+  try {
+    // Pobierz total_spots dla parkingu
+    const { data: parking, error: parkingError } = await supabase
+      .from('parking_lots')
+      .select('total_spots')
+      .eq('id', lotId)
+      .single();
+
+    if (parkingError || !parking) {
+      console.error('❌ Błąd pobierania parkingu:', parkingError);
+      return 0;
+    }
+
+    // Pobierz aktywne rezerwacje które nakładają się z checkTime
+    const { data: activeReservations, error: resError } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('lot_id', lotId)
+      .neq('status', 'cancelled')
+      .lte('start_time', checkTime.toISOString())
+      .gte('end_time', checkTime.toISOString());
+
+    if (resError) {
+      console.error('❌ Błąd pobierania rezerwacji:', resError);
+      return parking.total_spots;
+    }
+
+    const occupiedSpots = activeReservations?.length || 0;
+    const availableSpots = Math.max(0, parking.total_spots - occupiedSpots);
+
+    return availableSpots;
+  } catch (error) {
+    console.error('❌ Błąd obliczania dostępności:', error);
+    return 0;
+  }
+}
+
+// Funkcja do aktualizacji statusów rezerwacji bazując na czasie
+async function updateReservationStatuses() {
+  try {
+    const now = new Date().toISOString();
+
+    // Aktywuj rezerwacje które się rozpoczęły
+    const { data: activated, error: activateError } = await supabase
+      .from('reservations')
+      .update({ status: 'active' })
+      .eq('status', 'pending')
+      .lte('start_time', now)
+      .gte('end_time', now)
+      .select();
+
+    if (activateError) {
+      console.error('❌ Błąd aktywacji rezerwacji:', activateError);
+    } else if (activated && activated.length > 0) {
+      console.log(`✅ Aktywowano ${activated.length} rezerwacji`);
+    }
+
+    // Zakończ rezerwacje które się skończyły
+    const { data: completed, error: completeError } = await supabase
+      .from('reservations')
+      .update({ status: 'completed' })
+      .eq('status', 'active')
+      .lt('end_time', now)
+      .select();
+
+    if (completeError) {
+      console.error('❌ Błąd kończenia rezerwacji:', completeError);
+    } else if (completed && completed.length > 0) {
+      console.log(`✅ Zakończono ${completed.length} rezerwacji`);
+    }
+
+    if ((!activated || activated.length === 0) && (!completed || completed.length === 0)) {
+      console.log('ℹ️ Brak rezerwacji do aktualizacji');
+    }
+  } catch (error) {
+    console.error('❌ Błąd aktualizacji statusów:', error);
+  }
+}
+
 // GET /api/reservations - pobierz wszystkie rezerwacje (admin)
 app.get('/api/reservations', authenticateToken, async (req, res) => {
   try {
@@ -666,10 +779,10 @@ app.post('/api/reservations', authenticateToken, [
     const { lot_id, start_time, end_time, license_plate, pricing_type } = req.body;
     const user_id = req.user.id;
 
-    // Sprawdź dostępność i pobierz ceny
+    // Sprawdź dostępność w czasie rezerwacji i pobierz ceny
     const { data: parking, error: parkingError } = await supabase
       .from('parking_lots')
-      .select('available_spots, price_per_hour, price_per_day, price_per_week, price_per_month')
+      .select('total_spots, price_per_hour, price_per_day, price_per_week, price_per_month')
       .eq('id', lot_id)
       .single();
 
@@ -677,8 +790,15 @@ app.post('/api/reservations', authenticateToken, [
       return res.status(404).json({ error: 'Parking lot not found' });
     }
 
-    if (parking.available_spots <= 0) {
-      return res.status(400).json({ error: 'No available spots' });
+    // Sprawdź dostępność w czasie START rezerwacji
+    const startTime = new Date(start_time);
+    const availableSpotsAtStart = await calculateAvailableSpots(lot_id, startTime);
+
+    if (availableSpotsAtStart <= 0) {
+      return res.status(400).json({
+        error: 'No available spots at the requested time',
+        message: `Brak wolnych miejsc w czasie rozpoczęcia rezerwacji (${start_time})`
+      });
     }
 
     // Oblicz najlepszą cenę
@@ -707,15 +827,24 @@ app.post('/api/reservations', authenticateToken, [
       throw error;
     }
 
-    // Zmniejsz dostępne miejsca
-    await supabase
-      .from('parking_lots')
-      .update({ available_spots: parking.available_spots - 1 })
-      .eq('id', lot_id);
+    // NIE zmniejszamy available_spots od razu - będzie liczone dynamicznie
+    console.log(`✅ Rezerwacja utworzona (${data.id}) - start: ${start_time}, status: pending`);
 
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating reservation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/reservations/sync-statuses - ręcznie synchronizuj statusy rezerwacji
+app.post('/api/reservations/sync-statuses', async (req, res) => {
+  try {
+    console.log('🔄 Ręczna synchronizacja statusów rezerwacji...');
+    await updateReservationStatuses();
+    res.json({ message: 'Statusy rezerwacji zsynchronizowane', timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('❌ Błąd synchronizacji:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -833,21 +962,10 @@ app.put('/api/reservations/:id/cancel', authenticateToken, async (req, res) => {
       .single();
     
     if (error) throw error;
-    
-    // Zwiększ dostępne miejsca
-    const { data: parking } = await supabase
-      .from('parking_lots')
-      .select('available_spots')
-      .eq('id', reservation.lot_id)
-      .single();
-    
-    if (parking) {
-      await supabase
-        .from('parking_lots')
-        .update({ available_spots: parking.available_spots + 1 })
-        .eq('id', reservation.lot_id);
-    }
-    
+
+    // NIE zwiększamy available_spots - jest liczone dynamicznie
+    console.log(`✅ Rezerwacja anulowana (${id})`);
+
     res.json(data);
   } catch (error) {
     console.error('Error cancelling reservation:', error);
@@ -880,23 +998,12 @@ app.delete('/api/reservations/:id', authenticateToken, async (req, res) => {
       .from('reservations')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
-    
-    // Zwiększ dostępne miejsca
-    const { data: parking } = await supabase
-      .from('parking_lots')
-      .select('available_spots')
-      .eq('id', reservation.lot_id)
-      .single();
-    
-    if (parking) {
-      await supabase
-        .from('parking_lots')
-        .update({ available_spots: parking.available_spots + 1 })
-        .eq('id', reservation.lot_id);
-    }
-    
+
+    // NIE zwiększamy available_spots - jest liczone dynamicznie
+    console.log(`✅ Rezerwacja usunięta (${id})`);
+
     res.json({ message: 'Reservation deleted successfully' });
   } catch (error) {
     console.error('Error deleting reservation:', error);
@@ -1754,10 +1861,20 @@ app.post('/api/points/buy/:id', authenticateToken, [
   }
 });
 
+// Cron job - aktualizuj statusy rezerwacji co minutę
+cron.schedule('* * * * *', async () => {
+  console.log('⏰ Uruchamiam automatyczną aktualizację statusów rezerwacji...');
+  await updateReservationStatuses();
+});
+
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('⏰ Cron job uruchomiony - statusy rezerwacji będą aktualizowane co minutę');
+
+  // Uruchom raz na starcie
+  updateReservationStatuses();
 });
 
 export { supabase };
