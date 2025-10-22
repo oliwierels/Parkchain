@@ -125,6 +125,19 @@ export const parkingAPI = {
       console.error('Błąd przy dodawaniu parkingu:', error);
       throw error;
     }
+  },
+
+  // Znajdź najlepsze parkingi w pobliżu destynacji
+  getNearbyParkings: async (lat, lng, maxDistance = 5, limit = 10) => {
+    try {
+      const response = await api.get('/lots/nearby', {
+        params: { lat, lng, maxDistance, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy szukaniu parkingów w pobliżu:', error);
+      throw error;
+    }
   }
 };
 
