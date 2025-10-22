@@ -8,6 +8,7 @@ import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
 import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
+import AddChargingStationModal from '../components/AddChargingStationModal';
 import { useAuth } from '../context/AuthContext';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -31,7 +32,7 @@ const DestinationIcon = L.icon({
   popupAnchor: [1, -34]
 });
 
-// Funkcja do tworzenia custom markerów
+// Funkcja do tworzenia custom markerów dla parkingów
 function createParkingIcon(parking) {
   // Oblicz procent dostępności
   const availabilityPercent = parking.total_spots > 0
@@ -70,6 +71,58 @@ function createParkingIcon(parking) {
     iconSize: [30, 30],
     iconAnchor: [15, 30],
     popupAnchor: [0, -30]
+  });
+}
+
+// Funkcja do tworzenia custom markerów dla ładowarek EV
+function createChargingIcon(station) {
+  // Oblicz procent dostępności
+  const availabilityPercent = station.total_connectors > 0
+    ? (station.available_connectors / station.total_connectors) * 100
+    : 0;
+
+  // Wybierz kolor bazując na dostępności
+  let color;
+  if (station.available_connectors === 0) {
+    color = '#DC2626'; // Czerwony - brak złączy
+  } else if (availabilityPercent < 25) {
+    color = '#F59E0B'; // Pomarańczowy - mało złączy
+  } else if (availabilityPercent < 50) {
+    color = '#EAB308'; // Żółty - średnio złączy
+  } else {
+    color = '#10B981'; // Zielony - dużo złączy
+  }
+
+  const html = `
+    <div style="
+      width: 32px;
+      height: 32px;
+      background: ${color};
+      border: 3px solid white;
+      border-radius: 6px;
+      transform: rotate(45deg);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <div style="
+        transform: rotate(-45deg);
+        font-size: 16px;
+        line-height: 1;
+      ">
+        ⚡
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html: html,
+    className: 'custom-charging-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
   });
 }
 
@@ -120,6 +173,7 @@ function MapPage() {
   const { user } = useAuth();
   const mapRef = useRef(null);
   const [parkings, setParkings] = useState([]);
+  const [chargingStations, setChargingStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedParking, setSelectedParking] = useState(null);
@@ -137,24 +191,45 @@ function MapPage() {
   const [newParkingLocation, setNewParkingLocation] = useState(null);
   const [showAddParkingModal, setShowAddParkingModal] = useState(false);
 
+  // Nowe state dla dodawania ładowarki
+  const [addChargingMode, setAddChargingMode] = useState(false);
+  const [newChargingLocation, setNewChargingLocation] = useState(null);
+  const [showAddChargingModal, setShowAddChargingModal] = useState(false);
+
+  // Filtry
+  const [showParkings, setShowParkings] = useState(true);
+  const [showCharging, setShowCharging] = useState(true);
+
   useEffect(() => {
-    const fetchParkings = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await parkingAPI.getAllParkings();
-        console.log('✅ Pobrano parkingi:', data?.length, 'sztuk');
-        console.log('📍 Pierwsze 3 parkingi:', data?.slice(0, 3));
-        setParkings(data);
+
+        // Pobierz parkingi
+        const parkingsData = await parkingAPI.getAllParkings();
+        console.log('✅ Pobrano parkingi:', parkingsData?.length, 'sztuk');
+        setParkings(parkingsData);
+
+        // Pobierz ładowarki
+        try {
+          const response = await fetch('http://localhost:3000/api/charging-stations');
+          const chargingData = await response.json();
+          console.log('✅ Pobrano ładowarki:', chargingData?.stations?.length, 'sztuk');
+          setChargingStations(chargingData.stations || []);
+        } catch (err) {
+          console.error('⚠️ Nie udało się pobrać ładowarek:', err);
+          setChargingStations([]);
+        }
+
         setError(null);
       } catch (err) {
-        console.error('❌ Nie udało się pobrać parkingów:', err);
-        setError('Nie udało się załadować parkingów.');
-        setParkings([]);
+        console.error('❌ Nie udało się pobrać danych:', err);
+        setError('Nie udało się załadować danych.');
       } finally {
         setLoading(false);
       }
     };
-    fetchParkings();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -236,6 +311,12 @@ function MapPage() {
       setNewParkingLocation({ lat, lng });
       setShowAddParkingModal(true);
       setAddParkingMode(false);
+    } else if (addChargingMode) {
+      // Tryb dodawania ładowarki
+      console.log(`⚡ Wybrano lokalizację dla nowej ładowarki: [${lat}, ${lng}]`);
+      setNewChargingLocation({ lat, lng });
+      setShowAddChargingModal(true);
+      setAddChargingMode(false);
     }
   };
 
@@ -263,6 +344,38 @@ function MapPage() {
     setNewParkingLocation(null);
     // Odśwież parkingi
     parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
+
+  const handleToggleAddChargingMode = () => {
+    if (!user) {
+      alert('Musisz być zalogowany aby dodać ładowarkę');
+      return;
+    }
+
+    setAddChargingMode(!addChargingMode);
+    if (addChargingMode) {
+      // Wyłącz tryb dodawania
+      setNewChargingLocation(null);
+    }
+    // Wyłącz inne tryby jeśli były włączone
+    if (searchMode) {
+      setSearchMode(false);
+      setDestination(null);
+      setRecommendedParkings([]);
+    }
+    if (addParkingMode) {
+      setAddParkingMode(false);
+      setNewParkingLocation(null);
+    }
+  };
+
+  const handleAddChargingSuccess = () => {
+    setShowAddChargingModal(false);
+    setNewChargingLocation(null);
+    // Odśwież ładowarki
+    fetch('http://localhost:3000/api/charging-stations')
+      .then(res => res.json())
+      .then(data => setChargingStations(data.stations || []));
   };
 
   if (loading) {
@@ -331,25 +444,47 @@ function MapPage() {
         </button>
 
         {user && (
-          <button
-            onClick={handleToggleAddParkingMode}
-            style={{
-              backgroundColor: addParkingMode ? '#EF4444' : '#10B981',
-              color: 'white',
-              padding: '12px 24px',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            {addParkingMode ? '✕ Anuluj dodawanie' : '➕ Dodaj parking'}
-          </button>
+          <>
+            <button
+              onClick={handleToggleAddParkingMode}
+              style={{
+                backgroundColor: addParkingMode ? '#EF4444' : '#10B981',
+                color: 'white',
+                padding: '12px 24px',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {addParkingMode ? '✕ Anuluj' : '🅿️ Dodaj parking'}
+            </button>
+
+            <button
+              onClick={handleToggleAddChargingMode}
+              style={{
+                backgroundColor: addChargingMode ? '#EF4444' : '#F59E0B',
+                color: 'white',
+                padding: '12px 24px',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {addChargingMode ? '✕ Anuluj' : '⚡ Dodaj ładowarkę'}
+            </button>
+          </>
         )}
 
         {searchMode && (
@@ -376,9 +511,56 @@ function MapPage() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             maxWidth: '250px'
           }}>
-            📍 Kliknij na mapę w miejscu gdzie chcesz dodać parking
+            🅿️ Kliknij na mapę w miejscu gdzie chcesz dodać parking
           </div>
         )}
+
+        {addChargingMode && (
+          <div style={{
+            backgroundColor: '#FEF3C7',
+            color: '#92400E',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            maxWidth: '250px'
+          }}>
+            ⚡ Kliknij na mapę w miejscu gdzie chcesz dodać ładowarkę
+          </div>
+        )}
+
+        {/* Filtry */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '4px' }}>
+            Pokaż na mapie:
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showParkings}
+              onChange={(e) => setShowParkings(e.target.checked)}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '13px' }}>🅿️ Parkingi</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showCharging}
+              onChange={(e) => setShowCharging(e.target.checked)}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '13px' }}>⚡ Ładowarki EV</span>
+          </label>
+        </div>
       </div>
 
       {/* Legenda mapy */}
@@ -629,7 +811,7 @@ function MapPage() {
         <AutoCenter parkings={parkings} />
 
         {/* Komponent do klikania na mapę */}
-        {(searchMode || addParkingMode) && <MapClickHandler onMapClick={handleMapClick} />}
+        {(searchMode || addParkingMode || addChargingMode) && <MapClickHandler onMapClick={handleMapClick} />}
 
         {/* Marker destynacji */}
         {destination && (
@@ -647,7 +829,8 @@ function MapPage() {
           </Marker>
         )}
 
-      {parkings && parkings.length > 0 && (() => {
+      {/* Markery parkingów */}
+      {showParkings && parkings && parkings.length > 0 && (() => {
         const validParkings = parkings.filter(p => p.latitude && p.longitude);
         console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkings.length} parkingów na mapie`);
         return validParkings;
@@ -840,7 +1023,187 @@ function MapPage() {
       </div>
     </Popup>
   </Marker>
-))} 
+))}
+
+      {/* Markery ładowarek EV */}
+      {showCharging && chargingStations && chargingStations.length > 0 && (() => {
+        const validStations = chargingStations.filter(s => s.latitude && s.longitude);
+        console.log(`⚡ Wyświetlam ${validStations.length} z ${chargingStations.length} ładowarek na mapie`);
+        return validStations;
+      })()
+  .map((station) => (
+  <Marker
+    key={`charging-${station.id}`}
+    position={[station.latitude, station.longitude]}
+    icon={createChargingIcon(station)}
+  >
+    <Popup>
+      <div style={{ minWidth: '240px' }}>
+        {/* Nagłówek */}
+        <h3 style={{
+          margin: '0 0 12px 0',
+          fontSize: '17px',
+          fontWeight: 'bold',
+          color: '#1f2937',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          ⚡ {station.name}
+        </h3>
+
+        <p style={{
+          fontSize: '13px',
+          color: '#6b7280',
+          margin: '0 0 12px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          📍 {station.address}
+        </p>
+
+        {/* Status dostępności */}
+        <div style={{
+          marginBottom: '12px',
+          padding: '10px',
+          borderRadius: '8px',
+          background: station.available_connectors > 0
+            ? (station.available_connectors / station.total_connectors > 0.5 ? '#D1FAE5' : '#FEF3C7')
+            : '#FEE2E2',
+          border: `2px solid ${station.available_connectors > 0
+            ? (station.available_connectors / station.total_connectors > 0.5 ? '#10B981' : '#F59E0B')
+            : '#DC2626'}`
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: station.available_connectors > 0
+                ? (station.available_connectors / station.total_connectors > 0.5 ? '#065f46' : '#92400E')
+                : '#991b1b'
+            }}>
+              {station.available_connectors > 0
+                ? (station.available_connectors / station.total_connectors > 0.5
+                  ? '✅ Dużo wolnych złączy'
+                  : '⚠️ Mało wolnych złączy')
+                : '❌ Brak wolnych złączy'}
+            </span>
+            <span style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: station.available_connectors > 0
+                ? (station.available_connectors / station.total_connectors > 0.5 ? '#065f46' : '#92400E')
+                : '#991b1b'
+            }}>
+              {station.available_connectors}/{station.total_connectors}
+            </span>
+          </div>
+        </div>
+
+        {/* Specyfikacja */}
+        <div style={{
+          margin: '12px 0',
+          padding: '10px',
+          background: '#EFF6FF',
+          borderRadius: '8px',
+          border: '1px solid #DBEAFE'
+        }}>
+          <div style={{
+            fontSize: '12px',
+            color: '#6b7280',
+            lineHeight: '1.6'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+              <strong>Typ:</strong> {station.charger_type === 'AC' ? 'AC (wolne)' : station.charger_type === 'DC_FAST' ? 'DC Fast (szybkie)' : 'Ultra Fast (bardzo szybkie)'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+              <strong>Moc:</strong> {station.max_power_kw} kW
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <strong>Złącza:</strong> {station.connector_types?.join(', ') || 'Brak info'}
+            </div>
+          </div>
+        </div>
+
+        {/* Cennik */}
+        <div style={{
+          margin: '12px 0',
+          padding: '10px',
+          background: '#F9FAFB',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#F59E0B',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            💳 {station.price_per_kwh} zł/kWh
+          </div>
+          {(station.price_per_minute || station.price_per_session) && (
+            <div style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              lineHeight: '1.6'
+            }}>
+              {station.price_per_minute && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ⏱️ Minuta: <strong>{station.price_per_minute} zł</strong>
+                </div>
+              )}
+              {station.price_per_session && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  🎫 Sesja: <strong>{station.price_per_session} zł</strong>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Przyciski akcji */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+          {station.available_connectors > 0 && user && (
+            <button
+              onClick={() => {
+                alert('Rozpocznij sesję ładowania - funkcja w budowie!');
+                // TODO: Dodać modal do rozpoczęcia sesji ładowania
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: '#F59E0B',
+                color: 'white',
+                padding: '10px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#D97706'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#F59E0B'}
+            >
+              ⚡ Rozpocznij ładowanie
+            </button>
+          )}
+        </div>
+      </div>
+    </Popup>
+  </Marker>
+))}
       </MapContainer>
 
       {showReservationModal && selectedParking && (
@@ -868,6 +1231,18 @@ function MapPage() {
             setNewParkingLocation(null);
           }}
           onSuccess={handleAddParkingSuccess}
+        />
+      )}
+
+      {showAddChargingModal && newChargingLocation && (
+        <AddChargingStationModal
+          latitude={newChargingLocation.lat}
+          longitude={newChargingLocation.lng}
+          onClose={() => {
+            setShowAddChargingModal(false);
+            setNewChargingLocation(null);
+          }}
+          onSuccess={handleAddChargingSuccess}
         />
       )}
     </div>
