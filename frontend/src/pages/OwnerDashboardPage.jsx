@@ -33,7 +33,7 @@ function OwnerDashboardPage() {
       });
 
       if (!parkingsResponse.ok) {
-        throw new Error('Nie udaBo si pobra parking體');
+        throw new Error('Nie uda艂o si臋 pobra膰 parking贸w');
       }
 
       const parkingsData = await parkingsResponse.json();
@@ -49,7 +49,7 @@ function OwnerDashboardPage() {
       if (reservationsResponse.ok) {
         const reservationsData = await reservationsResponse.json();
 
-        // Filtruj rezerwacje tylko dla moich parking體
+        // Filtruj rezerwacje tylko dla moich parking贸w
         const myParkingIds = parkingsData.map(p => p.id);
         const myReservations = (reservationsData || []).filter(r =>
           myParkingIds.includes(r.lot_id)
@@ -74,8 +74,8 @@ function OwnerDashboardPage() {
 
       setError(null);
     } catch (err) {
-      console.error('BBd pobierania danych wBa[ciciela:', err);
-      setError('Nie udaBo si zaBadowa danych');
+      console.error('B艂膮d pobierania danych w艂a艣ciciela:', err);
+      setError('Nie uda艂o si臋 za艂adowa膰 danych');
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ function OwnerDashboardPage() {
         fontSize: '18px',
         color: '#6366F1'
       }}>
-        Aadowanie danych...
+        艁adowanie danych...
       </div>
     );
   }
@@ -122,7 +122,7 @@ function OwnerDashboardPage() {
           fontWeight: 'bold',
           color: '#1f2937'
         }}>
-          Panel wBa[ciciela
+          Panel w艂a艣ciciela
         </h1>
         <button
           onClick={() => navigate('/add-parking')}
@@ -212,12 +212,12 @@ function OwnerDashboardPage() {
             Zarobki
           </p>
           <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-            {stats.totalEarnings} zB
+            {stats.totalEarnings} z艂
           </p>
         </div>
       </div>
 
-      {/* Lista parking體 */}
+      {/* Lista parking贸w */}
       <div style={{ marginBottom: '40px' }}>
         <h2 style={{
           fontSize: '24px',
@@ -237,7 +237,7 @@ function OwnerDashboardPage() {
             color: '#6b7280'
           }}>
             <p style={{ fontSize: '18px', marginBottom: '16px' }}>
-              Nie masz jeszcze |adnych parking體
+              Nie masz jeszcze 偶adnych parking贸w
             </p>
             <button
               onClick={() => navigate('/add-parking')}
@@ -301,7 +301,7 @@ function OwnerDashboardPage() {
                         color: '#6366F1',
                         margin: 0
                       }}>
-                        {parking.price_per_hour} zB/godz
+                        {parking.price_per_hour} z艂/godz
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -381,7 +381,7 @@ function OwnerDashboardPage() {
                     fontWeight: 'bold',
                     color: '#6b7280'
                   }}>
-                    U|ytkownik
+                    U偶ytkownik
                   </th>
                   <th style={{
                     padding: '16px',
@@ -450,7 +450,7 @@ function OwnerDashboardPage() {
                         fontWeight: 'bold',
                         color: '#059669'
                       }}>
-                        {parseFloat(reservation.total_price).toFixed(2)} zB
+                        {parseFloat(reservation.total_price).toFixed(2)} z艂
                       </td>
                       <td style={{ padding: '16px' }}>
                         <span style={{
@@ -470,9 +470,9 @@ function OwnerDashboardPage() {
                             reservation.status === 'completed' ? '#6b7280' :
                             '#991b1b'
                         }}>
-                          {reservation.status === 'pending' ? 'Oczekujca' :
+                          {reservation.status === 'pending' ? 'Oczekuj膮ca' :
                            reservation.status === 'active' ? 'Aktywna' :
-                           reservation.status === 'completed' ? 'ZakoDczona' :
+                           reservation.status === 'completed' ? 'Zako艅czona' :
                            'Anulowana'}
                         </span>
                       </td>
