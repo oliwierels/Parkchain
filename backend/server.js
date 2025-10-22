@@ -1140,23 +1140,6 @@ app.get('/api/users/stats', authenticateToken, async (req, res) => {
   }
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.method} ${req.url} not found`
-  });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
-
 // ========== INSPEKCJE (CROWDSCAN) ==========
 
 // 1. ZGŁASZANIE (dla kierowcy)
@@ -1860,6 +1843,31 @@ app.post('/api/points/buy/:id', authenticateToken, [
     res.status(500).json({ error: error.message });
   }
 });
+
+// ========================================
+// ERROR HANDLERS - MUSZĄ BYĆ NA KOŃCU!
+// ========================================
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: `Route ${req.method} ${req.url} not found`
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+// ========================================
+// CRON JOBS & SERVER START
+// ========================================
 
 // Cron job - aktualizuj statusy rezerwacji co minutę
 cron.schedule('* * * * *', async () => {
