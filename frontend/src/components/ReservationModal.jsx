@@ -1,7 +1,8 @@
 // frontend/src/components/ReservationModal.jsx
 
-import { useState } from 'react';
-import { reservationAPI } from '../services/api';  // ← DODAJ TĘ LINIĘ
+import { useState, useEffect } from 'react';
+import { reservationAPI } from '../services/api';
+import axios from 'axios';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -14,7 +15,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [calculatedPrice, setCalculatedPrice] = useState(null);
+  const [priceCalculation, setPriceCalculation] = useState(null);
+  const [calculatingPrice, setCalculatingPrice] = useState(false);
 
   const handleChange = (e) => {
     const newData = {
@@ -26,23 +28,46 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     // Oblicz cenę jeśli wszystkie daty są wypełnione
     if (newData.startDate && newData.startTime && newData.endDate && newData.endTime) {
       calculatePrice(newData);
+    } else {
+      setPriceCalculation(null);
     }
   };
 
-  const calculatePrice = (data) => {
+  const calculatePrice = async (data) => {
     const start = new Date(`${data.startDate}T${data.startTime}`);
     const end = new Date(`${data.endDate}T${data.endTime}`);
 
-    const hours = (end - start) / (1000 * 60 * 60);
+    if (end <= start) {
+      setPriceCalculation(null);
+      return;
+    }
 
-    if (hours > 0) {
-      // Użyj price_per_hour (tak jak w bazie danych)
-      const pricePerHour = parking.price_per_hour || parking.hourly_rate || 0;
-      const price = hours * pricePerHour;
-      console.log('💰 Obliczam cenę:', hours, 'godz x', pricePerHour, 'zł/godz =', price, 'zł');
-      setCalculatedPrice(price.toFixed(2));
-    } else {
-      setCalculatedPrice(null);
+    try {
+      setCalculatingPrice(true);
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(
+        'http://localhost:3000/api/reservations/calculate-price',
+        {
+          lot_id: parking.id,
+          start_time: start.toISOString(),
+          end_time: end.toISOString()
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('💰 Obliczona cena:', response.data);
+      setPriceCalculation(response.data);
+    } catch (err) {
+      console.error('Błąd obliczania ceny:', err);
+      setPriceCalculation(null);
+    } finally {
+      setCalculatingPrice(false);
     }
   };
 
@@ -61,12 +86,18 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         return;
       }
 
+      if (!priceCalculation) {
+        setError('Nie udało się obliczyć ceny');
+        setLoading(false);
+        return;
+      }
+
       const reservationData = {
         lot_id: parking.id,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         license_plate: formData.licensePlate,
-        price: parseFloat(calculatedPrice)
+        pricing_type: priceCalculation.pricingType
       };
 
       console.log('🔄 Wysyłam rezerwację:', reservationData);
@@ -278,20 +309,89 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           </div>
 
           {/* Podsumowanie ceny */}
-          {calculatedPrice && (
+          {calculatingPrice && (
             <div style={{
-              backgroundColor: '#ede9fe',
+              backgroundColor: '#f3f4f6',
               padding: '15px',
               borderRadius: '8px',
               marginBottom: '20px',
-              textAlign: 'center'
+              textAlign: 'center',
+              color: '#6b7280'
             }}>
-              <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 5px 0' }}>
-                Szacowana cena:
-              </p>
-              <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
-                {calculatedPrice} zł
-              </p>
+              Obliczam cenę...
+            </div>
+          )}
+
+          {priceCalculation && !calculatingPrice && (
+            <div style={{ marginBottom: '20px' }}>
+              {/* Najlepsza cena (główna) */}
+              <div style={{
+                backgroundColor: '#dcfce7',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '15px',
+                border: '2px solid #16a34a'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '5px'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#16a34a',
+                    textTransform: 'uppercase'
+                  }}>
+                    ✓ Najlepsza opcja: {priceCalculation.pricingLabel}
+                  </span>
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a' }}>
+                  {priceCalculation.price} zł
+                </div>
+                <div style={{ fontSize: '13px', color: '#15803d', marginTop: '8px' }}>
+                  {priceCalculation.hours.toFixed(1)} godz ({priceCalculation.days.toFixed(1)} dni)
+                </div>
+              </div>
+
+              {/* Wszystkie opcje cenowe */}
+              {priceCalculation.allOptions && priceCalculation.allOptions.length > 1 && (
+                <div style={{
+                  backgroundColor: '#f9fafb',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  fontSize: '13px'
+                }}>
+                  <div style={{
+                    fontWeight: 'bold',
+                    marginBottom: '10px',
+                    color: '#374151'
+                  }}>
+                    Porównanie taryf:
+                  </div>
+                  {priceCalculation.allOptions.map((option, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0',
+                        borderBottom: index < priceCalculation.allOptions.length - 1 ? '1px solid #e5e7eb' : 'none'
+                      }}
+                    >
+                      <span style={{ color: '#6b7280' }}>{option.label}:</span>
+                      <span style={{
+                        fontWeight: option.type === priceCalculation.pricingType ? 'bold' : 'normal',
+                        color: option.type === priceCalculation.pricingType ? '#16a34a' : '#374151'
+                      }}>
+                        {option.price} zł
+                        {option.type === priceCalculation.pricingType && ' ✓'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -316,7 +416,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             </button>
             <button
               type="submit"
-              disabled={loading || !calculatedPrice}
+              disabled={loading || !priceCalculation}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -324,8 +424,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: 'bold',
-                cursor: loading || !calculatedPrice ? 'not-allowed' : 'pointer',
-                backgroundColor: loading || !calculatedPrice ? '#9ca3af' : '#6366F1',
+                cursor: loading || !priceCalculation ? 'not-allowed' : 'pointer',
+                backgroundColor: loading || !priceCalculation ? '#9ca3af' : '#6366F1',
                 color: 'white'
               }}
             >
