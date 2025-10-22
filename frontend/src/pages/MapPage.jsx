@@ -204,14 +204,27 @@ function MapPage() {
           </span>
         </div>
 
-        <p style={{ 
-          margin: '8px 0',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          color: '#6366F1'
-        }}>
-          {parking.price_per_hour} zł/godz
-        </p>
+        <div style={{ margin: '10px 0' }}>
+          <div style={{
+            fontSize: '16px',
+            fontWeight: 'bold',
+            color: '#6366F1',
+            marginBottom: '5px'
+          }}>
+            {parking.price_per_hour} zł/godz
+          </div>
+          {(parking.price_per_day || parking.price_per_week || parking.price_per_month) && (
+            <div style={{
+              fontSize: '11px',
+              color: '#6b7280',
+              lineHeight: '1.4'
+            }}>
+              {parking.price_per_day && <div>• {parking.price_per_day} zł/dzień</div>}
+              {parking.price_per_week && <div>• {parking.price_per_week} zł/tydzień</div>}
+              {parking.price_per_month && <div>• {parking.price_per_month} zł/miesiąc</div>}
+            </div>
+          )}
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
           {parking.available_spots > 0 && (
