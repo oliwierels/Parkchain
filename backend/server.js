@@ -393,24 +393,52 @@ app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
 // GET /api/reservations - pobierz wszystkie rezerwacje (admin)
 app.get('/api/reservations', authenticateToken, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    // Pobierz rezerwacje
+    const { data: reservations, error: resError } = await supabase
       .from('reservations')
-      .select(`
-        *,
-        parking_lots (
-          name,
-          address
-        ),
-        users (
-          full_name,
-          email
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    res.json(data || []);
+
+    if (resError) throw resError;
+
+    if (!reservations || reservations.length === 0) {
+      return res.json([]);
+    }
+
+    // Pobierz unikalne ID parkingów i użytkowników
+    const parkingIds = [...new Set(reservations.map(r => r.lot_id))];
+    const userIds = [...new Set(reservations.map(r => r.user_id))];
+
+    // Pobierz dane parkingów
+    const { data: parkings, error: parkError } = await supabase
+      .from('parking_lots')
+      .select('id, name, address')
+      .in('id', parkingIds);
+
+    if (parkError) throw parkError;
+
+    // Pobierz dane użytkowników
+    const { data: users, error: userError } = await supabase
+      .from('users')
+      .select('id, full_name, email')
+      .in('id', userIds);
+
+    if (userError) throw userError;
+
+    // Połącz dane
+    const parkingMap = {};
+    parkings?.forEach(p => { parkingMap[p.id] = p; });
+
+    const userMap = {};
+    users?.forEach(u => { userMap[u.id] = u; });
+
+    const result = reservations.map(r => ({
+      ...r,
+      parking_lots: parkingMap[r.lot_id] || null,
+      users: userMap[r.user_id] || null
+    }));
+
+    res.json(result);
   } catch (error) {
     console.error('Error fetching reservations:', error);
     res.status(500).json({ error: error.message });
@@ -489,22 +517,40 @@ app.post('/api/reservations', authenticateToken, [
 // GET /api/reservations/my - pobierz rezerwacje użytkownika
 app.get('/api/reservations/my', authenticateToken, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    // Pobierz rezerwacje użytkownika
+    const { data: reservations, error: resError } = await supabase
       .from('reservations')
-      .select(`
-        *,
-        parking_lots (
-          name,
-          address,
-          city
-        )
-      `)
+      .select('*')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    res.json({ reservations: data || [] }); // WAŻNE: zwraca { reservations: [...] }
+
+    if (resError) throw resError;
+
+    if (!reservations || reservations.length === 0) {
+      return res.json({ reservations: [] });
+    }
+
+    // Pobierz unikalne ID parkingów
+    const parkingIds = [...new Set(reservations.map(r => r.lot_id))];
+
+    // Pobierz dane parkingów
+    const { data: parkings, error: parkError } = await supabase
+      .from('parking_lots')
+      .select('id, name, address, city')
+      .in('id', parkingIds);
+
+    if (parkError) throw parkError;
+
+    // Połącz dane
+    const parkingMap = {};
+    parkings?.forEach(p => { parkingMap[p.id] = p; });
+
+    const result = reservations.map(r => ({
+      ...r,
+      parking_lots: parkingMap[r.lot_id] || null
+    }));
+
+    res.json({ reservations: result }); // WAŻNE: zwraca { reservations: [...] }
   } catch (error) {
     console.error('Error fetching reservations:', error);
     res.status(500).json({ error: error.message });
@@ -740,6 +786,47 @@ app.get('/', (req, res) => {
   });
 });
 
+// GET /api/users/stats - statystyki użytkownika
+app.get('/api/users/stats', authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id;
+
+    console.log('📊 Pobieranie statystyk dla user_id:', user_id);
+
+    // Pobierz wszystkie rezerwacje użytkownika
+    const { data: reservations, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('user_id', user_id);
+
+    if (error) {
+      console.error('❌ Błąd pobierania rezerwacji:', error);
+      throw error;
+    }
+
+    console.log('✅ Znaleziono rezerwacji:', reservations?.length);
+
+    const totalReservations = reservations?.length || 0;
+    const activeReservations = reservations?.filter(r =>
+      ['pending', 'active'].includes(r.status)
+    ).length || 0;
+    const totalSpent = reservations
+      ?.filter(r => r.status !== 'cancelled')
+      .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0) || 0;
+
+    res.json({
+      stats: {
+        totalReservations,
+        activeReservations,
+        totalSpent: totalSpent.toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching user stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -756,46 +843,7 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
-// GET /api/users/stats - statystyki użytkownika
-app.get('/api/users/stats', authenticateToken, async (req, res) => {
-  try {
-    const user_id = req.user.id;
-    
-    console.log('📊 Pobieranie statystyk dla user_id:', user_id);
-    
-    // Pobierz wszystkie rezerwacje użytkownika
-    const { data: reservations, error } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('user_id', user_id);
-    
-    if (error) {
-      console.error('❌ Błąd pobierania rezerwacji:', error);
-      throw error;
-    }
-    
-    console.log('✅ Znaleziono rezerwacji:', reservations?.length);
-    
-    const totalReservations = reservations?.length || 0;
-    const activeReservations = reservations?.filter(r => 
-      ['pending', 'active'].includes(r.status)
-    ).length || 0;
-    const totalSpent = reservations
-      ?.filter(r => r.status !== 'cancelled')
-      .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0) || 0;
-    
-    res.json({
-      stats: {
-        totalReservations,
-        activeReservations,
-        totalSpent: totalSpent.toFixed(2)
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error fetching user stats:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
