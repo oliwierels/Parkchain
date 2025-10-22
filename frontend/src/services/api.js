@@ -59,11 +59,22 @@ export const reservationAPI = {
      try {
        const response = await api.get('/reservations/my');
        // Upewnij się, że backend zwraca listę rezerwacji
-       return response.data.reservations; 
+       return response.data.reservations;
      } catch (error) {
        console.error('Błąd przy pobieraniu moich rezerwacji:', error);
        throw error;
      }
+  },
+
+  // Funkcja do anulowania rezerwacji
+  cancelReservation: async (id) => {
+    try {
+      const response = await api.put(`/reservations/${id}/cancel`);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd przy anulowaniu rezerwacji:', error);
+      throw error;
+    }
   }
 };
 

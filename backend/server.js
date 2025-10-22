@@ -761,39 +761,6 @@ app.get('/api/users/stats', authenticateToken, async (req, res) => {
   try {
     const user_id = req.user.id;
     
-    // Pobierz wszystkie rezerwacje użytkownika
-    const { data: reservations, error } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('user_id', user_id);
-    
-    if (error) throw error;
-    
-    const totalReservations = reservations.length;
-    const activeReservations = reservations.filter(r => 
-      ['pending', 'active'].includes(r.status)
-    ).length;
-    const totalSpent = reservations
-      .filter(r => r.status !== 'cancelled')
-      .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
-    
-    res.json({
-      stats: {
-        totalReservations,
-        activeReservations,
-        totalSpent: totalSpent.toFixed(2)
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching user stats:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-// GET /api/users/stats - statystyki użytkownika
-app.get('/api/users/stats', authenticateToken, async (req, res) => {
-  try {
-    const user_id = req.user.id;
-    
     console.log('📊 Pobieranie statystyk dla user_id:', user_id);
     
     // Pobierz wszystkie rezerwacje użytkownika
