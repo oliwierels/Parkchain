@@ -32,11 +32,14 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   const calculatePrice = (data) => {
     const start = new Date(`${data.startDate}T${data.startTime}`);
     const end = new Date(`${data.endDate}T${data.endTime}`);
-    
+
     const hours = (end - start) / (1000 * 60 * 60);
-    
+
     if (hours > 0) {
-      const price = hours * parking.hourly_rate;
+      // Użyj price_per_hour (tak jak w bazie danych)
+      const pricePerHour = parking.price_per_hour || parking.hourly_rate || 0;
+      const price = hours * pricePerHour;
+      console.log('💰 Obliczam cenę:', hours, 'godz x', pricePerHour, 'zł/godz =', price, 'zł');
       setCalculatedPrice(price.toFixed(2));
     } else {
       setCalculatedPrice(null);
@@ -143,7 +146,7 @@ await reservationAPI.createReservation(reservationData);;
             {parking.address}
           </p>
           <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
-            {parking.hourly_rate} zł/godz
+            {parking.price_per_hour || parking.hourly_rate} zł/godz
           </p>
         </div>
 

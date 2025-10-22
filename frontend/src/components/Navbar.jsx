@@ -66,6 +66,9 @@ function Navbar() {
               <Link to="/my-reservations" style={{ color: 'black', textDecoration: 'none' }}>
                 📋 Moje Rezerwacje
               </Link>
+              <Link to="/owner-dashboard" style={{ color: 'black', textDecoration: 'none' }}>
+                🏢 Moje Parkingi
+              </Link>
               <Link to="/profile" style={{ color: 'black', textDecoration: 'none' }}>
                 👤 {user?.full_name}
               </Link>
