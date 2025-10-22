@@ -431,70 +431,54 @@ app.post('/api/reservations', authenticateToken, [
   try {
     const { lot_id, start_time, end_time, license_plate } = req.body;
     const user_id = req.user.id;
-
-    console.log('🔄 Tworzenie rezerwacji:', { lot_id, start_time, end_time, license_plate, user_id });
-
-    // Sprawdź dostępność
+    
+    // Sprawdź dostępność i pobierz cenę
     const { data: parking, error: parkingError } = await supabase
       .from('parking_lots')
       .select('available_spots, price_per_hour')
       .eq('id', lot_id)
       .single();
-
+    
     if (parkingError || !parking) {
-      console.error('❌ Parking nie znaleziony:', parkingError);
       return res.status(404).json({ error: 'Parking lot not found' });
     }
-
+    
     if (parking.available_spots <= 0) {
-      console.error('❌ Brak wolnych miejsc');
       return res.status(400).json({ error: 'No available spots' });
     }
-
-    // Oblicz cenę
+    
+    // WAŻNE: Oblicz cenę
     const hours = (new Date(end_time) - new Date(start_time)) / (1000 * 60 * 60);
-    const total_price = hours * parking.price_per_hour;
-
-    console.log('💰 Obliczona cena:', hours, 'godz x', parking.price_per_hour, 'zł/godz =', total_price, 'zł');
-
-    // Stwórz rezerwację
-    const reservationData = {
-      user_id,
-      lot_id,
-      start_time,
-      end_time,
-      total_price,
-      status: 'pending'
-    };
-
-    // Dodaj license_plate jeśli zostało podane
-    if (license_plate) {
-      reservationData.license_plate = license_plate;
-    }
-
-    console.log('💾 Zapisuję rezerwację:', reservationData);
-
+    const price = hours * parking.price_per_hour;
+    
+    console.log('💰 Obliczona cena:', price, 'zł za', hours, 'godzin');
+    
+    // Stwórz rezerwację z ceną
     const { data, error } = await supabase
       .from('reservations')
-      .insert([reservationData])
+      .insert([{
+        user_id,
+        lot_id,
+        start_time,
+        end_time,
+        license_plate: license_plate || null,
+        price: price, // DODAJ TO
+        status: 'pending'
+      }])
       .select()
       .single();
-
+    
     if (error) {
-      console.error('❌ Błąd zapisu rezerwacji:', error);
+      console.error('❌ Błąd tworzenia rezerwacji:', error);
       throw error;
     }
-
-    console.log('✅ Rezerwacja utworzona:', data);
-
+    
     // Zmniejsz dostępne miejsca
     await supabase
       .from('parking_lots')
       .update({ available_spots: parking.available_spots - 1 })
       .eq('id', lot_id);
-
-    console.log('✅ Zaktualizowano dostępne miejsca:', parking.available_spots - 1);
-
+    
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating reservation:', error);
@@ -511,21 +495,21 @@ app.get('/api/reservations/my', authenticateToken, async (req, res) => {
         *,
         parking_lots (
           name,
-          address
+          address,
+          city
         )
       `)
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
-
+    
     if (error) throw error;
-
-    res.json({ reservations: data || [] });
+    
+    res.json({ reservations: data || [] }); // WAŻNE: zwraca { reservations: [...] }
   } catch (error) {
     console.error('Error fetching reservations:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
 // PUT /api/reservations/:id - aktualizuj rezerwację
 app.put('/api/reservations/:id', authenticateToken, async (req, res) => {
   try {
@@ -772,7 +756,79 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
-
+// GET /api/users/stats - statystyki użytkownika
+app.get('/api/users/stats', authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    
+    // Pobierz wszystkie rezerwacje użytkownika
+    const { data: reservations, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('user_id', user_id);
+    
+    if (error) throw error;
+    
+    const totalReservations = reservations.length;
+    const activeReservations = reservations.filter(r => 
+      ['pending', 'active'].includes(r.status)
+    ).length;
+    const totalSpent = reservations
+      .filter(r => r.status !== 'cancelled')
+      .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+    
+    res.json({
+      stats: {
+        totalReservations,
+        activeReservations,
+        totalSpent: totalSpent.toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// GET /api/users/stats - statystyki użytkownika
+app.get('/api/users/stats', authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    
+    console.log('📊 Pobieranie statystyk dla user_id:', user_id);
+    
+    // Pobierz wszystkie rezerwacje użytkownika
+    const { data: reservations, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('user_id', user_id);
+    
+    if (error) {
+      console.error('❌ Błąd pobierania rezerwacji:', error);
+      throw error;
+    }
+    
+    console.log('✅ Znaleziono rezerwacji:', reservations?.length);
+    
+    const totalReservations = reservations?.length || 0;
+    const activeReservations = reservations?.filter(r => 
+      ['pending', 'active'].includes(r.status)
+    ).length || 0;
+    const totalSpent = reservations
+      ?.filter(r => r.status !== 'cancelled')
+      .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0) || 0;
+    
+    res.json({
+      stats: {
+        totalReservations,
+        activeReservations,
+        totalSpent: totalSpent.toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching user stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
