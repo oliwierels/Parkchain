@@ -20,60 +20,62 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const fetchUser = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/auth/me');
-      setUser(response.data.user);
-    } catch (error) {
-      console.error('Błąd pobierania użytkownika:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await axios.get('http://localhost:3000/api/auth/me');
+    setUser(response.data); // ZMIANA: usuń .user
+  } catch (error) {
+    console.error('Błąd pobierania użytkownika:', error);
+    logout();
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const register = async (email, password, full_name, phone) => {
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/register', {
-        email,
-        password,
-        full_name,
-        phone
-      });
-      
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(user);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Błąd rejestracji' 
-      };
-    }
-  };
+ const register = async (email, password, full_name, phone) => {
+  try {
+    const response = await axios.post('http://localhost:3000/api/auth/register', {
+      email,
+      password,
+      full_name
+      // Usuń phone - backend go nie przyjmuje
+    });
+    
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    setToken(token);
+    setUser(user);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Register error:', error); // Dodaj console.log
+    return { 
+      success: false, 
+      message: error.response?.data?.error || 'Błąd rejestracji' // ZMIANA: .error zamiast .message
+    };
+  }
+};
 
-  const login = async (email, password) => {
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
-        email,
-        password
-      });
-      
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(user);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Błąd logowania' 
-      };
-    }
-  };
+const login = async (email, password) => {
+  try {
+    const response = await axios.post('http://localhost:3000/api/auth/login', {
+      email,
+      password
+    });
+    
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    setToken(token);
+    setUser(user);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Login error:', error); // Dodaj console.log
+    return { 
+      success: false, 
+      message: error.response?.data?.error || 'Błąd logowania' // ZMIANA: .error
+    };
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('token');

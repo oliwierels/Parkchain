@@ -111,87 +111,79 @@ function MapPage() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {parkings.map((parking) => (
-          <Marker 
-            key={parking.id} 
-            position={[parking.latitude, parking.longitude]}
+      {parkings && parkings.length > 0 && parkings
+  .filter(p => p.latitude && p.longitude) // Tylko parkingi z koordynatami
+  .map((parking) => (
+  <Marker 
+    key={parking.id} 
+    position={[parking.latitude, parking.longitude]}
+  >
+    <Popup>
+      <div style={{ minWidth: '200px' }}>
+        <h3 style={{ 
+          margin: '0 0 10px 0', 
+          fontSize: '16px',
+          fontWeight: 'bold',
+          color: '#1f2937'
+        }}>
+          {parking.name}
+        </h3>
+        
+        <p style={{
+          fontSize: '13px',
+          color: '#6b7280',
+          margin: '5px 0'
+        }}>
+          {parking.address}
+        </p>
+        
+        <div style={{ marginBottom: '8px', marginTop: '8px' }}>
+          <span style={{ 
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            backgroundColor: parking.available_spots > 0 ? '#d1fae5' : '#fee2e2',
+            color: parking.available_spots > 0 ? '#065f46' : '#991b1b'
+          }}>
+            {parking.available_spots > 0
+              ? `${parking.available_spots}/${parking.total_spots} miejsc` 
+              : 'Brak miejsc'}
+          </span>
+        </div>
+
+        <p style={{ 
+          margin: '8px 0',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          color: '#6366F1'
+        }}>
+          {parking.price_per_hour} zł/godz
+        </p>
+
+        {parking.available_spots > 0 && (
+          <button 
+            onClick={() => handleReserveClick(parking)}
+            style={{
+              width: '100%',
+              backgroundColor: '#6366F1',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              marginTop: '8px'
+            }}
           >
-            <Popup>
-              <div style={{ minWidth: '200px' }}>
-                <h3 style={{ 
-                  margin: '0 0 10px 0', 
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#1f2937'
-                }}>
-                  {parking.name}
-                </h3>
-                
-                <p style={{
-                  fontSize: '13px',
-                  color: '#6b7280',
-                  margin: '5px 0'
-                }}>
-                  {parking.address}
-                </p>
-                
-                <div style={{ marginBottom: '8px', marginTop: '8px' }}>
-                  <span style={{ 
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    backgroundColor: (parking.capacity - parking.current_occupancy) > 0 ? '#d1fae5' : '#fee2e2',
-                    color: (parking.capacity - parking.current_occupancy) > 0 ? '#065f46' : '#991b1b'
-                  }}>
-                    {(parking.capacity - parking.current_occupancy) > 0
-                      ? `${parking.capacity - parking.current_occupancy}/${parking.capacity} miejsc` 
-                      : 'Brak miejsc'}
-                  </span>
-                </div>
-
-                <p style={{ 
-                  margin: '8px 0',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#6366F1'
-                }}>
-                  {parking.hourly_rate} zł/godz
-                </p>
-
-                {parking.description && (
-                  <p style={{
-                    fontSize: '13px',
-                    color: '#6b7280',
-                    margin: '8px 0'
-                  }}>
-                    {parking.description}
-                  </p>
-                )}
-
-                {(parking.capacity - parking.current_occupancy) > 0 && (
-                  <button 
-                    onClick={() => handleReserveClick(parking)}
-                    style={{
-                      width: '100%',
-                      backgroundColor: '#6366F1',
-                      color: 'white',
-                      padding: '8px 16px',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      marginTop: '8px'
-                    }}
-                  >
-                    Zarezerwuj teraz
-                  </button>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+            Zarezerwuj teraz
+          </button>
+        )}
+      </div>
+    </Popup>
+  </Marker>
+))} 
       </MapContainer>
 
       {showReservationModal && selectedParking && (

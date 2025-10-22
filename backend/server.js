@@ -1,7 +1,6 @@
 // backend/server.js
 
 import express from 'express';
-import pg from 'pg';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -9,198 +8,56 @@ import morgan from 'morgan';
 import compression from 'compression';
 import { body, validationResult } from 'express-validator';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
+import { authenticateToken } from './middleware/auth.js';
 
-// Supabase client
-const supabase = createClient(
-  'https://rauhggtfprbbnrbfdpqg.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdWhnZ3RmcHJiYm5yYmZkcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDgyMDksImV4cCI6MjA3NjU4NDIwOX0.o7AM8E3HVNklgqt0BKbEuxlQ0T8QP_Ky9vW0tm1zfWw'
-);
-
-// --- NOWY IMPORT ---
-// Importujemy serwis geokodowania, który stworzyliśmy
-
-// --- KONIEC NOWEGO IMPORTU ---
-
+// Załaduj zmienne środowiskowe
 dotenv.config();
 
-const { Pool } = pg;
+// Sprawdź konfigurację Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase configuration missing. Please set SUPABASE_URL and SUPABASE_ANON_KEY.');
+}
+
+// Inicjalizacja klienta Supabase
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('✅ Supabase client initialized');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Konfiguracja puli baazy danych
-const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-});
-
-// Testowanie połączenia z bazą
-db.connect((err, client, release) => {
-  if (err) {
-    console.error('Błąd połączenia z bazą danych:', err.stack);
-  } else {
-    console.log('Połączono z bazą danych PostgreSQL');
-    client.query('SELECT NOW()', (err, result) => {
-      release();
-      if (err) {
-        console.error('Błąd przy zapytaniu testowym:', err.stack);
-      } else {
-        console.log('Test query result:', result.rows[0].now);
-      }
-    });
-  }
-});
-
-// Middlewares
-app.use(express.json()); // Do parsowania JSON
-app.use(helmet()); // Podstawowe zabezpieczenia
-app.use(compression()); // Kompresja odpowiedzi
-app.use(morgan('dev')); // Logowanie żądań w trybie dev
-
-// Konfiguracja CORS (z naszej poprzedniej poprawki)
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Niedozwolone przez CORS'));
-    }
-  },
-  credentials: true,
+// Middleware
+app.use(cors({
+  origin: '*',
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(compression());
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Obsługa zapytań pre-flight
+// ========== AUTENTYKACJA ==========
 
-// Prosta walidacja
-// Prosta walidacja
-const validateParkingLot = [
-  body('name').notEmpty().withMessage('Nazwa jest wymagana'),
-  body('address').notEmpty().withMessage('Adres jest wymagany'),
-  body('city').notEmpty().withMessage('Miasto jest wymagane'),
-  body('price_per_hour').isNumeric().withMessage('Cena musi być liczbą'),
-  body('total_spots').isNumeric().withMessage('Liczba miejsc musi być liczbą'),
-];
-
-const validateUser = [
-  body('email').isEmail().withMessage('Niepoprawny email'),
-  body('password').isLength({ min: 6 }).withMessage('Hasło musi mieć min. 6 znaków'),
-  body('username').notEmpty().withMessage('Nazwa użytkownika jest wymagana'),
-];
-
-// Funkcja pomocnicza do walidacji
-const handleValidationErrors = (req, res, next) => {
+// POST /api/auth/register - rejestracja
+app.post('/api/auth/register', [
+  body('email').isEmail(),
+  body('password').isLength({ min: 6 }),
+  body('full_name').notEmpty()
+], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  next();
-};
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-// JWT Middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Brak tokenu autoryzacji' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key', (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: 'Nieprawidłowy token' });
-    }
-    req.user = user;
-    next();
-  });
-};
-
-// Walidacja rejestracji
-const validateRegister = [
-  body('email').isEmail().withMessage('Nieprawidłowy email'),
-  body('password').isLength({ min: 6 }).withMessage('Hasło musi mieć min. 6 znaków'),
-  body('full_name').notEmpty().withMessage('Imię i nazwisko są wymagane'),
-];
-
-// Walidacja logowania
-const validateLogin = [
-  body('email').isEmail().withMessage('Nieprawidłowy email'),
-  body('password').notEmpty().withMessage('Hasło jest wymagane'),
-];
-// ===================================
-// API ROUTES
-// ===================================
-
-// Health Check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// -------------------
-// Parking Lots API
-// -------------------
-
-// Get all parking lots (z filtrowaniem)
-// Get all parking lots (z filtrowaniem)
-app.get('/api/lots', async (req, res) => {
-  console.log("Lots endpoint - używam Supabase");
   try {
-    const { city } = req.query;
-    
-    let query = supabase
-      .from('parking_lots')
-      .select('*')
-      .eq('status', 'active');
-    
-    if (city) {
-      query = query.eq('city', city);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      throw error;
-    }
-    
-    res.json({ lots: data || [] });
-  } catch (error) {
-    console.error('Error fetching parking lots:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Get a single parking lot by ID
-app.get('/api/lots/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { rows } = await db.query(
-      'SELECT * FROM parking_lots WHERE lot_id = $1',
-      [id]
-    );
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Parking lot not found' });
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Error fetching parking lot:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-// ===================================
-// AUTH ENDPOINTS
-// ===================================
-
-// Rejestracja
-app.post('/api/auth/register', validateRegister, handleValidationErrors, async (req, res) => {
-  try {
-    const { email, password, full_name, phone } = req.body;
+    const { email, password, full_name } = req.body;
 
     // Sprawdź czy użytkownik już istnieje
     const { data: existingUser } = await supabase
@@ -210,606 +67,682 @@ app.post('/api/auth/register', validateRegister, handleValidationErrors, async (
       .single();
 
     if (existingUser) {
-      return res.status(400).json({ message: 'Użytkownik o tym emailu już istnieje' });
+      return res.status(400).json({ error: 'User already exists' });
     }
 
     // Hashuj hasło
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
+    const password_hash = await bcrypt.hash(password, 10);
 
-    // Utwórz użytkownika
-    const { data: newUser, error } = await supabase
+    // Stwórz użytkownika
+    const { data, error } = await supabase
       .from('users')
       .insert([{
         email,
         password_hash,
         full_name,
-        phone: phone || null,
-        role: 'driver',
-        status: 'active'
+        role: 'user'
       }])
-      .select('id, email, full_name, role')
+      .select()
       .single();
 
     if (error) throw error;
 
-    // Utwórz reputację użytkownika
-    await supabase
-      .from('user_reputation')
-      .insert([{
-        user_id: newUser.id,
-        score: 0,
-        reports_total: 0,
-        reports_confirmed: 0,
-        reports_rejected: 0
-      }]);
-
-    // Generuj JWT token
+    // Stwórz JWT token
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || 'your_jwt_secret_key',
+      { id: data.id, email: data.email, role: data.role },
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.status(201).json({
-      message: 'Rejestracja udana',
+      message: 'User created successfully',
       token,
-      user: newUser
+      user: {
+        id: data.id,
+        email: data.email,
+        full_name: data.full_name,
+        role: data.role
+      }
     });
-
   } catch (error) {
-    console.error('Błąd rejestracji:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Register error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Logowanie
-app.post('/api/auth/login', validateLogin, handleValidationErrors, async (req, res) => {
+// POST /api/auth/login - logowanie
+app.post('/api/auth/login', [
+  body('email').isEmail(),
+  body('password').notEmpty()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     const { email, password } = req.body;
 
     // Znajdź użytkownika
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, password_hash, full_name, role, status')
+      .select('*')
       .eq('email', email)
       .single();
 
     if (error || !user) {
-      return res.status(401).json({ message: 'Nieprawidłowy email lub hasło' });
-    }
-
-    // Sprawdź status konta
-    if (user.status !== 'active') {
-      return res.status(403).json({ message: 'Konto nieaktywne' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Sprawdź hasło
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: 'Nieprawidłowy email lub hasło' });
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generuj JWT token
+    // Stwórz JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your_jwt_secret_key',
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Usuń hasło z odpowiedzi
-    delete user.password_hash;
-
     res.json({
-      message: 'Logowanie udane',
+      message: 'Login successful',
       token,
-      user
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role
+      }
     });
-
   } catch (error) {
-    console.error('Błąd logowania:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Pobierz profil użytkownika (chroniony endpoint)
+// GET /api/auth/me - pobierz dane zalogowanego użytkownika
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const { data: user, error } = await supabase
+    console.log('📍 Fetching user, req.user:', req.user); // DODAJ TO
+    
+    const { data, error } = await supabase
       .from('users')
-      .select('id, email, full_name, phone, wallet_address, role, status, created_at')
+      .select('id, email, full_name, role, created_at')
       .eq('id', req.user.id)
       .single();
 
-    if (error || !user) {
-      return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
+    console.log('📍 Supabase response:', { data, error }); // DODAJ TO
+
+    if (error) {
+      console.error('❌ Supabase error:', error); // DODAJ TO
+      throw error;
     }
 
-    res.json({ user });
-
+    console.log('✅ Returning user:', data); // DODAJ TO
+    res.json(data);
   } catch (error) {
-    console.error('Błąd pobierania profilu:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('❌ Error fetching user:', error); // DODAJ TO
+    res.status(500).json({ error: error.message });
   }
 });
+// ========== PARKINGI ==========
 
-// Aktualizuj profil użytkownika
-app.put('/api/auth/profile', authenticateToken, async (req, res) => {
+// GET /api/lots - pobierz wszystkie parkingi
+app.get('/api/lots', async (req, res) => {
   try {
-    const { full_name, phone } = req.body;
-
-    const { data: updatedUser, error } = await supabase
-      .from('users')
-      .update({ full_name, phone })
-      .eq('id', req.user.id)
-      .select('id, email, full_name, phone, role')
-      .single();
-
+    console.log('Fetching parking lots from Supabase...');
+    
+    const { data, error } = await supabase
+      .from('parking_lots')
+      .select('*');
+    
     if (error) throw error;
-
-    res.json({
-      message: 'Profil zaktualizowany',
-      user: updatedUser
-    });
-
+    
+    console.log('✅ Found parking lots:', data?.length);
+    res.json(data || []);
   } catch (error) {
-    console.error('Błąd aktualizacji profilu:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Error fetching parking lots:', error);
+    res.status(500).json({ error: error.message });
   }
 });
-// --- CAŁA PONIŻSZA SEKCJA `app.post` ZOSTAŁA ZASTĄPIONA --- //
-// Create a new parking lot (z Geokodowaniem)
-app.post('/api/lots', validateParkingLot, handleValidationErrors, async (req, res) => {
-  console.log("POST /api/lots - dodawanie parkingu");
-  console.log("Otrzymane dane:", req.body);
 
+// POST /api/lots - dodaj parking (BACKWARD COMPATIBILITY)
+app.post('/api/lots', authenticateToken, async (req, res) => {
   try {
-    const { name, address, city, price_per_hour, total_spots, description } = req.body;
-
-    // Geokodowanie adresu
-    const fullAddress = `${address}, ${city}, Polska`;
-    const coords = await geocodeAddress(fullAddress);
-
-    if (!coords) {
-      return res.status(400).json({ 
-        message: 'Nie udało się znaleźć adresu. Sprawdź poprawność danych.' 
-      });
-    }
-
-    // Dodaj parking do Supabase
+    const { name, address, price_per_hour, total_spots, latitude, longitude, available_spots } = req.body;
+    const owner_id = req.user.id;
+    
     const { data, error } = await supabase
       .from('parking_lots')
       .insert([{
         name,
         address,
-        city,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        capacity: total_spots,
-        current_occupancy: 0,
-        hourly_rate: price_per_hour,
-        description: description || null,
-        status: 'active'
+        price_per_hour: price_per_hour || 0,
+        total_spots: total_spots || 10,
+        available_spots: available_spots !== undefined ? available_spots : total_spots || 10,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        owner_id
       }])
       .select()
       .single();
-
-    if (error) {
-      console.error('Supabase error:', error);
-      return res.status(400).json({ message: error.message, error });
-    }
-
-    console.log('✅ Parking dodany:', data);
+    
+    if (error) throw error;
+    
     res.status(201).json(data);
-
   } catch (error) {
-    console.error('❌ Error creating parking:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error creating parking lot:', error);
+    res.status(500).json({ error: error.message });
   }
 });
-// <-- ZMIENIONE
-// Create a new parking lot (z Geokodowaniem)
-// Create a new parking lot (z Supabase)
-// Create a new parking lot (z Supabase)
-// Create a new parking lot (z Geokodowaniem)
-// ============================================
-// RESERVATIONS ENDPOINTS (Supabase)
-// ============================================
 
-// Create reservation
-// ============================================
-// RESERVATIONS ENDPOINTS (Supabase)
-// ============================================
-
-// Create reservation
-app.post('/api/reservations', authenticateToken, async (req, res) => {
-  console.log("POST /api/reservations - tworzenie rezerwacji");
-  console.log("User:", req.user);
-  console.log("Otrzymane dane:", req.body);
+// POST /api/parking-lots - dodaj parking (tylko dla zalogowanych)
+app.post('/api/parking-lots', authenticateToken, [
+  body('name').notEmpty(),
+  body('address').notEmpty(),
+  body('price_per_hour').isNumeric(),
+  body('total_spots').isInt({ min: 1 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   try {
-    const { lot_id, start_time, end_time, license_plate, price } = req.body;
+    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
+    const owner_id = req.user.id;
+    
+    const { data, error } = await supabase
+      .from('parking_lots')
+      .insert([{
+        name,
+        address,
+        price_per_hour,
+        total_spots,
+        available_spots: total_spots,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        owner_id
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error creating parking lot:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
+// GET /api/parking-lots/my - pobierz parkingi zalogowanego właściciela
+app.get('/api/parking-lots/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('parking_lots')
+      .select('*')
+      .eq('owner_id', req.user.id);
+    
+    if (error) throw error;
+    
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching my parking lots:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/parking-lots/:id - edytuj parking (tylko właściciel)
+app.put('/api/parking-lots/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
+    
+    // Sprawdź czy parking należy do użytkownika
+    const { data: parking, error: fetchError } = await supabase
+      .from('parking_lots')
+      .select('owner_id')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !parking) {
+      return res.status(404).json({ error: 'Parking lot not found' });
+    }
+    
+    if (parking.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Aktualizuj
+    const { data, error } = await supabase
+      .from('parking_lots')
+      .update({
+        name,
+        address,
+        price_per_hour,
+        total_spots,
+        latitude: latitude || null,
+        longitude: longitude || null
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error updating parking lot:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/parking-lots/:id - usuń parking (tylko właściciel)
+app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Sprawdź czy parking należy do użytkownika
+    const { data: parking, error: fetchError } = await supabase
+      .from('parking_lots')
+      .select('owner_id')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !parking) {
+      return res.status(404).json({ error: 'Parking lot not found' });
+    }
+    
+    if (parking.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Usuń
+    const { error } = await supabase
+      .from('parking_lots')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    res.json({ message: 'Parking lot deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting parking lot:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== REZERWACJE ==========
+
+// GET /api/reservations - pobierz wszystkie rezerwacje (admin)
+app.get('/api/reservations', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('reservations')
+      .select(`
+        *,
+        parking_lots (
+          name,
+          address
+        ),
+        users (
+          full_name,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/reservations - stwórz rezerwację
+app.post('/api/reservations', authenticateToken, [
+  body('lot_id').isInt(),
+  body('start_time').notEmpty(),
+  body('end_time').notEmpty()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { lot_id, start_time, end_time } = req.body;
+    const user_id = req.user.id;
+    
+    // Sprawdź dostępność
+    const { data: parking, error: parkingError } = await supabase
+      .from('parking_lots')
+      .select('available_spots, price_per_hour')
+      .eq('id', lot_id)
+      .single();
+    
+    if (parkingError || !parking) {
+      return res.status(404).json({ error: 'Parking lot not found' });
+    }
+    
+    if (parking.available_spots <= 0) {
+      return res.status(400).json({ error: 'No available spots' });
+    }
+    
+    // Oblicz cenę
+    const hours = (new Date(end_time) - new Date(start_time)) / (1000 * 60 * 60);
+    const total_price = hours * parking.price_per_hour;
+    
+    // Stwórz rezerwację
     const { data, error } = await supabase
       .from('reservations')
       .insert([{
+        user_id,
         lot_id,
-        user_id: req.user.id, // Teraz mamy prawdziwego użytkownika!
         start_time,
         end_time,
-        license_plate,
-        price,
+        total_price,
         status: 'pending'
       }])
       .select()
       .single();
-
-    if (error) {
-      console.error('Supabase error:', error);
-      return res.status(400).json({ message: error.message, error });
-    }
-
-    console.log('✅ Rezerwacja utworzona:', data);
+    
+    if (error) throw error;
+    
+    // Zmniejsz dostępne miejsca
+    await supabase
+      .from('parking_lots')
+      .update({ available_spots: parking.available_spots - 1 })
+      .eq('id', lot_id);
+    
     res.status(201).json(data);
-
   } catch (error) {
-    console.error('❌ Error creating reservation:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-// Update a parking lot
-app.put('/api/lots/:id', validateParkingLot, handleValidationErrors, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      name,
-      address,
-      city,
-      country,
-      latitude,
-      longitude,
-      price_per_hour,
-      total_spots,
-      available_spots,
-      description,
-      is_active
-    } = req.body;
-
-    // W przyszłości, jeśli adres się zmieni, tutaj też powinniśmy wywołać geokoder!
-    // Na razie prosta aktualizacja.
-    
-    const updatedLot = await db.query(
-      `UPDATE parking_lots
-       SET name = $1, address = $2, city = $3, country = $4, latitude = $5, longitude = $6,
-           price_per_hour = $7, total_spots = $8, available_spots = $9, description = $10, is_active = $11
-       WHERE lot_id = $12 RETURNING *`,
-      [
-        name, address, city, country, latitude, longitude,
-        price_per_hour, total_spots, available_spots, description, is_active,
-        id
-      ]
-    );
-
-    if (updatedLot.rows.length === 0) {
-      return res.status(404).json({ message: 'Parking lot not found' });
-    }
-    res.json(updatedLot.rows[0]);
-  } catch (error) {
-    console.error('Error updating parking lot:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating reservation:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a parking lot (soft delete)
-app.delete('/api/lots/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    // Lepsze niż usuwanie jest deaktywowanie
-    const deletedLot = await db.query(
-      "UPDATE parking_lots SET is_active = false WHERE lot_id = $1 RETURNING *",
-      [id]
-    );
-    
-    if (deletedLot.rows.length === 0) {
-      return res.status(404).json({ message: 'Parking lot not found' });
-    }
-    res.status(200).json({ message: 'Parking lot deactivated', lot: deletedLot.rows[0] });
-  } catch (error) {
-    console.error('Error deleting parking lot:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
-// -------------------
-// Users API
-// -------------------
-
-// Register a new user
-app.post('/api/users/register', validateUser, handleValidationErrors, async (req, res) => {
-  try {
-    const { username, email, password, first_name, last_name, phone } = req.body;
-    
-    // W produkcji: hashowanie hasła!
-    // const salt = await bcrypt.genSalt(10);
-    // const hashedPassword = await bcrypt.hash(password, salt);
-    const hashedPassword = password; // Uproszczenie dla dev! TODO: Poprawić!
-
-    const newUser = await db.query(
-      `INSERT INTO users (username, email, password_hash, first_name, last_name, phone)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING user_id, username, email`,
-      [username, email, hashedPassword, first_name, last_name, phone]
-    );
-
-    res.status(201).json(newUser.rows[0]);
-  } catch (error) {
-    if (error.code === '23505') { // Unikalny klucz
-      return res.status(400).json({ message: 'Email or username already exists' });
-    }
-    console.error('Error registering user:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Login user
-app.post('/api/users/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const user = rows[0];
-    
-    // W produkcji: porównywanie hashowanych haseł!
-    // const isMatch = await bcrypt.compare(password, user.password_hash);
-    const isMatch = (password === user.password_hash); // Uproszczenie! TODO: Poprawić!
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // W produkcji: generowanie tokena JWT
-    // const token = jwt.sign({ id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const token = `fake-jwt-token-for-${user.user_id}`; // Uproszczenie!
-
-    res.json({ 
-      token, 
-      user: { 
-        id: user.user_id, 
-        username: user.username, 
-        email: user.email, 
-        role: user.role 
-      } 
-    });
-  } catch (error) {
-    console.error('Error logging in:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Get user profile (TODO: Wymaga autentykacji middleware)
-app.get('/api/users/profile', async (req, res) => {
-  // TODO: Dodać middleware sprawdzające token JWT
-  const userId = '...'; // Pobrać z tokena
-  try {
-    const { rows } = await db.query(
-      'SELECT user_id, username, email, first_name, last_name, phone, solana_wallet, created_at FROM users WHERE user_id = $1',
-      [userId]
-    );
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Error fetching profile:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-
-// -------------------
-// Reservations API
-// -------------------
-
-// Create a reservation
-// ===================================
-// USER RESERVATIONS ENDPOINTS
-// ===================================
-
-// Pobierz moje rezerwacje
+// GET /api/reservations/my - pobierz rezerwacje użytkownika
 app.get('/api/reservations/my', authenticateToken, async (req, res) => {
   try {
-    const { data: reservations, error } = await supabase
+    const { data, error } = await supabase
       .from('reservations')
       .select(`
         *,
         parking_lots (
-          id,
           name,
-          address,
-          city,
-          hourly_rate,
-          latitude,
-          longitude
+          address
         )
       `)
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
-
+    
     if (error) throw error;
-
-    res.json({ reservations });
-
+    
+    res.json(data || []);
   } catch (error) {
-    console.error('Błąd pobierania rezerwacji:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Pobierz szczegóły pojedynczej rezerwacji
-app.get('/api/reservations/:id', authenticateToken, async (req, res) => {
+// PUT /api/reservations/:id - aktualizuj rezerwację
+app.put('/api/reservations/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-
-    const { data: reservation, error } = await supabase
-      .from('reservations')
-      .select(`
-        *,
-        parking_lots (
-          id,
-          name,
-          address,
-          city,
-          hourly_rate,
-          latitude,
-          longitude
-        )
-      `)
-      .eq('id', id)
-      .eq('user_id', req.user.id)
-      .single();
-
-    if (error) throw error;
-
-    if (!reservation) {
-      return res.status(404).json({ message: 'Rezerwacja nie znaleziona' });
-    }
-
-    res.json({ reservation });
-
-  } catch (error) {
-    console.error('Błąd pobierania rezerwacji:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
-  }
-});
-
-// Anuluj rezerwację
-app.patch('/api/reservations/:id/cancel', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-
+    const { status } = req.body;
+    
     // Sprawdź czy rezerwacja należy do użytkownika
     const { data: reservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('*, parking_lots(current_occupancy)')
+      .select('user_id')
       .eq('id', id)
-      .eq('user_id', req.user.id)
       .single();
-
+    
     if (fetchError || !reservation) {
-      return res.status(404).json({ message: 'Rezerwacja nie znaleziona' });
+      return res.status(404).json({ error: 'Reservation not found' });
     }
+    
+    if (reservation.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Aktualizuj
+    const { data, error } = await supabase
+      .from('reservations')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error updating reservation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
+// PUT /api/reservations/:id/cancel - anuluj rezerwację
+app.put('/api/reservations/:id/cancel', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Sprawdź czy rezerwacja należy do użytkownika
+    const { data: reservation, error: fetchError } = await supabase
+      .from('reservations')
+      .select('user_id, lot_id, status')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !reservation) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+    
+    if (reservation.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
     if (reservation.status === 'cancelled') {
-      return res.status(400).json({ message: 'Rezerwacja jest już anulowana' });
+      return res.status(400).json({ error: 'Reservation already cancelled' });
     }
-
+    
     // Anuluj rezerwację
-    const { data: updatedReservation, error: updateError } = await supabase
+    const { data, error } = await supabase
       .from('reservations')
       .update({ status: 'cancelled' })
       .eq('id', id)
       .select()
       .single();
-
-    if (updateError) throw updateError;
-
-    // Zmniejsz zajętość parkingu (jeśli trigger nie zadziałał)
-    await supabase
+    
+    if (error) throw error;
+    
+    // Zwiększ dostępne miejsca
+    const { data: parking } = await supabase
       .from('parking_lots')
-      .update({ 
-        current_occupancy: Math.max((reservation.parking_lots.current_occupancy || 1) - 1, 0)
-      })
-      .eq('id', reservation.lot_id);
-
-    res.json({ 
-      message: 'Rezerwacja anulowana',
-      reservation: updatedReservation 
-    });
-
+      .select('available_spots')
+      .eq('id', reservation.lot_id)
+      .single();
+    
+    if (parking) {
+      await supabase
+        .from('parking_lots')
+        .update({ available_spots: parking.available_spots + 1 })
+        .eq('id', reservation.lot_id);
+    }
+    
+    res.json(data);
   } catch (error) {
-    console.error('Błąd anulowania rezerwacji:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Error cancelling reservation:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Statystyki użytkownika
-app.get('/api/users/stats', authenticateToken, async (req, res) => {
+// DELETE /api/reservations/:id - usuń rezerwację
+app.delete('/api/reservations/:id', authenticateToken, async (req, res) => {
   try {
-    // Liczba rezerwacji
-    const { count: totalReservations } = await supabase
+    const { id } = req.params;
+    
+    // Sprawdź czy rezerwacja należy do użytkownika
+    const { data: reservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', req.user.id);
-
-    // Aktywne rezerwacje
-    const { count: activeReservations } = await supabase
+      .select('user_id, lot_id')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !reservation) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+    
+    if (reservation.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Usuń
+    const { error } = await supabase
       .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', req.user.id)
-      .in('status', ['pending', 'active']);
-
-    // Suma wydanych pieniędzy
-    const { data: reservations } = await supabase
-      .from('reservations')
-      .select('price')
-      .eq('user_id', req.user.id)
-      .neq('status', 'cancelled');
-
-    const totalSpent = reservations?.reduce((sum, r) => sum + (r.price || 0), 0) || 0;
-
-    res.json({
-      stats: {
-        totalReservations: totalReservations || 0,
-        activeReservations: activeReservations || 0,
-        totalSpent: totalSpent.toFixed(2)
-      }
-    });
-
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    // Zwiększ dostępne miejsca
+    const { data: parking } = await supabase
+      .from('parking_lots')
+      .select('available_spots')
+      .eq('id', reservation.lot_id)
+      .single();
+    
+    if (parking) {
+      await supabase
+        .from('parking_lots')
+        .update({ available_spots: parking.available_spots + 1 })
+        .eq('id', reservation.lot_id);
+    }
+    
+    res.json({ message: 'Reservation deleted successfully' });
   } catch (error) {
-    console.error('Błąd pobierania statystyk:', error);
-    res.status(500).json({ message: 'Błąd serwera', error: error.message });
+    console.error('Error deleting reservation:', error);
+    res.status(500).json({ error: error.message });
   }
 });
-// ... inne trasy (cancel reservation, get reservation by id, etc.) ...
 
+// ========== GEOCODING ==========
 
-// -------------------
-// Payments & Solana API
-// -------------------
+// POST /api/geocode - geocode adresu
+app.post('/api/geocode', [
+  body('address').notEmpty().withMessage('Address is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-// (placeholder)
-app.post('/api/payments/solana/confirm', (req, res) => {
-  const { signature, reservation_id } = req.body;
-  // TODO: Weryfikacja transakcji na blockchainie Solana
-  console.log(`Weryfikacja płatności Solana: ${signature} dla rezerwacji ${reservation_id}`);
-  // TODO: Aktualizacja statusu rezerwacji na 'confirmed'
-  res.json({ status: 'verified', message: 'Payment confirmed' });
+  try {
+    const { address } = req.body;
+    const coordinates = await geocodeAddress(address);
+
+    if (!coordinates) {
+      return res.status(404).json({
+        error: 'Address not found',
+        message: 'Could not geocode the provided address'
+      });
+    }
+
+    res.json(coordinates);
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    res.status(500).json({
+      error: 'Geocoding failed',
+      message: error.message
+    });
+  }
 });
 
+// ========== BLOCKCHAIN ==========
 
-// ===================================
-// Error Handling
-// ===================================
-
-// Obsługa 404
-app.use((req, res, next) => {
-  res.status(404).json({ message: 'Not Found' });
+// GET /api/blockchain/parking/:id - pobierz dane parkingu z blockchain
+app.get('/api/blockchain/parking/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    res.json({
+      message: 'Blockchain integration coming soon',
+      parking_id: id
+    });
+  } catch (error) {
+    console.error('Blockchain error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Globalny error handler
+// POST /api/blockchain/verify - weryfikuj transakcję
+app.post('/api/blockchain/verify', authenticateToken, async (req, res) => {
+  try {
+    const { transaction_hash } = req.body;
+    
+    res.json({
+      message: 'Blockchain verification coming soon',
+      transaction_hash
+    });
+  } catch (error) {
+    console.error('Blockchain verification error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== HEALTH CHECK ==========
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'ParkChain API',
+    version: '1.0.0',
+    endpoints: {
+      auth: ['/api/auth/register', '/api/auth/login', '/api/auth/me'],
+      lots: ['/api/lots', '/api/parking-lots', '/api/parking-lots/my'],
+      reservations: ['/api/reservations', '/api/reservations/my'],
+      geocode: ['/api/geocode'],
+      blockchain: ['/api/blockchain/parking/:id', '/api/blockchain/verify']
+    }
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: `Route ${req.method} ${req.url} not found`
+  });
+});
+
+// Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!', error: err.message });
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
-// ===================================
-// Start Server
-// ===================================
-
+// Start serwera
 app.listen(port, () => {
-  console.log(`Parkchain API running on port ${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`🚀 Parkchain API running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+export { supabase };

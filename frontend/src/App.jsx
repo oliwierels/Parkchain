@@ -23,6 +23,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-reservations" element={<MyReservationsPage />} />
+            <Route path="/dodaj-parking" element={<AddParkingPage />} />
           </Routes>
         </div>
       </BrowserRouter>
