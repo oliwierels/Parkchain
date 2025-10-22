@@ -1,7 +1,7 @@
 // frontend/src/pages/MapPage.jsx
 
 import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
@@ -18,6 +18,38 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
+
+// Komponent do automatycznego centrowania mapy
+function AutoCenter({ parkings }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (parkings && parkings.length > 0) {
+      const validParkings = parkings.filter(p => p.latitude && p.longitude);
+
+      if (validParkings.length === 0) {
+        console.log('⚠️ Brak parkingów z poprawnymi współrzędnymi');
+        return;
+      }
+
+      if (validParkings.length === 1) {
+        // Pojedynczy parking - wycentruj na nim
+        const parking = validParkings[0];
+        console.log('🎯 Centruję mapę na parkingu:', parking.name, [parking.latitude, parking.longitude]);
+        map.setView([parking.latitude, parking.longitude], 15);
+      } else {
+        // Wiele parkingów - pokaż wszystkie
+        const bounds = L.latLngBounds(
+          validParkings.map(p => [p.latitude, p.longitude])
+        );
+        console.log('🎯 Centruję mapę na wszystkich parkingach:', validParkings.length);
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+  }, [parkings, map]);
+
+  return null;
+}
 
 function MapPage() {
   const mapRef = useRef(null);
@@ -104,15 +136,17 @@ function MapPage() {
       
       <MapContainer
         ref={mapRef}
-        center={[52.2297, 19.1451]}
-        zoom={13}
+        center={[52.2297, 21.0118]}
+        zoom={12}
         style={{ width: '100%', height: '100%' }}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
+
+        <AutoCenter parkings={parkings} />
+
       {parkings && parkings.length > 0 && (() => {
         const validParkings = parkings.filter(p => p.latitude && p.longitude);
         console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkings.length} parkingów na mapie`);
