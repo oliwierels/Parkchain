@@ -31,6 +31,144 @@ const DestinationIcon = L.icon({
   popupAnchor: [1, -34]
 });
 
+// Funkcja do tworzenia custom markerów
+function createParkingIcon(parking) {
+  // Oblicz procent dostępności
+  const availabilityPercent = parking.total_spots > 0
+    ? (parking.available_spots / parking.total_spots) * 100
+    : 0;
+
+  // Wybierz kolor bazując na dostępności
+  let color, bgColor, borderColor;
+  if (parking.available_spots === 0) {
+    color = '#DC2626'; // Czerwony - brak miejsc
+    bgColor = '#FEE2E2';
+    borderColor = '#991B1B';
+  } else if (availabilityPercent < 25) {
+    color = '#F59E0B'; // Pomarańczowy - mało miejsc
+    bgColor = '#FEF3C7';
+    borderColor = '#D97706';
+  } else if (availabilityPercent < 50) {
+    color = '#EAB308'; // Żółty - średnio miejsc
+    bgColor = '#FEF9C3';
+    borderColor = '#CA8A04';
+  } else {
+    color = '#10B981'; // Zielony - dużo miejsc
+    bgColor = '#D1FAE5';
+    borderColor = '#059669';
+  }
+
+  // Sprawdź czy ma niską cenę (poniżej 5 zł/h)
+  const isAffordable = parking.price_per_hour < 5;
+
+  // Sprawdź czy parking ma pełny cennik (promocja)
+  const hasFullPricing = parking.price_per_day && parking.price_per_week;
+
+  const html = `
+    <div style="
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <!-- Główna ikona -->
+      <div style="
+        width: 36px;
+        height: 36px;
+        background: ${bgColor};
+        border: 3px solid ${color};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      ">
+        <div style="
+          transform: rotate(45deg);
+          font-size: 18px;
+          font-weight: bold;
+          color: ${color};
+        ">
+          🅿️
+        </div>
+      </div>
+
+      <!-- Badge z liczbą miejsc -->
+      <div style="
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: ${color};
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: bold;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      ">
+        ${parking.available_spots}
+      </div>
+
+      ${isAffordable ? `
+        <!-- Badge "tanie" -->
+        <div style="
+          position: absolute;
+          bottom: -6px;
+          left: -6px;
+          background: #8B5CF6;
+          color: white;
+          border-radius: 10px;
+          padding: 2px 6px;
+          font-size: 9px;
+          font-weight: bold;
+          border: 1.5px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        ">
+          💰
+        </div>
+      ` : ''}
+
+      ${hasFullPricing ? `
+        <!-- Badge "promocje" -->
+        <div style="
+          position: absolute;
+          bottom: -6px;
+          right: -6px;
+          background: #EC4899;
+          color: white;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          border: 1.5px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        ">
+          %
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  return L.divIcon({
+    html: html,
+    className: 'custom-parking-marker',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
+  });
+}
+
 // Komponent do automatycznego centrowania mapy
 function AutoCenter({ parkings }) {
   const map = useMap();
@@ -339,6 +477,100 @@ function MapPage() {
         )}
       </div>
 
+      {/* Legenda mapy */}
+      <div style={{
+        position: 'absolute',
+        bottom: '30px',
+        left: '20px',
+        zIndex: 1000,
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '16px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        maxWidth: '280px',
+        border: '2px solid #E5E7EB'
+      }}>
+        <h4 style={{
+          margin: '0 0 12px 0',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          color: '#1F2937'
+        }}>
+          📋 Legenda
+        </h4>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Dostępność miejsc */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '6px' }}>
+              Dostępność:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  border: '2px solid #059669'
+                }}></div>
+                <span>Dużo miejsc (&gt;50%)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#EAB308',
+                  border: '2px solid #CA8A04'
+                }}></div>
+                <span>Średnio miejsc (25-50%)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#F59E0B',
+                  border: '2px solid #D97706'
+                }}></div>
+                <span>Mało miejsc (&lt;25%)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#DC2626',
+                  border: '2px solid #991B1B'
+                }}></div>
+                <span>Brak miejsc</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Dodatkowe oznaczenia */}
+          <div style={{
+            paddingTop: '10px',
+            borderTop: '1px solid #E5E7EB'
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '6px' }}>
+              Dodatkowe oznaczenia:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '16px' }}>💰</span>
+                <span>Tani parking (&lt;5 zł/h)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '16px' }}>%</span>
+                <span>Promocje długoterminowe</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Panel z rekomendacjami */}
       {destination && recommendedParkings.length > 0 && (
         <div style={{
@@ -541,68 +773,160 @@ function MapPage() {
         return validParkings;
       })()
   .map((parking) => (
-  <Marker 
-    key={parking.id} 
+  <Marker
+    key={parking.id}
     position={[parking.latitude, parking.longitude]}
+    icon={createParkingIcon(parking)}
   >
     <Popup>
-      <div style={{ minWidth: '200px' }}>
-        <h3 style={{ 
-          margin: '0 0 10px 0', 
-          fontSize: '16px',
-          fontWeight: 'bold',
-          color: '#1f2937'
+      <div style={{ minWidth: '240px' }}>
+        {/* Nagłówek z ikonami statusu */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '12px'
         }}>
-          {parking.name}
-        </h3>
-        
+          <h3 style={{
+            margin: 0,
+            fontSize: '17px',
+            fontWeight: 'bold',
+            color: '#1f2937',
+            flex: 1
+          }}>
+            {parking.name}
+          </h3>
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            marginLeft: '8px'
+          }}>
+            {parking.price_per_hour < 5 && (
+              <span title="Tani parking!" style={{ fontSize: '16px' }}>💰</span>
+            )}
+            {parking.price_per_day && parking.price_per_week && (
+              <span title="Promocje długoterminowe" style={{ fontSize: '16px' }}>%</span>
+            )}
+          </div>
+        </div>
+
         <p style={{
           fontSize: '13px',
           color: '#6b7280',
-          margin: '5px 0'
+          margin: '0 0 12px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
         }}>
-          {parking.address}
+          📍 {parking.address}
         </p>
-        
-        <div style={{ marginBottom: '8px', marginTop: '8px' }}>
-          <span style={{ 
-            display: 'inline-block',
-            padding: '4px 12px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            backgroundColor: parking.available_spots > 0 ? '#d1fae5' : '#fee2e2',
-            color: parking.available_spots > 0 ? '#065f46' : '#991b1b'
+
+        {/* Status dostępności z wizualnym wskaźnikiem */}
+        <div style={{
+          marginBottom: '12px',
+          padding: '10px',
+          borderRadius: '8px',
+          background: parking.available_spots > 0
+            ? (parking.available_spots / parking.total_spots > 0.5 ? '#D1FAE5' : '#FEF3C7')
+            : '#FEE2E2',
+          border: `2px solid ${parking.available_spots > 0
+            ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
+            : '#DC2626'}`
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            {parking.available_spots > 0
-              ? `${parking.available_spots}/${parking.total_spots} miejsc` 
-              : 'Brak miejsc'}
-          </span>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: parking.available_spots > 0
+                ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
+                : '#991b1b'
+            }}>
+              {parking.available_spots > 0
+                ? (parking.available_spots / parking.total_spots > 0.5
+                  ? '✅ Dużo wolnych miejsc'
+                  : '⚠️ Mało wolnych miejsc')
+                : '❌ Brak wolnych miejsc'}
+            </span>
+            <span style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: parking.available_spots > 0
+                ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
+                : '#991b1b'
+            }}>
+              {parking.available_spots}/{parking.total_spots}
+            </span>
+          </div>
+
+          {/* Pasek progresu */}
+          <div style={{
+            marginTop: '6px',
+            height: '6px',
+            background: '#E5E7EB',
+            borderRadius: '3px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${(parking.available_spots / parking.total_spots) * 100}%`,
+              background: parking.available_spots > 0
+                ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
+                : '#DC2626',
+              transition: 'width 0.3s ease'
+            }}></div>
+          </div>
         </div>
 
-        <div style={{ margin: '10px 0' }}>
+        {/* Cennik z ikonami */}
+        <div style={{
+          margin: '12px 0',
+          padding: '10px',
+          background: '#F9FAFB',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB'
+        }}>
           <div style={{
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: 'bold',
             color: '#6366F1',
-            marginBottom: '5px'
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}>
-            {parking.price_per_hour} zł/godz
+            💳 {parking.price_per_hour} zł/godz
           </div>
           {(parking.price_per_day || parking.price_per_week || parking.price_per_month) && (
             <div style={{
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#6b7280',
-              lineHeight: '1.4'
+              lineHeight: '1.6'
             }}>
-              {parking.price_per_day && <div>• {parking.price_per_day} zł/dzień</div>}
-              {parking.price_per_week && <div>• {parking.price_per_week} zł/tydzień</div>}
-              {parking.price_per_month && <div>• {parking.price_per_month} zł/miesiąc</div>}
+              {parking.price_per_day && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ☀️ Dzień: <strong>{parking.price_per_day} zł</strong>
+                </div>
+              )}
+              {parking.price_per_week && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  📅 Tydzień: <strong>{parking.price_per_week} zł</strong>
+                </div>
+              )}
+              {parking.price_per_month && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  📆 Miesiąc: <strong>{parking.price_per_month} zł</strong>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+        {/* Przyciski akcji */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
           {parking.available_spots > 0 && (
             <button
               onClick={() => handleReserveClick(parking)}
@@ -610,14 +934,22 @@ function MapPage() {
                 width: '100%',
                 backgroundColor: '#6366F1',
                 color: 'white',
-                padding: '8px 16px',
+                padding: '10px 16px',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 fontWeight: 'bold',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'background-color 0.2s'
               }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#4F46E5'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#6366F1'}
             >
-              Zarezerwuj teraz
+              🎫 Zarezerwuj teraz
             </button>
           )}
 
@@ -627,12 +959,20 @@ function MapPage() {
               width: '100%',
               backgroundColor: '#10b981',
               color: 'white',
-              padding: '8px 16px',
+              padding: '10px 16px',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '8px',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'background-color 0.2s'
             }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
           >
             📍 Zgłoś zajętość (CrowdScan)
           </button>

@@ -21,3 +21,42 @@ body {
   width: 256px !important;
   height: 256px !important;
 }
+
+/* Custom parking markers */
+.custom-parking-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Animacja dla markerów */
+@keyframes marker-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.custom-parking-marker:hover {
+  animation: marker-pulse 0.3s ease-in-out;
+  z-index: 1000 !important;
+}
+
+/* Popup styling improvements */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
