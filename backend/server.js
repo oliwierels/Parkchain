@@ -193,18 +193,30 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 // GET /api/lots - pobierz wszystkie parkingi
 app.get('/api/lots', async (req, res) => {
   try {
-    console.log('Fetching parking lots from Supabase...');
+    console.log('🔍 Fetching parking lots from Supabase...');
 
-    const { data, error } = await supabase
+    // Zwiększ limit dla dużej liczby parkingów (domyślnie Supabase ma limit 1000)
+    const { data, error, count } = await supabase
       .from('parking_lots')
-      .select('*');
+      .select('*', { count: 'exact' });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
 
     console.log('✅ Found parking lots:', data?.length);
+    console.log('📊 Total count in database:', count);
+
+    if (data && data.length > 0) {
+      console.log('📍 First parking:', data[0]);
+      const withCoords = data.filter(p => p.latitude && p.longitude).length;
+      console.log(`📍 Parkings with coordinates: ${withCoords}/${data.length}`);
+    }
+
     res.json({ lots: data || [] });
   } catch (error) {
-    console.error('Error fetching parking lots:', error);
+    console.error('❌ Error fetching parking lots:', error);
     res.status(500).json({ error: error.message });
   }
 });

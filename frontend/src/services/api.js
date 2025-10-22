@@ -73,16 +73,25 @@ export const parkingAPI = {
     try {
       const { city, lat, lng, radius } = filters;
       const params = new URLSearchParams();
-      
+
       if (city) params.append('city', city);
       if (lat) params.append('lat', lat);
       if (lng) params.append('lng', lng);
       if (radius) params.append('radius', radius);
-      
+
       const response = await api.get(`/lots?${params.toString()}`);
+      console.log('🔍 API Response:', response.data);
+      console.log('🔍 Parking lots array:', response.data.lots);
+
+      if (!response.data.lots) {
+        console.error('❌ Backend nie zwrócił właściwości "lots":', response.data);
+        return [];
+      }
+
       return response.data.lots;
     } catch (error) {
-      console.error('Błąd przy pobieraniu parkingów:', error);
+      console.error('❌ Błąd przy pobieraniu parkingów:', error);
+      console.error('❌ Error details:', error.response?.data);
       throw error;
     }
   },
