@@ -194,15 +194,15 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 app.get('/api/lots', async (req, res) => {
   try {
     console.log('Fetching parking lots from Supabase...');
-    
+
     const { data, error } = await supabase
       .from('parking_lots')
       .select('*');
-    
+
     if (error) throw error;
-    
+
     console.log('✅ Found parking lots:', data?.length);
-    res.json(data || []);
+    res.json({ lots: data || [] });
   } catch (error) {
     console.error('Error fetching parking lots:', error);
     res.status(500).json({ error: error.message });
@@ -482,10 +482,10 @@ app.get('/api/reservations/my', authenticateToken, async (req, res) => {
       `)
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
-    res.json(data || []);
+
+    res.json({ reservations: data || [] });
   } catch (error) {
     console.error('Error fetching reservations:', error);
     res.status(500).json({ error: error.message });
