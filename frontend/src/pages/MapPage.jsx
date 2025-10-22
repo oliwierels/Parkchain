@@ -32,10 +32,12 @@ function MapPage() {
       try {
         setLoading(true);
         const data = await parkingAPI.getAllParkings();
+        console.log('✅ Pobrano parkingi:', data?.length, 'sztuk');
+        console.log('📍 Pierwsze 3 parkingi:', data?.slice(0, 3));
         setParkings(data);
         setError(null);
       } catch (err) {
-        console.error('Nie udało się pobrać parkingów:', err);
+        console.error('❌ Nie udało się pobrać parkingów:', err);
         setError('Nie udało się załadować parkingów.');
         setParkings([]);
       } finally {
@@ -111,8 +113,11 @@ function MapPage() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-      {parkings && parkings.length > 0 && parkings
-  .filter(p => p.latitude && p.longitude) // Tylko parkingi z koordynatami
+      {parkings && parkings.length > 0 && (() => {
+        const validParkings = parkings.filter(p => p.latitude && p.longitude);
+        console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkings.length} parkingów na mapie`);
+        return validParkings;
+      })()
   .map((parking) => (
   <Marker 
     key={parking.id} 
