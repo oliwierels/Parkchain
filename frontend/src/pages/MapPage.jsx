@@ -39,133 +39,37 @@ function createParkingIcon(parking) {
     : 0;
 
   // Wybierz kolor bazując na dostępności
-  let color, bgColor, borderColor;
+  let color;
   if (parking.available_spots === 0) {
     color = '#DC2626'; // Czerwony - brak miejsc
-    bgColor = '#FEE2E2';
-    borderColor = '#991B1B';
   } else if (availabilityPercent < 25) {
     color = '#F59E0B'; // Pomarańczowy - mało miejsc
-    bgColor = '#FEF3C7';
-    borderColor = '#D97706';
   } else if (availabilityPercent < 50) {
     color = '#EAB308'; // Żółty - średnio miejsc
-    bgColor = '#FEF9C3';
-    borderColor = '#CA8A04';
   } else {
     color = '#10B981'; // Zielony - dużo miejsc
-    bgColor = '#D1FAE5';
-    borderColor = '#059669';
   }
-
-  // Sprawdź czy ma niską cenę (poniżej 5 zł/h)
-  const isAffordable = parking.price_per_hour < 5;
-
-  // Sprawdź czy parking ma pełny cennik (promocja)
-  const hasFullPricing = parking.price_per_day && parking.price_per_week;
 
   const html = `
     <div style="
-      position: relative;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background: ${color};
+      border: 3px solid white;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
     ">
-      <!-- Główna ikona -->
-      <div style="
-        width: 36px;
-        height: 36px;
-        background: ${bgColor};
-        border: 3px solid ${color};
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-      ">
-        <div style="
-          transform: rotate(45deg);
-          font-size: 18px;
-          font-weight: bold;
-          color: ${color};
-        ">
-          🅿️
-        </div>
-      </div>
-
-      <!-- Badge z liczbą miejsc -->
-      <div style="
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: ${color};
-        color: white;
-        border-radius: 50%;
-        width: 22px;
-        height: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: bold;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      ">
-        ${parking.available_spots}
-      </div>
-
-      ${isAffordable ? `
-        <!-- Badge "tanie" -->
-        <div style="
-          position: absolute;
-          bottom: -6px;
-          left: -6px;
-          background: #8B5CF6;
-          color: white;
-          border-radius: 10px;
-          padding: 2px 6px;
-          font-size: 9px;
-          font-weight: bold;
-          border: 1.5px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        ">
-          💰
-        </div>
-      ` : ''}
-
-      ${hasFullPricing ? `
-        <!-- Badge "promocje" -->
-        <div style="
-          position: absolute;
-          bottom: -6px;
-          right: -6px;
-          background: #EC4899;
-          color: white;
-          border-radius: 50%;
-          width: 18px;
-          height: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 10px;
-          border: 1.5px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        ">
-          %
-        </div>
-      ` : ''}
     </div>
   `;
 
   return L.divIcon({
     html: html,
     className: 'custom-parking-marker',
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40]
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
   });
 }
 
@@ -487,7 +391,7 @@ function MapPage() {
         borderRadius: '12px',
         padding: '16px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        maxWidth: '280px',
+        maxWidth: '220px',
         border: '2px solid #E5E7EB'
       }}>
         <h4 style={{
@@ -496,77 +400,53 @@ function MapPage() {
           fontWeight: 'bold',
           color: '#1F2937'
         }}>
-          📋 Legenda
+          📋 Dostępność miejsc
         </h4>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Dostępność miejsc */}
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '6px' }}>
-              Dostępność:
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: '#10B981',
-                  border: '2px solid #059669'
-                }}></div>
-                <span>Dużo miejsc (&gt;50%)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: '#EAB308',
-                  border: '2px solid #CA8A04'
-                }}></div>
-                <span>Średnio miejsc (25-50%)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: '#F59E0B',
-                  border: '2px solid #D97706'
-                }}></div>
-                <span>Mało miejsc (&lt;25%)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: '#DC2626',
-                  border: '2px solid #991B1B'
-                }}></div>
-                <span>Brak miejsc</span>
-              </div>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#10B981',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}></div>
+            <span>Dużo miejsc (&gt;50%)</span>
           </div>
-
-          {/* Dodatkowe oznaczenia */}
-          <div style={{
-            paddingTop: '10px',
-            borderTop: '1px solid #E5E7EB'
-          }}>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '6px' }}>
-              Dodatkowe oznaczenia:
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '16px' }}>💰</span>
-                <span>Tani parking (&lt;5 zł/h)</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '16px' }}>%</span>
-                <span>Promocje długoterminowe</span>
-              </div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#EAB308',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}></div>
+            <span>Średnio (25-50%)</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#F59E0B',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}></div>
+            <span>Mało (&lt;25%)</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#DC2626',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}></div>
+            <span>Brak miejsc</span>
           </div>
         </div>
       </div>
@@ -780,35 +660,15 @@ function MapPage() {
   >
     <Popup>
       <div style={{ minWidth: '240px' }}>
-        {/* Nagłówek z ikonami statusu */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '12px'
+        {/* Nagłówek */}
+        <h3 style={{
+          margin: '0 0 12px 0',
+          fontSize: '17px',
+          fontWeight: 'bold',
+          color: '#1f2937'
         }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: '17px',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            flex: 1
-          }}>
-            {parking.name}
-          </h3>
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            marginLeft: '8px'
-          }}>
-            {parking.price_per_hour < 5 && (
-              <span title="Tani parking!" style={{ fontSize: '16px' }}>💰</span>
-            )}
-            {parking.price_per_day && parking.price_per_week && (
-              <span title="Promocje długoterminowe" style={{ fontSize: '16px' }}>%</span>
-            )}
-          </div>
-        </div>
+          {parking.name}
+        </h3>
 
         <p style={{
           fontSize: '13px',
