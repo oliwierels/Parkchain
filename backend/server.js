@@ -429,50 +429,72 @@ app.post('/api/reservations', authenticateToken, [
   }
 
   try {
-    const { lot_id, start_time, end_time } = req.body;
+    const { lot_id, start_time, end_time, license_plate } = req.body;
     const user_id = req.user.id;
-    
+
+    console.log('🔄 Tworzenie rezerwacji:', { lot_id, start_time, end_time, license_plate, user_id });
+
     // Sprawdź dostępność
     const { data: parking, error: parkingError } = await supabase
       .from('parking_lots')
       .select('available_spots, price_per_hour')
       .eq('id', lot_id)
       .single();
-    
+
     if (parkingError || !parking) {
+      console.error('❌ Parking nie znaleziony:', parkingError);
       return res.status(404).json({ error: 'Parking lot not found' });
     }
-    
+
     if (parking.available_spots <= 0) {
+      console.error('❌ Brak wolnych miejsc');
       return res.status(400).json({ error: 'No available spots' });
     }
-    
+
     // Oblicz cenę
     const hours = (new Date(end_time) - new Date(start_time)) / (1000 * 60 * 60);
     const total_price = hours * parking.price_per_hour;
-    
+
+    console.log('💰 Obliczona cena:', hours, 'godz x', parking.price_per_hour, 'zł/godz =', total_price, 'zł');
+
     // Stwórz rezerwację
+    const reservationData = {
+      user_id,
+      lot_id,
+      start_time,
+      end_time,
+      total_price,
+      status: 'pending'
+    };
+
+    // Dodaj license_plate jeśli zostało podane
+    if (license_plate) {
+      reservationData.license_plate = license_plate;
+    }
+
+    console.log('💾 Zapisuję rezerwację:', reservationData);
+
     const { data, error } = await supabase
       .from('reservations')
-      .insert([{
-        user_id,
-        lot_id,
-        start_time,
-        end_time,
-        total_price,
-        status: 'pending'
-      }])
+      .insert([reservationData])
       .select()
       .single();
-    
-    if (error) throw error;
-    
+
+    if (error) {
+      console.error('❌ Błąd zapisu rezerwacji:', error);
+      throw error;
+    }
+
+    console.log('✅ Rezerwacja utworzona:', data);
+
     // Zmniejsz dostępne miejsca
     await supabase
       .from('parking_lots')
       .update({ available_spots: parking.available_spots - 1 })
       .eq('id', lot_id);
-    
+
+    console.log('✅ Zaktualizowano dostępne miejsca:', parking.available_spots - 1);
+
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating reservation:', error);

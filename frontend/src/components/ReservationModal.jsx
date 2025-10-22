@@ -69,16 +69,19 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         price: parseFloat(calculatedPrice)
       };
 
-      console.log('Wysyłam rezerwację:', reservationData);
+      console.log('🔄 Wysyłam rezerwację:', reservationData);
 
-      // TODO: Wywołaj API
-await reservationAPI.createReservation(reservationData);;
+      const result = await reservationAPI.createReservation(reservationData);
+      console.log('✅ Rezerwacja utworzona:', result);
 
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Błąd rezerwacji:', err);
-      setError(err.response?.data?.message || 'Nie udało się utworzyć rezerwacji');
+      console.error('❌ Błąd rezerwacji:', err);
+      console.error('❌ Response:', err.response?.data);
+      console.error('❌ Status:', err.response?.status);
+      console.error('❌ Message:', err.message);
+      setError(err.response?.data?.error || err.message || 'Nie udało się utworzyć rezerwacji');
     } finally {
       setLoading(false);
     }

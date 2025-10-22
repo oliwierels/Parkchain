@@ -75,8 +75,18 @@ function AddParkingPage() {
 
     try {
       const token = localStorage.getItem('token');
-      
-      await axios.post('http://localhost:3000/api/parking-lots', {
+
+      console.log('🔄 Wysyłam parking do API:', {
+        name: formData.name,
+        address: formData.address,
+        city: formData.city,
+        price_per_hour: parseFloat(formData.price_per_hour),
+        total_spots: parseInt(formData.total_spots),
+        latitude: parseFloat(formData.latitude),
+        longitude: parseFloat(formData.longitude)
+      });
+
+      const response = await axios.post('http://localhost:3000/api/parking-lots', {
         name: formData.name,
         address: formData.address,
           city: formData.city,  // <-- DODAJ TĘ LINIĘ
@@ -90,11 +100,15 @@ function AddParkingPage() {
         }
       });
 
+      console.log('✅ Parking dodany:', response.data);
       alert('✅ Parking dodany pomyślnie!');
       navigate('/map');
     } catch (err) {
-      console.error('Error adding parking:', err);
-      setError(err.response?.data?.error || 'Błąd podczas dodawania parkingu');
+      console.error('❌ Błąd dodawania parkingu:', err);
+      console.error('❌ Response:', err.response?.data);
+      console.error('❌ Status:', err.response?.status);
+      console.error('❌ Message:', err.message);
+      setError(err.response?.data?.error || err.message || 'Błąd podczas dodawania parkingu');
     } finally {
       setLoading(false);
     }
