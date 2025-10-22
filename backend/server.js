@@ -329,6 +329,14 @@ app.put('/api/parking-lots/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
     
+    // Middleware do sprawdzania roli inspektora
+const isInspector = (req, res, next) => {
+  if (req.user && req.user.role === 'inspector') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Brak uprawnień. Wymagana rola inspektora.' });
+  }
+};
     // Aktualizuj
     const { data, error } = await supabase
       .from('parking_lots')
@@ -352,7 +360,97 @@ app.put('/api/parking-lots/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// === INSPEKCJE (CROWDSCAN) ===
 
+// 1. ZGŁASZANIE (dla kierowcy)
+// Każdy zalogowany użytkownik (dzięki 'auth') może wysłać zgłoszenie
+app.post('/api/inspections', authenticateToken, async (req, res) => {
+  const { lot_id, reported_occupancy } = req.body;
+  const reporter_id = req.user.id; // ID z tokena JWT (dzięki middleware 'auth')
+
+  if (!lot_id || reported_occupancy == null) {
+    return res.status(400).json({ error: 'Brakuje lot_id lub reported_occupancy' });
+  }
+
+  try {
+    const newInspection = await pool.query(
+      'INSERT INTO inspections (lot_id, reporter_id, reported_occupancy, status) VALUES ($1, $2, $3, $4) RETURNING *',
+      [lot_id, reporter_id, reported_occupancy, 'queued'] // Status 'queued'
+    );
+    res.status(201).json(newInspection.rows[0]);
+  } catch (err) {
+    console.error('Błąd przy tworzeniu inspekcji:', err);
+    res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// 2. POBIERANIE ZGŁOSZEŃ (dla inspektora)
+// Używamy 'auth' (musi być zalogowany) ORAZ 'isInspector' (musi być inspektorem)
+app.get('/api/inspections/queued', [authenticateToken, isInspector], async (req, res) => {
+  try {
+    // Łączymy z parkingami, żeby inspektor wiedział, co sprawdza
+    const queuedInspections = await pool.query(
+      `SELECT i.*, p.name as parking_name 
+       FROM inspections i
+       JOIN parking_lots p ON i.lot_id = p.id
+       WHERE i.status = 'queued' 
+       ORDER BY i.created_at ASC`
+    );
+    res.json(queuedInspections.rows);
+  } catch (err) {
+    console.error('Błąd przy pobieraniu inspekcji:', err);
+    res.status(500).json({ error: 'Błąd serwera' });
+  }
+});
+
+// 3. WERYFIKACJA ZGŁOSZENIA (przez inspektora)
+app.put('/api/inspections/:id', [auth, isInspector], async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // Oczekujemy 'confirmed' lub 'rejected'
+  const inspector_id = req.user.id;
+
+  if (status !== 'confirmed' && status !== 'rejected') {
+    return res.status(400).json({ error: 'Nieprawidłowy status. Oczekiwano "confirmed" lub "rejected"' });
+  }
+
+  // Używamy transakcji, bo robimy dwie rzeczy: aktualizujemy inspekcję I tworzymy nagrodę
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Krok 1: Aktualizujemy inspekcję
+    const updatedInspectionRes = await client.query(
+      'UPDATE inspections SET status = $1, inspector_id = $2, reviewed_at = NOW() WHERE id = $3 RETURNING *',
+      [status, inspector_id, id]
+    );
+    
+    if (updatedInspectionRes.rows.length === 0) {
+      throw new Error('Nie znaleziono inspekcji o podanym ID');
+    }
+    
+    const inspection = updatedInspectionRes.rows[0];
+
+    // Krok 2: Jeśli zatwierdzona ('confirmed'), utwórz nagrodę (tabela 'rewards')
+    if (status === 'confirmed') {
+      await client.query(
+        'INSERT INTO rewards (user_id, inspection_id, type, amount, currency, status) VALUES ($1, $2, $3, $4, $5, $6)',
+        [inspection.reporter_id, id, 'credit', 5.00, 'PLN', 'issued'] // Przykładowa nagroda 5 PLN
+      );
+    }
+    
+    // Krok 3: Trigger 'update_user_reputation' w bazie danych sam zajmie się reputacją.
+
+    await client.query('COMMIT'); // Zatwierdź transakcję
+    res.json(inspection); // Zwróć zaktualizowaną inspekcję
+    
+  } catch (err) {
+    await client.query('ROLLBACK'); // Wycofaj zmiany w razie błędu
+    console.error('Błąd przy weryfikacji inspekcji:', err);
+    res.status(500).json({ error: 'Błąd serwera', details: err.message });
+  } finally {
+    client.release(); // Zawsze zwalniaj klienta puli
+  }
+});
 // DELETE /api/parking-lots/:id - usuń parking (tylko właściciel)
 app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
   try {
@@ -372,7 +470,31 @@ app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
     if (parking.owner_id !== req.user.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
+   // 4. REPUTACJA (dla profilu zalogowanego użytkownika)
+app.get('/api/reputation/me', auth, async (req, res) => {
+  try {
+    const reputation = await pool.query(
+      'SELECT * FROM user_reputation WHERE user_id = $1',
+      [req.user.id]
+    );
     
+    if (reputation.rows.length === 0) {
+      // Jeśli użytkownik jeszcze nic nie zgłosił, tabela może być pusta. Zwróć domyślne dane.
+      return res.json({ 
+        user_id: req.user.id, 
+        score: 0, 
+        reports_total: 0, 
+        reports_confirmed: 0, 
+        reports_rejected: 0 
+      });
+    }
+    
+    res.json(reputation.rows[0]);
+  } catch (err) {
+    console.error('Błąd przy pobieraniu reputacji:', err);
+    res.status(500).json({ error: 'Błąd serwera' });
+  }
+}); 
     // Usuń
     const { error } = await supabase
       .from('parking_lots')
@@ -843,7 +965,155 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
+// ========== MIDDLEWARE DLA RÓL ==========
 
+// Middleware do sprawdzania roli inspektora
+const isInspector = (req, res, next) => {
+  if (req.user && req.user.role === 'inspector') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Brak uprawnień. Wymagana rola inspektora.' });
+  }
+};
+
+// ========== INSPEKCJE (CROWDSCAN) ==========
+
+// 1. ZGŁASZANIE (dla kierowcy)
+// Używamy 'authenticateToken' (to jest POPRAWNA nazwa)
+app.post('/api/inspections', authenticateToken, async (req, res) => {
+  const { lot_id, reported_occupancy } = req.body;
+  const reporter_id = req.user.id; // ID z tokena JWT
+
+  if (!lot_id || reported_occupancy == null) {
+    return res.status(400).json({ error: 'Brakuje lot_id lub reported_occupancy' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('inspections')
+      .insert({
+        lot_id: lot_id,
+        reporter_id: reporter_id,
+        reported_occupancy: reported_occupancy,
+        status: 'queued' // Ustawia status na "oczekujący"
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Błąd przy tworzeniu inspekcji:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. POBIERANIE ZGŁOSZEŃ (dla inspektora)
+// Używamy 'authenticateToken' ORAZ 'isInspector'
+app.get('/api/inspections/queued', [authenticateToken, isInspector], async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('inspections')
+      .select(`
+        *,
+        parking_lots ( name )
+      `)
+      .eq('status', 'queued')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    
+    const formattedData = data.map(item => ({
+      ...item,
+      parking_name: item.parking_lots?.name || 'Nieznany parking'
+    }));
+    
+    res.json(formattedData);
+  } catch (error) {
+    console.error('Błąd przy pobieraniu inspekcji:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. WERYFIKACJA ZGŁOSZENIA (przez inspektora)
+app.put('/api/inspections/:id', [authenticateToken, isInspector], async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; 
+  const inspector_id = req.user.id;
+
+  if (status !== 'confirmed' && status !== 'rejected') {
+    return res.status(400).json({ error: 'Nieprawidłowy status. Oczekiwano "confirmed" lub "rejected"' });
+  }
+
+  try {
+    const { data: inspection, error: updateError } = await supabase
+      .from('inspections')
+      .update({
+        status: status,
+        inspector_id: inspector_id,
+        reviewed_at: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+    if (!inspection) throw new Error('Nie znaleziono inspekcji');
+
+    if (status === 'confirmed') {
+      const { error: rewardError } = await supabase
+        .from('rewards')
+        .insert({
+          user_id: inspection.reporter_id,
+          inspection_id: id,
+          type: 'credit',
+          amount: 5.00, 
+          currency: 'PLN',
+          status: 'issued'
+        });
+      
+      if (rewardError) {
+        console.error("Błąd przy tworzeniu nagrody:", rewardError);
+      }
+    }
+    
+    res.json(inspection); 
+
+  } catch (error) {
+    console.error('Błąd przy weryfikacji inspekcji:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. REPUTACJA (dla profilu zalogowanego użytkownika)
+app.get('/api/reputation/me', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_reputation')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .single(); 
+
+    if (error && error.code !== 'PGRST116') { 
+      throw error;
+    }
+
+    if (!data) {
+      return res.json({
+        user_id: req.user.id,
+        score: 0,
+        reports_total: 0,
+        reports_confirmed: 0,
+        reports_rejected: 0
+      });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Błąd przy pobieraniu reputacji:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
