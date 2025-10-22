@@ -1,6 +1,5 @@
-import 'dotenv/config';
-configDotenv()
 // backend/server.js
+import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
@@ -13,10 +12,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
-import { configDotenv } from 'dotenv';
-
-// Załaduj zmienne środowiskowe
-dotenv.config();
 
 // ========== MIDDLEWARE DLA RÓL ==========
 
