@@ -7,6 +7,8 @@ import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
 import ReportOccupancyModal from '../components/ReportOccupancyModal';
+import AddParkingModal from '../components/AddParkingModal';
+import { useAuth } from '../context/AuthContext';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -62,17 +64,18 @@ function AutoCenter({ parkings }) {
 }
 
 // Komponent do klikania na mapę
-function DestinationPicker({ onDestinationSet }) {
+function MapClickHandler({ onMapClick }) {
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
-      onDestinationSet(lat, lng);
+      onMapClick(lat, lng);
     }
   });
   return null;
 }
 
 function MapPage() {
+  const { user } = useAuth();
   const mapRef = useRef(null);
   const [parkings, setParkings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,11 @@ function MapPage() {
   const [destination, setDestination] = useState(null);
   const [recommendedParkings, setRecommendedParkings] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+
+  // Nowe state dla dodawania parkingu
+  const [addParkingMode, setAddParkingMode] = useState(false);
+  const [newParkingLocation, setNewParkingLocation] = useState(null);
+  const [showAddParkingModal, setShowAddParkingModal] = useState(false);
 
   useEffect(() => {
     const fetchParkings = async () => {
@@ -176,6 +184,45 @@ function MapPage() {
     setRecommendedParkings([]);
   };
 
+  const handleMapClick = (lat, lng) => {
+    if (searchMode) {
+      // Tryb wyszukiwania destynacji
+      handleDestinationSet(lat, lng);
+    } else if (addParkingMode) {
+      // Tryb dodawania parkingu
+      console.log(`📍 Wybrano lokalizację dla nowego parkingu: [${lat}, ${lng}]`);
+      setNewParkingLocation({ lat, lng });
+      setShowAddParkingModal(true);
+      setAddParkingMode(false);
+    }
+  };
+
+  const handleToggleAddParkingMode = () => {
+    if (!user) {
+      alert('Musisz być zalogowany aby dodać parking');
+      return;
+    }
+
+    setAddParkingMode(!addParkingMode);
+    if (addParkingMode) {
+      // Wyłącz tryb dodawania
+      setNewParkingLocation(null);
+    }
+    // Wyłącz tryb wyszukiwania jeśli był włączony
+    if (searchMode) {
+      setSearchMode(false);
+      setDestination(null);
+      setRecommendedParkings([]);
+    }
+  };
+
+  const handleAddParkingSuccess = () => {
+    setShowAddParkingModal(false);
+    setNewParkingLocation(null);
+    // Odśwież parkingi
+    parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
+
   if (loading) {
     return (
       <div style={{
@@ -211,12 +258,15 @@ function MapPage() {
         </div>
       )}
 
-      {/* Przycisk do włączenia trybu wyszukiwania */}
+      {/* Przyciski do różnych trybów */}
       <div style={{
         position: 'absolute',
         top: '20px',
         left: '20px',
-        zIndex: 1000
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
       }}>
         <button
           onClick={handleToggleSearchMode}
@@ -235,12 +285,33 @@ function MapPage() {
             gap: '8px'
           }}
         >
-          {searchMode ? '✕ Anuluj' : '🎯 Znajdź parking'}
+          {searchMode ? '✕ Anuluj wyszukiwanie' : '🎯 Znajdź parking'}
         </button>
+
+        {user && (
+          <button
+            onClick={handleToggleAddParkingMode}
+            style={{
+              backgroundColor: addParkingMode ? '#EF4444' : '#10B981',
+              color: 'white',
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {addParkingMode ? '✕ Anuluj dodawanie' : '➕ Dodaj parking'}
+          </button>
+        )}
 
         {searchMode && (
           <div style={{
-            marginTop: '10px',
             backgroundColor: '#FEF3C7',
             color: '#92400E',
             padding: '10px 16px',
@@ -250,6 +321,20 @@ function MapPage() {
             maxWidth: '250px'
           }}>
             📍 Kliknij na mapę aby wybrać destynację
+          </div>
+        )}
+
+        {addParkingMode && (
+          <div style={{
+            backgroundColor: '#D1FAE5',
+            color: '#065F46',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            maxWidth: '250px'
+          }}>
+            📍 Kliknij na mapę w miejscu gdzie chcesz dodać parking
           </div>
         )}
       </div>
@@ -431,8 +516,8 @@ function MapPage() {
 />
         <AutoCenter parkings={parkings} />
 
-        {/* Komponent do klikania na mapę w trybie wyszukiwania */}
-        {searchMode && <DestinationPicker onDestinationSet={handleDestinationSet} />}
+        {/* Komponent do klikania na mapę */}
+        {(searchMode || addParkingMode) && <MapClickHandler onMapClick={handleMapClick} />}
 
         {/* Marker destynacji */}
         {destination && (
@@ -571,6 +656,18 @@ function MapPage() {
           parking={selectedParking}
           onClose={() => setShowReportModal(false)}
           onSuccess={handleReportSuccess}
+        />
+      )}
+
+      {showAddParkingModal && newParkingLocation && (
+        <AddParkingModal
+          latitude={newParkingLocation.lat}
+          longitude={newParkingLocation.lng}
+          onClose={() => {
+            setShowAddParkingModal(false);
+            setNewParkingLocation(null);
+          }}
+          onSuccess={handleAddParkingSuccess}
         />
       )}
     </div>
