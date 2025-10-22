@@ -275,15 +275,30 @@ app.post('/api/parking-lots', authenticateToken, [
   }
 
   try {
-    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
+    const {
+      name,
+      address,
+      city,
+      price_per_hour,
+      price_per_day,
+      price_per_week,
+      price_per_month,
+      total_spots,
+      latitude,
+      longitude
+    } = req.body;
     const owner_id = req.user.id;
-    
+
     const { data, error } = await supabase
       .from('parking_lots')
       .insert([{
         name,
         address,
+        city: city || null,
         price_per_hour,
+        price_per_day: price_per_day || null,
+        price_per_week: price_per_week || null,
+        price_per_month: price_per_month || null,
         total_spots,
         available_spots: total_spots,
         latitude: latitude || null,
@@ -292,9 +307,9 @@ app.post('/api/parking-lots', authenticateToken, [
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating parking lot:', error);
@@ -463,30 +478,34 @@ function calculateBestPrice(parking, startTime, endTime) {
   const hours = (end - start) / (1000 * 60 * 60);
   const days = hours / 24;
 
-  // Oblicz cenę dla każdej taryfy
+  // Oblicz cenę godzinową (zawsze dostępna)
   const hourlyPrice = hours * parking.price_per_hour;
-  const dailyPrice = parking.price_per_day ? Math.ceil(days) * parking.price_per_day : hourlyPrice;
-  const weeklyPrice = parking.price_per_week ? Math.ceil(days / 7) * parking.price_per_week : hourlyPrice;
-  const monthlyPrice = parking.price_per_month ? Math.ceil(days / 30) * parking.price_per_month : hourlyPrice;
 
-  // Znajdź najtańszą opcję
+  // Buduj listę dostępnych opcji cenowych
   const options = [
-    { price: hourlyPrice, type: 'hourly', label: 'Godzinowa' },
-    { price: dailyPrice, type: 'daily', label: 'Dzienna' },
-    { price: weeklyPrice, type: 'weekly', label: 'Tygodniowa' },
-    { price: monthlyPrice, type: 'monthly', label: 'Miesięczna' }
+    { price: hourlyPrice, type: 'hourly', label: 'Godzinowa', available: true }
   ];
 
-  // Filtruj opcje które mają sens (np. daily tylko jeśli >= 1 dzień)
-  const validOptions = options.filter(opt => {
-    if (opt.type === 'daily') return days >= 1;
-    if (opt.type === 'weekly') return days >= 7;
-    if (opt.type === 'monthly') return days >= 30;
-    return true;
-  });
+  // Dodaj dzienną tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_day && days >= 1) {
+    const dailyPrice = Math.ceil(days) * parking.price_per_day;
+    options.push({ price: dailyPrice, type: 'daily', label: 'Dzienna', available: true });
+  }
 
-  // Znajdź najtańszą
-  const best = validOptions.reduce((min, opt) => opt.price < min.price ? opt : min);
+  // Dodaj tygodniową tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_week && days >= 7) {
+    const weeklyPrice = Math.ceil(days / 7) * parking.price_per_week;
+    options.push({ price: weeklyPrice, type: 'weekly', label: 'Tygodniowa', available: true });
+  }
+
+  // Dodaj miesięczną tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_month && days >= 30) {
+    const monthlyPrice = Math.ceil(days / 30) * parking.price_per_month;
+    options.push({ price: monthlyPrice, type: 'monthly', label: 'Miesięczna', available: true });
+  }
+
+  // Znajdź najtańszą opcję
+  const best = options.reduce((min, opt) => opt.price < min.price ? opt : min);
 
   return {
     price: parseFloat(best.price.toFixed(2)),
@@ -494,8 +513,9 @@ function calculateBestPrice(parking, startTime, endTime) {
     pricingLabel: best.label,
     hours: parseFloat(hours.toFixed(2)),
     days: parseFloat(days.toFixed(2)),
-    allOptions: validOptions.map(opt => ({
-      ...opt,
+    allOptions: options.map(opt => ({
+      type: opt.type,
+      label: opt.label,
       price: parseFloat(opt.price.toFixed(2))
     }))
   };
@@ -1067,6 +1087,572 @@ app.get('/api/reputation/me', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ========================================
+// EV CHARGING NETWORK - DeCharge Hackathon
+// ========================================
+
+// ========== CHARGING STATIONS ==========
+
+// GET /api/charging-stations - pobierz wszystkie stacje ładowania
+app.get('/api/charging-stations', async (req, res) => {
+  try {
+    console.log('🔋 Fetching charging stations from Supabase...');
+
+    const { data, error, count } = await supabase
+      .from('charging_stations')
+      .select('*', { count: 'exact' })
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
+
+    console.log('✅ Found charging stations:', data?.length);
+    console.log('📊 Total count:', count);
+
+    res.json({ stations: data || [] });
+  } catch (error) {
+    console.error('❌ Error fetching charging stations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/charging-stations - dodaj nową stację ładowania (tylko dla zalogowanych)
+app.post('/api/charging-stations', authenticateToken, [
+  body('name').notEmpty(),
+  body('address').notEmpty(),
+  body('charger_type').isIn(['AC', 'DC_FAST', 'ULTRA_FAST']),
+  body('max_power_kw').isNumeric(),
+  body('price_per_kwh').isNumeric(),
+  body('total_connectors').isInt({ min: 1 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const {
+      name,
+      address,
+      city,
+      latitude,
+      longitude,
+      charger_type,
+      connector_types,
+      max_power_kw,
+      total_connectors,
+      price_per_kwh,
+      price_per_minute,
+      price_per_session
+    } = req.body;
+    const owner_id = req.user.id;
+
+    const { data, error } = await supabase
+      .from('charging_stations')
+      .insert([{
+        name,
+        address,
+        city: city || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        charger_type,
+        connector_types: connector_types || ['Type2'],
+        max_power_kw,
+        total_connectors,
+        available_connectors: total_connectors,
+        price_per_kwh,
+        price_per_minute: price_per_minute || null,
+        price_per_session: price_per_session || null,
+        owner_id,
+        is_active: true,
+        is_verified: false
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('✅ Charging station created:', data.id);
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error creating charging station:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/charging-stations/my - pobierz moje stacje ładowania
+app.get('/api/charging-stations/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('charging_stations')
+      .select('*')
+      .eq('owner_id', req.user.id);
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching my charging stations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== CHARGING SESSIONS ==========
+
+// POST /api/charging-sessions/start - rozpocznij sesję ładowania
+app.post('/api/charging-sessions/start', authenticateToken, [
+  body('station_id').isInt(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { station_id, vehicle_info } = req.body;
+    const user_id = req.user.id;
+
+    // Sprawdź dostępność stacji
+    const { data: station, error: stationError } = await supabase
+      .from('charging_stations')
+      .select('*')
+      .eq('id', station_id)
+      .single();
+
+    if (stationError) throw stationError;
+
+    if (!station || !station.is_active) {
+      return res.status(400).json({ error: 'Stacja niedostępna' });
+    }
+
+    if (station.available_connectors <= 0) {
+      return res.status(400).json({ error: 'Brak wolnych złączy' });
+    }
+
+    // Utwórz sesję
+    const { data: session, error: sessionError } = await supabase
+      .from('charging_sessions')
+      .insert([{
+        station_id,
+        user_id,
+        start_time: new Date().toISOString(),
+        status: 'active',
+        vehicle_info: vehicle_info || null,
+        payment_status: 'pending'
+      }])
+      .select()
+      .single();
+
+    if (sessionError) throw sessionError;
+
+    // Zmniejsz liczbę dostępnych złączy
+    const { error: updateError } = await supabase
+      .from('charging_stations')
+      .update({ available_connectors: station.available_connectors - 1 })
+      .eq('id', station_id);
+
+    if (updateError) throw updateError;
+
+    // Utwórz event dla live feed
+    await supabase
+      .from('charging_events')
+      .insert([{
+        session_id: session.id,
+        event_type: 'session_started',
+        event_data: {
+          station_name: station.name,
+          user_id: user_id,
+          start_time: session.start_time
+        }
+      }]);
+
+    console.log('✅ Charging session started:', session.id);
+    res.status(201).json(session);
+  } catch (error) {
+    console.error('Error starting charging session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/charging-sessions/:id/complete - zakończ sesję ładowania
+app.put('/api/charging-sessions/:id/complete', authenticateToken, [
+  body('energy_delivered_kwh').isNumeric(),
+  body('charging_duration_minutes').isInt({ min: 0 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { energy_delivered_kwh, charging_duration_minutes, payment_method, solana_tx_signature } = req.body;
+
+    // Pobierz sesję
+    const { data: session, error: sessionError } = await supabase
+      .from('charging_sessions')
+      .select('*, charging_stations(*)')
+      .eq('id', id)
+      .single();
+
+    if (sessionError) throw sessionError;
+
+    if (session.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Brak uprawnień' });
+    }
+
+    if (session.status !== 'active') {
+      return res.status(400).json({ error: 'Sesja nie jest aktywna' });
+    }
+
+    // Oblicz koszt za pomocą funkcji z bazy danych
+    const { data: costData, error: costError } = await supabase
+      .rpc('calculate_session_cost', {
+        p_station_id: session.station_id,
+        p_energy_kwh: energy_delivered_kwh,
+        p_duration_minutes: charging_duration_minutes
+      });
+
+    if (costError) throw costError;
+
+    const total_cost = costData || 0;
+    const average_power_kw = charging_duration_minutes > 0
+      ? (energy_delivered_kwh / (charging_duration_minutes / 60)).toFixed(2)
+      : 0;
+
+    // Zaktualizuj sesję (trigger automatycznie doda punkty)
+    const { data: updatedSession, error: updateError } = await supabase
+      .from('charging_sessions')
+      .update({
+        end_time: new Date().toISOString(),
+        energy_delivered_kwh,
+        charging_duration_minutes,
+        average_power_kw,
+        total_cost,
+        status: 'completed',
+        payment_method: payment_method || 'fiat',
+        payment_status: 'completed',
+        solana_tx_signature: solana_tx_signature || null,
+        on_chain_verified: solana_tx_signature ? true : false
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Zwiększ liczbę dostępnych złączy
+    const { error: connectorError } = await supabase
+      .from('charging_stations')
+      .update({
+        available_connectors: session.charging_stations.available_connectors + 1
+      })
+      .eq('id', session.station_id);
+
+    if (connectorError) throw connectorError;
+
+    // Utwórz event dla live feed
+    await supabase
+      .from('charging_events')
+      .insert([{
+        session_id: id,
+        event_type: 'session_completed',
+        event_data: {
+          energy_delivered_kwh,
+          points_earned: updatedSession.points_earned,
+          total_cost,
+          on_chain_verified: updatedSession.on_chain_verified
+        }
+      }]);
+
+    console.log('✅ Charging session completed:', id, 'Points awarded:', updatedSession.points_earned);
+    res.json(updatedSession);
+  } catch (error) {
+    console.error('Error completing charging session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/charging-sessions/active - pobierz aktywne sesje użytkownika
+app.get('/api/charging-sessions/active', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .select('*, charging_stations(*)')
+      .eq('user_id', req.user.id)
+      .eq('status', 'active')
+      .order('start_time', { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching active sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/charging-sessions/my - pobierz wszystkie sesje użytkownika
+app.get('/api/charging-sessions/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .select('*, charging_stations(*)')
+      .eq('user_id', req.user.id)
+      .order('start_time', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching my sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== LIVE FEED ==========
+
+// GET /api/live-feed - pobierz live feed aktywnych sesji ładowania
+app.get('/api/live-feed', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('live_charging_feed')
+      .select('*')
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching live feed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== POINTS SYSTEM ==========
+
+// GET /api/points/my - pobierz moje punkty
+app.get('/api/points/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    if (!data) {
+      // Utwórz rekord jeśli nie istnieje
+      const { data: newData, error: insertError } = await supabase
+        .from('user_points')
+        .insert([{ user_id: req.user.id }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      return res.json(newData);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching my points:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/points/marketplace - pobierz oferty punktów
+app.get('/api/points/marketplace', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('points_listings')
+      .select(`
+        *,
+        seller:users!seller_id(id, full_name)
+      `)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching marketplace:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/points/listings - utwórz ofertę sprzedaży punktów
+app.post('/api/points/listings', authenticateToken, [
+  body('points_amount').isInt({ min: 1 }),
+  body('price_per_point').isNumeric(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { points_amount, price_per_point, discount_percentage } = req.body;
+    const seller_id = req.user.id;
+
+    // Sprawdź czy użytkownik ma wystarczająco punktów
+    const { data: userPoints, error: pointsError } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', seller_id)
+      .single();
+
+    if (pointsError) throw pointsError;
+
+    if (!userPoints || userPoints.available_points < points_amount) {
+      return res.status(400).json({ error: 'Niewystarczająca liczba punktów' });
+    }
+
+    const total_price = (points_amount * price_per_point).toFixed(2);
+
+    // Utwórz ofertę
+    const { data: listing, error: listingError } = await supabase
+      .from('points_listings')
+      .insert([{
+        seller_id,
+        points_amount,
+        price_per_point,
+        total_price,
+        discount_percentage: discount_percentage || 50,
+        status: 'active',
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 dni
+      }])
+      .select()
+      .single();
+
+    if (listingError) throw listingError;
+
+    // Zablokuj punkty
+    const { error: lockError } = await supabase
+      .from('user_points')
+      .update({
+        available_points: userPoints.available_points - points_amount,
+        locked_points: userPoints.locked_points + points_amount
+      })
+      .eq('user_id', seller_id);
+
+    if (lockError) throw lockError;
+
+    console.log('✅ Points listing created:', listing.id);
+    res.status(201).json(listing);
+  } catch (error) {
+    console.error('Error creating listing:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/points/buy/:id - kup punkty z marketplace
+app.post('/api/points/buy/:id', authenticateToken, [
+  body('solana_tx_signature').optional().isString()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { solana_tx_signature } = req.body;
+    const buyer_id = req.user.id;
+
+    // Pobierz ofertę
+    const { data: listing, error: listingError } = await supabase
+      .from('points_listings')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (listingError) throw listingError;
+
+    if (listing.status !== 'active') {
+      return res.status(400).json({ error: 'Oferta nieaktywna' });
+    }
+
+    if (listing.seller_id === buyer_id) {
+      return res.status(400).json({ error: 'Nie możesz kupić własnych punktów' });
+    }
+
+    // Zaktualizuj ofertę
+    const { error: updateListingError } = await supabase
+      .from('points_listings')
+      .update({
+        status: 'sold',
+        buyer_id,
+        sold_at: new Date().toISOString(),
+        solana_sale_tx: solana_tx_signature || null
+      })
+      .eq('id', id);
+
+    if (updateListingError) throw updateListingError;
+
+    // Przenieś punkty od sprzedawcy do kupującego
+    // 1. Odblokuj punkty sprzedawcy i odejmij je
+    const { data: sellerPoints } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', listing.seller_id)
+      .single();
+
+    await supabase
+      .from('user_points')
+      .update({
+        total_points: sellerPoints.total_points - listing.points_amount,
+        locked_points: sellerPoints.locked_points - listing.points_amount,
+        total_traded: sellerPoints.total_traded + listing.points_amount
+      })
+      .eq('user_id', listing.seller_id);
+
+    // 2. Dodaj punkty kupującemu
+    const { data: buyerPoints } = await supabase
+      .from('user_points')
+      .select('*')
+      .eq('user_id', buyer_id)
+      .maybeSingle();
+
+    if (buyerPoints) {
+      await supabase
+        .from('user_points')
+        .update({
+          total_points: buyerPoints.total_points + listing.points_amount,
+          available_points: buyerPoints.available_points + listing.points_amount
+        })
+        .eq('user_id', buyer_id);
+    } else {
+      await supabase
+        .from('user_points')
+        .insert([{
+          user_id: buyer_id,
+          total_points: listing.points_amount,
+          available_points: listing.points_amount
+        }]);
+    }
+
+    console.log('✅ Points purchased:', listing.points_amount, 'from', listing.seller_id, 'to', buyer_id);
+    res.json({
+      success: true,
+      points_amount: listing.points_amount,
+      total_price: listing.total_price
+    });
+  } catch (error) {
+    console.error('Error buying points:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
