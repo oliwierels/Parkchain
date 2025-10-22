@@ -60,7 +60,7 @@ function OwnerDashboardPage() {
         // Oblicz statystyki
         const totalEarnings = myReservations
           .filter(r => r.status !== 'cancelled')
-          .reduce((sum, r) => sum + (parseFloat(r.total_price) || 0), 0);
+          .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
 
         const activeParkings = parkingsData.filter(p => p.available_spots > 0).length;
 
@@ -450,7 +450,7 @@ function OwnerDashboardPage() {
                         fontWeight: 'bold',
                         color: '#059669'
                       }}>
-                        {parseFloat(reservation.total_price).toFixed(2)} zł
+                        {parseFloat(reservation.price).toFixed(2)} zł
                       </td>
                       <td style={{ padding: '16px' }}>
                         <span style={{
