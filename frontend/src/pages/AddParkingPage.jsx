@@ -1,3 +1,5 @@
+import { FaMapMarkerAlt } from 'react-icons/fa';
+import MapPickerModal from '../components/MapPickerModal';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,17 +9,15 @@ function AddParkingPage() {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    city: '',
     price_per_hour: '',
-    price_per_day: '',
-    price_per_week: '',
-    price_per_month: '',
+      city: '', // DODAJ TO
     total_spots: '',
     latitude: '',
     longitude: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showMapModal, setShowMapModal] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   
   const { user } = useAuth();
@@ -29,7 +29,17 @@ function AddParkingPage() {
       [e.target.name]: e.target.value
     });
   };
-
+// Ta funkcja otrzyma dane z naszego modala
+const handleMapSelect = (details) => {
+  setFormData({
+    ...formData,
+    address: details.address, // Ustawiamy adres z pinezki
+    city: details.city,         // Ustawiamy miasto z pinezki
+    latitude: details.latitude.toString(),
+    longitude: details.longitude.toString(),
+  });
+  setShowMapModal(false); // Zamykamy modal
+};
   const handleGeocodeAddress = async () => {
     if (!formData.address) {
       setError('Wprowadź adres przed geokodowaniem');
@@ -44,8 +54,14 @@ function AddParkingPage() {
         address: formData.address
       });
 
+     // Spróbujmy wyciągnąć miasto z wpisanego adresu
+      const addressParts = formData.address.split(',');
+      // Bierzemy ostatni człon adresu, zakładając, że to miasto (np. "ul. Marszałkowska 1, Warszawa")
+      const city = addressParts.length > 1 ? addressParts[addressParts.length - 1].trim() : '';
+
       setFormData({
         ...formData,
+        city: city, // <-- DODANA LINIA
         latitude: response.data.latitude.toString(),
         longitude: response.data.longitude.toString()
       });
@@ -92,11 +108,8 @@ function AddParkingPage() {
       const response = await axios.post('http://localhost:3000/api/parking-lots', {
         name: formData.name,
         address: formData.address,
-        city: formData.city,
+          city: formData.city,  // <-- DODAJ TĘ LINIĘ
         price_per_hour: parseFloat(formData.price_per_hour),
-        price_per_day: formData.price_per_day ? parseFloat(formData.price_per_day) : null,
-        price_per_week: formData.price_per_week ? parseFloat(formData.price_per_week) : null,
-        price_per_month: formData.price_per_month ? parseFloat(formData.price_per_month) : null,
         total_spots: parseInt(formData.total_spots),
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude)
@@ -145,13 +158,13 @@ function AddParkingPage() {
   return (
     <div style={{
       minHeight: 'calc(100vh - 64px)',
-      backgroundColor: '#f9fafb',
+      backgroundColor: 'black',
       padding: '40px 20px'
     }}>
       <div style={{
         maxWidth: '600px',
         margin: '0 auto',
-        backgroundColor: 'white',
+    
         padding: '40px',
         borderRadius: '15px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
@@ -223,39 +236,60 @@ function AddParkingPage() {
               Adres *
             </label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-                placeholder="ul. Marszałkowska 1, Warszawa"
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleGeocodeAddress}
-                disabled={geocoding}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: geocoding ? '#9ca3af' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  cursor: geocoding ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {geocoding ? '...' : '📍 Znajdź'}
-              </button>
-            </div>
+          <input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            required
+            placeholder="ul. Marszałkowska 1, Warszawa"
+            style={{
+              flex: 1,
+              padding: '12px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px',
+              fontSize: '16px'
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleGeocodeAddress}
+            disabled={geocoding}
+            title="Znajdź współrzędne na podstawie adresu" // Tooltip
+            style={{
+              padding: '12px 20px',
+              backgroundColor: geocoding ? '#9ca3af' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: geocoding ? 'not-allowed' : 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {geocoding ? '...' : 'Znajdź'}
+          </button>
+
+          {/* === NOWY PRZYCISK Z IKONĄ MAPY === */}
+          <button
+            type="button"
+            onClick={() => setShowMapModal(true)}
+            title="Wybierz lokalizację z mapy" // Tooltip
+            style={{
+              padding: '12px 15px',
+              backgroundColor: '#6366F1', // Kolor fioletowy
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '18px' // Zwiększamy rozmiar dla ikony
+            }}
+          >
+            <FaMapMarkerAlt />
+          </button>
+          {/* === KONIEC NOWEGO PRZYCISKU === */}
+        </div>
             <div style={{ marginBottom: '20px' }}>
   <label style={{
     display: 'block',
@@ -282,8 +316,8 @@ function AddParkingPage() {
   />
 </div>
             <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '5px', display: 'block' }}>
-              Kliknij "Znajdź" aby automatycznie pobrać współrzędne
-            </small>
+          Wpisz adres i kliknij "Znajdź" lub wybierz lokalizację z mapy <FaMapMarkerAlt style={{ display: 'inline', margin: '0 2px' }}/>
+        </small>
           </div>
 
           <div style={{ 
@@ -349,7 +383,7 @@ function AddParkingPage() {
             </div>
           </div>
 
-          {/* Sekcja cen */}
+                    {/* Sekcja cen */}
           <div style={{
             backgroundColor: '#f0f9ff',
             padding: '20px',
@@ -513,31 +547,64 @@ function AddParkingPage() {
             </div>
           </div>
 
-          {/* Liczba miejsc */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: 'bold',
-              color: '#374151'
-            }}>
-              Liczba miejsc parkingowych *
-            </label>
-            <input
-              type="number"
-              name="total_spots"
-              value={formData.total_spots}
-              onChange={handleChange}
-              required
-              placeholder="50"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px'
-              }}
-            />
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '20px',
+            marginBottom: '20px' 
+          }}>
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: 'bold',
+                color: '#374151'
+              }}>
+                Cena za godzinę (zł) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="price_per_hour"
+                value={formData.price_per_hour}
+                onChange={handleChange}
+                required
+                placeholder="10.00"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: 'bold',
+                color: '#374151'
+              }}>
+                Liczba miejsc *
+              </label>
+              <input
+                type="number"
+                name="total_spots"
+                value={formData.total_spots}
+                onChange={handleChange}
+                required
+                placeholder="50"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
           </div>
 
           <button
@@ -560,6 +627,14 @@ function AddParkingPage() {
           </button>
         </form>
       </div>
+      {/* === TUTAJ WKLEJ TEN KOD === */}
+      {showMapModal && (
+        <MapPickerModal
+          onClose={() => setShowMapModal(false)}
+          onSelect={handleMapSelect}
+        />
+      )}
+      {/* === KONIEC WKLEJANIA === */}
     </div>
   );
 }

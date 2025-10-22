@@ -9,13 +9,12 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
-import InspectorDashboardPage from './pages/InspectorDashboardPage';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-black">
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -26,7 +25,6 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-reservations" element={<MyReservationsPage />} />
             <Route path="/owner-dashboard" element={<OwnerDashboardPage />} />
-            <Route path="/inspector-dashboard" element={<InspectorDashboardPage />} />
             <Route path="/dodaj-parking" element={<AddParkingPage />} />
           </Routes>
         </div>

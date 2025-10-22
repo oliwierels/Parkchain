@@ -33,11 +33,11 @@ function LoginPage() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#f9fafb',
+      
       padding: '20px'
     }}>
       <div style={{
-        backgroundColor: 'white',
+        
         padding: '40px',
         borderRadius: '15px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',

@@ -16,7 +16,7 @@ function Navbar() {
   return (
     // --- STYL PASKA NAWIGACJI OD KOLEGI ---
     <nav style={{
-      backgroundColor: 'white',
+      backgroundColor: 'black',
       color: 'white',
       height: '100px',
       paddingLeft: '1rem',
@@ -49,13 +49,13 @@ function Navbar() {
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
 
           {/* --- Linki statyczne ze stylami (kolor 'black') od kolegi --- */}
-          <Link to="/" style={{ color: 'black', textDecoration: 'none' }}>
+          <Link to="/" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
             Strona Główna
           </Link>
-          <Link to="/map" style={{ color: 'black', textDecoration: 'none' }}>
+          <Link to="/map" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
             Mapa
           </Link>
-          <Link to="/add-parking" style={{ color: 'black', textDecoration: 'none' }}>
+          <Link to="/add-parking" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
             Dodaj parking
           </Link>
 
@@ -63,25 +63,13 @@ function Navbar() {
           {isAuthenticated ? (
             <>
               {/* Linki dla zalogowanego, ze stylami od kolegi */}
-              <Link to="/my-reservations" style={{ color: 'black', textDecoration: 'none' }}>
+              <Link to="/my-reservations" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
                 📋 Moje Rezerwacje
               </Link>
-              <Link to="/owner-dashboard" style={{ color: 'black', textDecoration: 'none' }}>
+              <Link to="/owner-dashboard" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
                 🏢 Moje Parkingi
               </Link>
-              {user?.role === 'inspector' && (
-                <Link to="/inspector-dashboard" style={{
-                  color: 'white',
-                  textDecoration: 'none',
-                  backgroundColor: '#10b981',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontWeight: 'bold'
-                }}>
-                  🔍 Panel Inspektora
-                </Link>
-              )}
-              <Link to="/profile" style={{ color: 'black', textDecoration: 'none' }}>
+              <Link to="/profile" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
                 👤 {user?.full_name}
               </Link>
 

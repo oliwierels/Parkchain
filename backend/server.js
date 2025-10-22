@@ -1,7 +1,8 @@
+import 'dotenv/config';
+configDotenv()
 // backend/server.js
 
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -12,6 +13,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
+import { configDotenv } from 'dotenv';
 
 // Załaduj zmienne środowiskowe
 dotenv.config();

@@ -63,11 +63,11 @@ function RegisterPage() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#f9fafb',
+      
       padding: '20px'
     }}>
       <div style={{
-        backgroundColor: 'white',
+        
         padding: '40px',
         borderRadius: '15px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -86,7 +86,7 @@ function RegisterPage() {
 
         {error && (
           <div style={{
-            backgroundColor: '#fee2e2',
+            
             color: '#991b1b',
             padding: '12px',
             borderRadius: '8px',
