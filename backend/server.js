@@ -275,15 +275,30 @@ app.post('/api/parking-lots', authenticateToken, [
   }
 
   try {
-    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
+    const {
+      name,
+      address,
+      city,
+      price_per_hour,
+      price_per_day,
+      price_per_week,
+      price_per_month,
+      total_spots,
+      latitude,
+      longitude
+    } = req.body;
     const owner_id = req.user.id;
-    
+
     const { data, error } = await supabase
       .from('parking_lots')
       .insert([{
         name,
         address,
+        city: city || null,
         price_per_hour,
+        price_per_day: price_per_day || null,
+        price_per_week: price_per_week || null,
+        price_per_month: price_per_month || null,
         total_spots,
         available_spots: total_spots,
         latitude: latitude || null,
@@ -292,9 +307,9 @@ app.post('/api/parking-lots', authenticateToken, [
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating parking lot:', error);
@@ -463,30 +478,34 @@ function calculateBestPrice(parking, startTime, endTime) {
   const hours = (end - start) / (1000 * 60 * 60);
   const days = hours / 24;
 
-  // Oblicz cenę dla każdej taryfy
+  // Oblicz cenę godzinową (zawsze dostępna)
   const hourlyPrice = hours * parking.price_per_hour;
-  const dailyPrice = parking.price_per_day ? Math.ceil(days) * parking.price_per_day : hourlyPrice;
-  const weeklyPrice = parking.price_per_week ? Math.ceil(days / 7) * parking.price_per_week : hourlyPrice;
-  const monthlyPrice = parking.price_per_month ? Math.ceil(days / 30) * parking.price_per_month : hourlyPrice;
 
-  // Znajdź najtańszą opcję
+  // Buduj listę dostępnych opcji cenowych
   const options = [
-    { price: hourlyPrice, type: 'hourly', label: 'Godzinowa' },
-    { price: dailyPrice, type: 'daily', label: 'Dzienna' },
-    { price: weeklyPrice, type: 'weekly', label: 'Tygodniowa' },
-    { price: monthlyPrice, type: 'monthly', label: 'Miesięczna' }
+    { price: hourlyPrice, type: 'hourly', label: 'Godzinowa', available: true }
   ];
 
-  // Filtruj opcje które mają sens (np. daily tylko jeśli >= 1 dzień)
-  const validOptions = options.filter(opt => {
-    if (opt.type === 'daily') return days >= 1;
-    if (opt.type === 'weekly') return days >= 7;
-    if (opt.type === 'monthly') return days >= 30;
-    return true;
-  });
+  // Dodaj dzienną tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_day && days >= 1) {
+    const dailyPrice = Math.ceil(days) * parking.price_per_day;
+    options.push({ price: dailyPrice, type: 'daily', label: 'Dzienna', available: true });
+  }
 
-  // Znajdź najtańszą
-  const best = validOptions.reduce((min, opt) => opt.price < min.price ? opt : min);
+  // Dodaj tygodniową tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_week && days >= 7) {
+    const weeklyPrice = Math.ceil(days / 7) * parking.price_per_week;
+    options.push({ price: weeklyPrice, type: 'weekly', label: 'Tygodniowa', available: true });
+  }
+
+  // Dodaj miesięczną tylko jeśli jest ustawiona i ma sens czasowo
+  if (parking.price_per_month && days >= 30) {
+    const monthlyPrice = Math.ceil(days / 30) * parking.price_per_month;
+    options.push({ price: monthlyPrice, type: 'monthly', label: 'Miesięczna', available: true });
+  }
+
+  // Znajdź najtańszą opcję
+  const best = options.reduce((min, opt) => opt.price < min.price ? opt : min);
 
   return {
     price: parseFloat(best.price.toFixed(2)),
@@ -494,8 +513,9 @@ function calculateBestPrice(parking, startTime, endTime) {
     pricingLabel: best.label,
     hours: parseFloat(hours.toFixed(2)),
     days: parseFloat(days.toFixed(2)),
-    allOptions: validOptions.map(opt => ({
-      ...opt,
+    allOptions: options.map(opt => ({
+      type: opt.type,
+      label: opt.label,
       price: parseFloat(opt.price.toFixed(2))
     }))
   };

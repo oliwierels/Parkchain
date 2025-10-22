@@ -7,8 +7,11 @@ function AddParkingPage() {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
+    city: '',
     price_per_hour: '',
-      city: '', // DODAJ TO
+    price_per_day: '',
+    price_per_week: '',
+    price_per_month: '',
     total_spots: '',
     latitude: '',
     longitude: ''
@@ -89,8 +92,11 @@ function AddParkingPage() {
       const response = await axios.post('http://localhost:3000/api/parking-lots', {
         name: formData.name,
         address: formData.address,
-          city: formData.city,  // <-- DODAJ TĘ LINIĘ
+        city: formData.city,
         price_per_hour: parseFloat(formData.price_per_hour),
+        price_per_day: formData.price_per_day ? parseFloat(formData.price_per_day) : null,
+        price_per_week: formData.price_per_week ? parseFloat(formData.price_per_week) : null,
+        price_per_month: formData.price_per_month ? parseFloat(formData.price_per_month) : null,
         total_spots: parseInt(formData.total_spots),
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude)
@@ -343,64 +349,195 @@ function AddParkingPage() {
             </div>
           </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '20px',
-            marginBottom: '20px' 
+          {/* Sekcja cen */}
+          <div style={{
+            backgroundColor: '#f0f9ff',
+            padding: '20px',
+            borderRadius: '12px',
+            marginBottom: '20px',
+            border: '2px solid #bfdbfe'
           }}>
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
-                Cena za godzinę (zł) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                name="price_per_hour"
-                value={formData.price_per_hour}
-                onChange={handleChange}
-                required
-                placeholder="10.00"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              marginBottom: '15px',
+              color: '#1e40af'
+            }}>
+              💰 Cennik (elastyczne taryfy)
+            </h3>
+            <p style={{
+              fontSize: '13px',
+              color: '#6b7280',
+              marginBottom: '20px'
+            }}>
+              Ustaw ceny dla różnych okresów wynajmu. System automatycznie wybierze najtańszą opcję dla klienta.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '15px'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: '#374151',
+                  fontSize: '14px'
+                }}>
+                  Cena za godzinę (zł) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price_per_hour"
+                  value={formData.price_per_hour}
+                  onChange={handleChange}
+                  required
+                  placeholder="10.00"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                  Podstawowa stawka
+                </small>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: '#374151',
+                  fontSize: '14px'
+                }}>
+                  Cena za dzień (zł)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price_per_day"
+                  value={formData.price_per_day}
+                  onChange={handleChange}
+                  placeholder="60.00"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                  Opcjonalne (24h)
+                </small>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: '#374151',
+                  fontSize: '14px'
+                }}>
+                  Cena za tydzień (zł)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price_per_week"
+                  value={formData.price_per_week}
+                  onChange={handleChange}
+                  placeholder="350.00"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                  Opcjonalne (7 dni)
+                </small>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: 'bold',
+                  color: '#374151',
+                  fontSize: '14px'
+                }}>
+                  Cena za miesiąc (zł)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price_per_month"
+                  value={formData.price_per_month}
+                  onChange={handleChange}
+                  placeholder="1200.00"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                />
+                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                  Opcjonalne (30 dni)
+                </small>
+              </div>
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
-                Liczba miejsc *
-              </label>
-              <input
-                type="number"
-                name="total_spots"
-                value={formData.total_spots}
-                onChange={handleChange}
-                required
-                placeholder="50"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
+            <div style={{
+              backgroundColor: '#eff6ff',
+              padding: '12px',
+              borderRadius: '8px',
+              marginTop: '15px',
+              fontSize: '12px',
+              color: '#1e40af'
+            }}>
+              <strong>Wskazówka:</strong> Ustaw niższe ceny dla dłuższych okresów, aby zachęcić do długoterminowego wynajmu.
+              Np. dzień = 20h godzinowa, tydzień = 30% taniej, miesiąc = 40% taniej.
             </div>
+          </div>
+
+          {/* Liczba miejsc */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '8px',
+              fontWeight: 'bold',
+              color: '#374151'
+            }}>
+              Liczba miejsc parkingowych *
+            </label>
+            <input
+              type="number"
+              name="total_spots"
+              value={formData.total_spots}
+              onChange={handleChange}
+              required
+              placeholder="50"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '16px'
+              }}
+            />
           </div>
 
           <button
