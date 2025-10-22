@@ -69,6 +69,18 @@ function Navbar() {
               <Link to="/owner-dashboard" style={{ color: 'black', textDecoration: 'none' }}>
                 🏢 Moje Parkingi
               </Link>
+              {user?.role === 'inspector' && (
+                <Link to="/inspector-dashboard" style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  backgroundColor: '#10b981',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold'
+                }}>
+                  🔍 Panel Inspektora
+                </Link>
+              )}
               <Link to="/profile" style={{ color: 'black', textDecoration: 'none' }}>
                 👤 {user?.full_name}
               </Link>

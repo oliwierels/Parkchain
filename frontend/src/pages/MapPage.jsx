@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
+import ReportOccupancyModal from '../components/ReportOccupancyModal';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -58,6 +59,7 @@ function MapPage() {
   const [error, setError] = useState(null);
   const [selectedParking, setSelectedParking] = useState(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     const fetchParkings = async () => {
@@ -95,6 +97,17 @@ function MapPage() {
   const handleReservationSuccess = () => {
     alert('Rezerwacja utworzona!');
     setShowReservationModal(false);
+    // Odśwież parkingi
+    parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
+
+  const handleReportClick = (parking) => {
+    setSelectedParking(parking);
+    setShowReportModal(true);
+  };
+
+  const handleReportSuccess = () => {
+    setShowReportModal(false);
     // Odśwież parkingi
     parkingAPI.getAllParkings().then(data => setParkings(data));
   };
@@ -200,24 +213,41 @@ function MapPage() {
           {parking.price_per_hour} zł/godz
         </p>
 
-        {parking.available_spots > 0 && (
-          <button 
-            onClick={() => handleReserveClick(parking)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+          {parking.available_spots > 0 && (
+            <button
+              onClick={() => handleReserveClick(parking)}
+              style={{
+                width: '100%',
+                backgroundColor: '#6366F1',
+                color: 'white',
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Zarezerwuj teraz
+            </button>
+          )}
+
+          <button
+            onClick={() => handleReportClick(parking)}
             style={{
               width: '100%',
-              backgroundColor: '#6366F1',
+              backgroundColor: '#10b981',
               color: 'white',
               padding: '8px 16px',
               border: 'none',
               borderRadius: '6px',
               fontWeight: 'bold',
-              cursor: 'pointer',
-              marginTop: '8px'
+              cursor: 'pointer'
             }}
           >
-            Zarezerwuj teraz
+            📍 Zgłoś zajętość (CrowdScan)
           </button>
-        )}
+        </div>
       </div>
     </Popup>
   </Marker>
@@ -229,6 +259,14 @@ function MapPage() {
           parking={selectedParking}
           onClose={() => setShowReservationModal(false)}
           onSuccess={handleReservationSuccess}
+        />
+      )}
+
+      {showReportModal && selectedParking && (
+        <ReportOccupancyModal
+          parking={selectedParking}
+          onClose={() => setShowReportModal(false)}
+          onSuccess={handleReportSuccess}
         />
       )}
     </div>
