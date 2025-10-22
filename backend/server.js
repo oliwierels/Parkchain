@@ -198,6 +198,110 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 });
 // ========== PARKINGI ==========
 
+// Funkcja pomocnicza do obliczania odległości (formuła Haversine)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Promień Ziemi w km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Odległość w km
+}
+
+// Funkcja rankingowa dla parkingów
+function rankParking(parking, destinationLat, destinationLng, maxDistance = 5) {
+  if (!parking.latitude || !parking.longitude) {
+    return null; // Parking bez współrzędnych
+  }
+
+  const distance = calculateDistance(
+    destinationLat,
+    destinationLng,
+    parking.latitude,
+    parking.longitude
+  );
+
+  if (distance > maxDistance) {
+    return null; // Za daleko
+  }
+
+  // Normalizacja ceny (zakładamy max 50 zł/godz)
+  const normalizedPrice = Math.min(parking.price_per_hour / 50, 1);
+
+  // Normalizacja odległości (0-5km → 0-1)
+  const normalizedDistance = distance / maxDistance;
+
+  // Brak dostępnych miejsc to duży minus
+  const availabilityFactor = parking.available_spots > 0 ? 1 : 0.1;
+
+  // Ranking: mniejszy = lepszy
+  // 40% waga odległości, 30% waga ceny, 30% waga dostępności
+  const score = (
+    normalizedDistance * 0.4 +
+    normalizedPrice * 0.3 +
+    (1 - availabilityFactor) * 0.3
+  );
+
+  return {
+    ...parking,
+    distance: parseFloat(distance.toFixed(2)),
+    score: parseFloat(score.toFixed(4)),
+    walkingTime: Math.ceil(distance * 12) // ~12 minut na km
+  };
+}
+
+// GET /api/lots/nearby - znajdź najlepsze parkingi w pobliżu destynacji
+app.get('/api/lots/nearby', async (req, res) => {
+  try {
+    const { lat, lng, maxDistance = 5, limit = 10 } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Wymagane parametry: lat, lng' });
+    }
+
+    const destinationLat = parseFloat(lat);
+    const destinationLng = parseFloat(lng);
+
+    console.log(`🔍 Szukam parkingów w pobliżu: [${destinationLat}, ${destinationLng}]`);
+
+    // Pobierz wszystkie parkingi
+    const { data: parkings, error } = await supabase
+      .from('parking_lots')
+      .select('*');
+
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
+
+    // Oceń i posortuj parkingi
+    const rankedParkings = parkings
+      .map(parking => rankParking(parking, destinationLat, destinationLng, parseFloat(maxDistance)))
+      .filter(p => p !== null) // Usuń parkingi bez współrzędnych lub za daleko
+      .sort((a, b) => a.score - b.score) // Sortuj według score (mniejszy = lepszy)
+      .slice(0, parseInt(limit)); // Ogranicz do limitu
+
+    console.log(`✅ Znaleziono ${rankedParkings.length} parkingów w promieniu ${maxDistance}km`);
+
+    if (rankedParkings.length > 0) {
+      console.log('🏆 Najlepszy parking:', rankedParkings[0].name,
+        `(${rankedParkings[0].distance}km, ${rankedParkings[0].price_per_hour}zł/h, score: ${rankedParkings[0].score})`);
+    }
+
+    res.json({
+      destination: { lat: destinationLat, lng: destinationLng },
+      parkings: rankedParkings,
+      count: rankedParkings.length
+    });
+  } catch (error) {
+    console.error('❌ Error finding nearby parkings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/lots - pobierz wszystkie parkingi
 app.get('/api/lots', async (req, res) => {
   try {
