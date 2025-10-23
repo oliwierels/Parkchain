@@ -19,11 +19,12 @@ import AnalyticsPage from './pages/AnalyticsPage';
 function AppContent() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const isMapPage = location.pathname === '/map';
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Ukryj navbar na stronie głównej dla immersive experience */}
-      {!isHomePage && <Navbar />}
+      {/* Ukryj navbar na stronie głównej i mapie dla maksymalnej przestrzeni */}
+      {!isHomePage && !isMapPage && <Navbar />}
       <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/map" element={<MapPage />} />

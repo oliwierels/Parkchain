@@ -1,7 +1,9 @@
 // frontend/src/pages/MapPage.jsx
 
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { motion } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
@@ -11,6 +13,7 @@ import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import { useAuth } from '../context/AuthContext';
+import { FaHome, FaCog, FaArrowLeft } from 'react-icons/fa';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -385,7 +388,7 @@ function MapPage() {
     return (
       <div style={{
         width: '100%',
-        height: 'calc(100vh - 64px)',
+        height: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -398,7 +401,85 @@ function MapPage() {
   }
 
   return (
-    <div style={{ width: '100%', height: 'calc(100vh - 64px)', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      {/* Minimal Floating Controls */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        padding: '20px',
+        pointerEvents: 'none'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          maxWidth: '100%'
+        }}>
+          {/* Powrót do strony głównej - lewy górny róg */}
+          <Link to="/" style={{ pointerEvents: 'auto' }}>
+            <motion.div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 20px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                cursor: 'pointer'
+              }}
+              whileHover={{
+                scale: 1.05,
+                boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
+              <FaArrowLeft style={{ fontSize: '16px', color: '#6366F1' }} />
+              <span style={{
+                fontSize: '15px',
+                fontWeight: '600',
+                color: '#1F2937'
+              }}>
+                Powrót
+              </span>
+            </motion.div>
+          </Link>
+
+          {/* Settings - prawy górny róg */}
+          <Link to="/profile" style={{ pointerEvents: 'auto' }}>
+            <motion.div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '48px',
+                height: '48px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                cursor: 'pointer'
+              }}
+              whileHover={{
+                scale: 1.1,
+                rotate: 90,
+                boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
+              }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
+              <FaCog style={{ fontSize: '20px', color: '#6366F1' }} />
+            </motion.div>
+          </Link>
+        </div>
+      </div>
       {error && (
         <div style={{
           position: 'absolute',
@@ -415,156 +496,6 @@ function MapPage() {
           {error}
         </div>
       )}
-
-      {/* Przyciski do różnych trybów */}
-      <div style={{
-        position: 'absolute',
-        top: '20px',
-        left: '20px',
-        zIndex: 1000,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}>
-        <button
-          onClick={handleToggleSearchMode}
-          style={{
-            backgroundColor: searchMode ? '#EF4444' : '#6366F1',
-            color: 'white',
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          {searchMode ? '✕ Anuluj wyszukiwanie' : '🎯 Znajdź parking'}
-        </button>
-
-        {user && (
-          <>
-            <button
-              onClick={handleToggleAddParkingMode}
-              style={{
-                backgroundColor: addParkingMode ? '#EF4444' : '#10B981',
-                color: 'white',
-                padding: '12px 24px',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              {addParkingMode ? '✕ Anuluj' : '🅿️ Dodaj parking'}
-            </button>
-
-            <button
-              onClick={handleToggleAddChargingMode}
-              style={{
-                backgroundColor: addChargingMode ? '#EF4444' : '#F59E0B',
-                color: 'white',
-                padding: '12px 24px',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              {addChargingMode ? '✕ Anuluj' : '⚡ Dodaj ładowarkę'}
-            </button>
-          </>
-        )}
-
-        {searchMode && (
-          <div style={{
-            backgroundColor: '#FEF3C7',
-            color: '#92400E',
-            padding: '10px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            maxWidth: '250px'
-          }}>
-            📍 Kliknij na mapę aby wybrać destynację
-          </div>
-        )}
-
-        {addParkingMode && (
-          <div style={{
-            backgroundColor: '#D1FAE5',
-            color: '#065F46',
-            padding: '10px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            maxWidth: '250px'
-          }}>
-            🅿️ Kliknij na mapę w miejscu gdzie chcesz dodać parking
-          </div>
-        )}
-
-        {addChargingMode && (
-          <div style={{
-            backgroundColor: '#FEF3C7',
-            color: '#92400E',
-            padding: '10px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            maxWidth: '250px'
-          }}>
-            ⚡ Kliknij na mapę w miejscu gdzie chcesz dodać ładowarkę
-          </div>
-        )}
-
-        {/* Filtry */}
-        <div style={{
-          backgroundColor: 'white',
-          padding: '12px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px'
-        }}>
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6B7280', marginBottom: '4px' }}>
-            Pokaż na mapie:
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showParkings}
-              onChange={(e) => setShowParkings(e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '13px' }}>🅿️ Parkingi</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showCharging}
-              onChange={(e) => setShowCharging(e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '13px' }}>⚡ Ładowarki EV</span>
-          </label>
-        </div>
-      </div>
 
       {/* Legenda mapy */}
       <div style={{
