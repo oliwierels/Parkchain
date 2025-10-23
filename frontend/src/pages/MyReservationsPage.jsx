@@ -171,6 +171,7 @@ function MyReservationsPage() {
       case 'active': return 'bg-green-900 text-green-200';
       case 'completed': return 'bg-gray-700 text-gray-200';
       case 'cancelled': return 'bg-red-900 text-red-200';
+      case 'pending_verification': return 'bg-orange-900 text-orange-200';
       default: return 'bg-gray-700 text-gray-200';
     }
   };
@@ -181,6 +182,7 @@ function MyReservationsPage() {
       case 'active': return 'Aktywna';
       case 'completed': return 'Zakończona';
       case 'cancelled': return 'Anulowana';
+      case 'pending_verification': return 'Weryfikacja właściciela';
       default: return status;
     }
   };
