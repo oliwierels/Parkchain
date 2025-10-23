@@ -50,13 +50,19 @@ function MyReservationsPage() {
     }
   };
 
-  const getStatusColor = (status) => {
+  // NOWA FUNKCJA Z KLASAMI TAILWIND DLA DARK MODE
+  const getStatusClasses = (status) => {
     switch (status) {
-      case 'pending': return '#FFA500';
-      case 'active': return '#22C55E';
-      case 'completed': return '#6B7280';
-      case 'cancelled': return '#EF4444';
-      default: return '#6B7280';
+      case 'pending':
+        return 'bg-yellow-900 text-yellow-200';
+      case 'active':
+        return 'bg-green-900 text-green-200';
+      case 'completed':
+        return 'bg-gray-700 text-gray-200';
+      case 'cancelled':
+        return 'bg-red-900 text-red-200';
+      default:
+        return 'bg-gray-700 text-gray-200';
     }
   };
 
@@ -79,7 +85,11 @@ function MyReservationsPage() {
   });
 
   if (authLoading || loading) {
-    return <div style={{ padding: '40px', textAlign: 'center' }}>Ładowanie...</div>;
+    return (
+      <div className="p-10 text-center text-lg text-indigo-400">
+        Ładowanie...
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -87,57 +97,39 @@ function MyReservationsPage() {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '20px' }}>
-      {/* Header z statystykami */}
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px' }}>
+    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
+      {/* Header */}
+      <h1 className="text-3xl font-bold text-white mb-8">
         Moje Rezerwacje
       </h1>
 
+      {/* Statystyki */}
       {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginBottom: '30px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '15px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '5px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          
+          <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+            <p className="text-sm text-gray-400 mb-1">
               Wszystkie rezerwacje
             </p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>
+            <p className="text-4xl font-bold text-white">
               {stats.totalReservations}
             </p>
           </div>
 
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '15px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '5px' }}>
+          <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+            <p className="text-sm text-gray-400 mb-1">
               Aktywne rezerwacje
             </p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#22C55E' }}>
+            <p className="text-4xl font-bold text-green-500">
               {stats.activeReservations}
             </p>
           </div>
 
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '15px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '5px' }}>
+          <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+            <p className="text-sm text-gray-400 mb-1">
               Wydane pieniądze
             </p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6366F1' }}>
+            <p className="text-4xl font-bold text-indigo-400">
               {stats.totalSpent} zł
             </p>
           </div>
@@ -145,28 +137,18 @@ function MyReservationsPage() {
       )}
 
       {/* Filtry */}
-      <div style={{
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '20px',
-        flexWrap: 'wrap'
-      }}>
+      <div className="flex gap-3 mb-6 flex-wrap">
         {['all', 'active', 'past', 'cancelled'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            style={{
-              padding: '10px 20px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: filter === f ? '#6366F1' : 'white',
-              color: filter === f ? 'white' : '#6b7280',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
+            className={`py-2 px-5 rounded-lg font-bold cursor-pointer transition-colors ${
+              filter === f
+                ? 'bg-indigo-600 text-white' // Aktywny filtr
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600' // Nieaktywny
+            }`}
           >
-            {f === 'all' ? 'Wszystkie' : 
+            {f === 'all' ? 'Wszystkie' :
              f === 'active' ? 'Aktywne' :
              f === 'past' ? 'Historia' :
              'Anulowane'}
@@ -176,98 +158,64 @@ function MyReservationsPage() {
 
       {/* Error */}
       {error && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
-          padding: '15px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
+        <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
           ❌ {error}
         </div>
       )}
 
       {/* Lista rezerwacji */}
       {filteredReservations.length === 0 ? (
-        <div style={{
-          backgroundColor: 'white',
-          padding: '40px',
-          borderRadius: '15px',
-          textAlign: 'center',
-          color: '#6b7280'
-        }}>
-          <p style={{ fontSize: '18px' }}>Brak rezerwacji</p>
+        <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
+          <p className="text-lg">Brak rezerwacji</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          {filteredReservations.map(reservation => (
-            <div
-              key={reservation.id}
-              style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '15px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                flexWrap: 'wrap',
-                gap: '20px'
-              }}
-            >
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>
-                  {reservation.parking_lots.name}
-                </h3>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '5px' }}>
-                  📍 {reservation.parking_lots.address}, {reservation.parking_lots.city}
-                </p>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '5px' }}>
-                  🚗 {reservation.license_plate}
-                </p>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>
-                  📅 {new Date(reservation.start_time).toLocaleString('pl-PL')} 
-                  {' → '} 
-                  {new Date(reservation.end_time).toLocaleString('pl-PL')}
-                </p>
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <div style={{
-                  display: 'inline-block',
-                  padding: '5px 15px',
-                  borderRadius: '20px',
-                  backgroundColor: getStatusColor(reservation.status) + '20',
-                  color: getStatusColor(reservation.status),
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  marginBottom: '10px'
-                }}>
-                  {getStatusText(reservation.status)}
+        <div className="flex flex-col gap-4">
+          {filteredReservations.map(reservation => {
+            const statusClasses = getStatusClasses(reservation.status);
+            return (
+              <div
+                key={reservation.id}
+                className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col md:flex-row justify-between items-start gap-6"
+              >
+                {/* Lewa strona - Info */}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {reservation.parking_lots.name}
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-1">
+                    📍 {reservation.parking_lots.address}, {reservation.parking_lots.city}
+                  </p>
+                  <p className="text-gray-400 text-sm mb-1">
+                    🚗 {reservation.license_plate}
+                  </p>
+                  <p className="text-gray-300 text-sm mt-2">
+                    📅 {new Date(reservation.start_time).toLocaleString('pl-PL')}
+                    {' → '}
+                    {new Date(reservation.end_time).toLocaleString('pl-PL')}
+                  </p>
                 </div>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#6366F1', marginBottom: '15px' }}>
-                  {reservation.price} zł
-                </p>
 
-                {['pending', 'active'].includes(reservation.status) && (
-                  <button
-                    onClick={() => handleCancelReservation(reservation.id)}
-                    style={{
-                      padding: '8px 20px',
-                      backgroundColor: '#EF4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Anuluj
-                  </button>
-                )}
+                {/* Prawa strona - Status, Cena, Akcja */}
+                <div className="flex flex-col items-start md:items-end w-full md:w-auto">
+                  <div className={`py-1.5 px-3 rounded-full text-xs font-bold mb-3 ${statusClasses}`}>
+                    {getStatusText(reservation.status)}
+                  </div>
+                  <p className="text-2xl font-bold text-indigo-400 mb-4">
+                    {reservation.price} zł
+                  </p>
+
+                  {['pending', 'active'].includes(reservation.status) && (
+                    <button
+                      onClick={() => handleCancelReservation(reservation.id)}
+                      className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    >
+                      Anuluj
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

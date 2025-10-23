@@ -1,5 +1,3 @@
-// frontend/src/pages/ChargingDashboardPage.jsx
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -89,308 +87,147 @@ function ChargingDashboardPage() {
     });
   };
 
-  const getStatusColor = (status) => {
+  // Zwracamy klasy Tailwind dla DARK MODE
+  const getStatusClasses = (status) => {
     switch (status) {
       case 'active':
-        return { bg: '#DBEAFE', text: '#1E40AF' };
+        return 'bg-blue-900 text-blue-200';
       case 'completed':
-        return { bg: '#D1FAE5', text: '#059669' };
+        return 'bg-green-900 text-green-200';
       case 'cancelled':
-        return { bg: '#FEE2E2', text: '#DC2626' };
+        return 'bg-red-900 text-red-200';
       default:
-        return { bg: '#F3F4F6', text: '#6B7280' };
+        return 'bg-gray-700 text-gray-200';
     }
   };
 
   if (loading) {
     return (
-      <div style={{
-        padding: '40px',
-        textAlign: 'center',
-        fontSize: '18px',
-        color: '#6366F1'
-      }}>
+      <div className="p-10 text-center text-lg text-indigo-400">
         Ładowanie danych...
       </div>
     );
   }
 
   return (
-    <div style={{
-      maxWidth: '1400px',
-      margin: '0 auto',
-      padding: '30px'
-    }}>
+    // ========= ⬇️ GŁÓWNA ZMIANA TŁA ⬇️ =========
+    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
+      
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '30px'
-      }}>
-        <h1 style={{
-          fontSize: '32px',
-          fontWeight: 'bold',
-          color: '#1f2937',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
           ⚡ Moje ładowarki
         </h1>
         <button
           onClick={() => navigate('/map')}
-          style={{
-            backgroundColor: '#F59E0B',
-            color: 'white',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            border: 'none',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
+          // Przycisk pozostaje jasny dla kontrastu
+          className="bg-amber-500 text-white py-3 px-6 rounded-lg font-bold text-base cursor-pointer hover:bg-amber-600 transition-colors duration-200"
         >
           + Dodaj ładowarkę
         </button>
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
+        <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       {/* Statystyki */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        marginBottom: '40px'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          border: '2px solid #F59E0B'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Moje ładowarki
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#F59E0B', margin: 0 }}>
-            {stats.totalChargers}
-          </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+        
+        {/* Karta statystyk (ciemne tło) */}
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border-2 border-amber-500">
+          <p className="text-sm text-gray-400 mb-1">Moje ładowarki</p>
+          <p className="text-4xl font-bold text-amber-500">{stats.totalChargers}</p>
+        </div>
+        
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Aktywne złącza</p>
+          <p className="text-4xl font-bold text-green-500">{stats.activeChargers}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Aktywne złącza
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-            {stats.activeChargers}
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Wszystkie sesje</p>
+          <p className="text-4xl font-bold text-indigo-400">{stats.totalSessions}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Wszystkie sesje
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
-            {stats.totalSessions}
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Aktywne sesje</p>
+          <p className="text-4xl font-bold text-blue-400">{stats.activeSessions}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Aktywne sesje
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1E40AF', margin: 0 }}>
-            {stats.activeSessions}
-          </p>
-        </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Energia dostarczona
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-            {stats.totalEnergy} kWh
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Energia dostarczona</p>
+          <p className="text-4xl font-bold text-green-500">{stats.totalEnergy} kWh</p>
         </div>
       </div>
 
       {/* Moje ładowarki */}
-      <div style={{ marginBottom: '40px' }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#1f2937'
-        }}>
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-5 text-white">
           Lista moich ładowarek
         </h2>
 
         {myChargers.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            padding: '60px 40px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚡</div>
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
+          <div className="bg-gray-800 p-10 md:p-16 rounded-xl text-center shadow-lg border border-gray-700">
+            <div className="text-6xl mb-4">⚡</div>
+            <h3 className="text-xl font-bold text-white mb-2">
               Nie masz jeszcze ładowarek
             </h3>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+            <p className="text-gray-400 mb-6">
               Dodaj pierwszą ładowarkę na mapie
             </p>
             <button
               onClick={() => navigate('/map')}
-              style={{
-                backgroundColor: '#F59E0B',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                border: 'none',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
+              className="bg-amber-500 text-white py-3 px-6 rounded-lg font-bold cursor-pointer hover:bg-amber-600 transition-colors"
             >
               Przejdź do mapy
             </button>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
-            gap: '20px'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myChargers.map((charger) => (
               <div
                 key={charger.id}
-                style={{
-                  backgroundColor: 'white',
-                  padding: '24px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: '1px solid #e5e7eb',
-                  transition: 'transform 0.2s, box-shadow 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                }}
+                className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-gray-600"
               >
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'start',
-                  marginBottom: '16px'
-                }}>
+                <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: 'bold',
-                      color: '#1f2937',
-                      margin: '0 0 8px 0'
-                    }}>
+                    <h3 className="text-lg font-bold text-white mb-1">
                       {charger.name}
                     </h3>
-                    <p style={{
-                      color: '#6b7280',
-                      fontSize: '14px',
-                      margin: 0
-                    }}>
+                    <p className="text-gray-400 text-sm">
                       {charger.address}
                       {charger.city && `, ${charger.city}`}
                     </p>
                   </div>
-                  <span style={{
-                    backgroundColor: charger.available_connectors > 0 ? '#D1FAE5' : '#FEE2E2',
-                    color: charger.available_connectors > 0 ? '#059669' : '#DC2626',
-                    padding: '6px 12px',
-                    borderRadius: '16px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap'
-                  }}>
+                  {/* Dynamiczny tag statusu (wersja dark) */}
+                  <span className={`py-1 px-3 rounded-full text-xs font-bold whitespace-nowrap ${
+                    charger.available_connectors > 0
+                      ? 'bg-green-900 text-green-200'
+                      : 'bg-red-900 text-red-200'
+                  }`}>
                     {charger.available_connectors}/{charger.total_connectors} wolne
                   </span>
                 </div>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '16px',
-                  paddingTop: '16px',
-                  borderTop: '1px solid #e5e7eb'
-                }}>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-4 border-t border-gray-700">
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Typ ładowarki
-                    </p>
-                    <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                      {charger.charger_type}
-                    </p>
+                    <p className="text-xs text-gray-400 mb-0.5">Typ ładowarki</p>
+                    <p className="text-base font-bold text-gray-100">{charger.charger_type}</p>
                   </div>
-
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Moc maksymalna
-                    </p>
-                    <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#F59E0B', margin: 0 }}>
-                      {charger.max_power_kw} kW
-                    </p>
+                    <p className="text-xs text-gray-400 mb-0.5">Moc maksymalna</p>
+                    <p className="text-base font-bold text-amber-500">{charger.max_power_kw} kW</p>
                   </div>
-
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Cena za kWh
-                    </p>
-                    <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-                      {charger.price_per_kwh} zł
-                    </p>
+                    <p className="text-xs text-gray-400 mb-0.5">Cena za kWh</p>
+                    <p className="text-base font-bold text-green-500">{charger.price_per_kwh} zł</p>
                   </div>
-
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Liczba złączy
-                    </p>
-                    <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                      {charger.total_connectors}
-                    </p>
+                    <p className="text-xs text-gray-400 mb-0.5">Liczba złączy</p>
+                    <p className="text-base font-bold text-gray-100">{charger.total_connectors}</p>
                   </div>
                 </div>
               </div>
@@ -401,90 +238,48 @@ function ChargingDashboardPage() {
 
       {/* Moje sesje ładowania */}
       <div>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#1f2937'
-        }}>
+        <h2 className="text-2xl font-bold mb-5 text-white">
           Historia sesji ładowania
         </h2>
 
         {mySessions.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            color: '#6b7280',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
             Nie masz jeszcze żadnych sesji ładowania
           </div>
         ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            overflow: 'hidden'
-          }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse'
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>
-                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                      Stacja
-                    </th>
-                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                      Data rozpoczęcia
-                    </th>
-                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                      Energia
-                    </th>
-                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                      Koszt
-                    </th>
-                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                      Status
-                    </th>
+          // Kontener tabeli
+          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stacja</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data rozpoczęcia</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Energia</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koszt</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-gray-800 divide-y divide-gray-700">
                   {mySessions.map((session) => {
-                    const statusColors = getStatusColor(session.status);
+                    const statusClasses = getStatusClasses(session.status);
                     return (
-                      <tr key={session.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                        <td style={{ padding: '16px' }}>
-                          <div>
-                            <div style={{ fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>
-                              {session.charging_stations?.name || 'Nieznana stacja'}
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#6B7280' }}>
-                              {session.charging_stations?.address}
-                            </div>
-                          </div>
+                      <tr key={session.id} className="hover:bg-gray-700 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-white">{session.charging_stations?.name || 'Nieznana stacja'}</div>
+                          <div className="text-sm text-gray-400">{session.charging_stations?.address}</div>
                         </td>
-                        <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {formatDate(session.start_time)}
                         </td>
-                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: '600', color: '#F59E0B' }}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-500">
                           {session.energy_delivered_kwh ? `${session.energy_delivered_kwh} kWh` : '-'}
                         </td>
-                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: '600', color: '#059669' }}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">
                           {session.total_cost ? `${session.total_cost} zł` : '-'}
                         </td>
-                        <td style={{ padding: '16px' }}>
-                          <span style={{
-                            backgroundColor: statusColors.bg,
-                            color: statusColors.text,
-                            padding: '6px 12px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                          }}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`py-1.5 px-3 rounded-full text-xs font-bold ${statusClasses}`}>
                             {session.status === 'active' ? 'Aktywna' :
                              session.status === 'completed' ? 'Zakończona' :
                              session.status === 'cancelled' ? 'Anulowana' : session.status}

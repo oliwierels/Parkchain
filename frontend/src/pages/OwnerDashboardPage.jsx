@@ -1,7 +1,4 @@
-// frontend/src/pages/OwnerDashboardPage.jsx
-
 import { useState, useEffect } from 'react';
-import { parkingAPI, reservationAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 function OwnerDashboardPage() {
@@ -92,238 +89,141 @@ function OwnerDashboardPage() {
     });
   };
 
+  // Funkcje pomocnicze do statusów (dla dark mode)
+  const getStatusClasses = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-blue-900 text-blue-200';
+      case 'active':
+        return 'bg-green-900 text-green-200';
+      case 'completed':
+        return 'bg-gray-700 text-gray-200';
+      case 'cancelled':
+        return 'bg-red-900 text-red-200';
+      default:
+        return 'bg-gray-700 text-gray-200';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending': return 'Oczekująca';
+      case 'active': return 'Aktywna';
+      case 'completed': return 'Zakończona';
+      case 'cancelled': return 'Anulowana';
+      default: return status;
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{
-        padding: '40px',
-        textAlign: 'center',
-        fontSize: '18px',
-        color: '#6366F1'
-      }}>
+      <div className="p-10 text-center text-lg text-indigo-400">
         Ładowanie danych...
       </div>
     );
   }
 
   return (
-    <div style={{
-      maxWidth: '1400px',
-      margin: '0 auto',
-      padding: '30px'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '30px'
-      }}>
-        <h1 style={{
-          fontSize: '32px',
-          fontWeight: 'bold',
-          color: '#1f2937'
-        }}>
+    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
+      
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-white">
           Panel właściciela
         </h1>
         <button
           onClick={() => navigate('/add-parking')}
-          style={{
-            backgroundColor: '#6366F1',
-            color: 'white',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            border: 'none',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
+          className="bg-indigo-600 text-white py-3 px-6 rounded-lg font-bold text-base cursor-pointer hover:bg-indigo-700 transition-colors"
         >
           + Dodaj parking
         </button>
       </div>
 
       {error && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
+        <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       {/* Statystyki */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '40px'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Moje parkingi
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-            {stats.totalParkings}
-          </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Moje parkingi</p>
+          <p className="text-4xl font-bold text-white">{stats.totalParkings}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Aktywne parkingi
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981', margin: 0 }}>
-            {stats.activeParkings}
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Aktywne parkingi</p>
+          <p className="text-4xl font-bold text-green-500">{stats.activeParkings}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Rezerwacje
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
-            {stats.totalReservations}
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Rezerwacje</p>
+          <p className="text-4xl font-bold text-indigo-400">{stats.totalReservations}</p>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Zarobki
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-            {stats.totalEarnings} zł
-          </p>
+        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+          <p className="text-sm text-gray-400 mb-1">Zarobki</p>
+          <p className="text-4xl font-bold text-green-500">{stats.totalEarnings} zł</p>
         </div>
       </div>
 
       {/* Lista parkingów */}
-      <div style={{ marginBottom: '40px' }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#1f2937'
-        }}>
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-5 text-white">
           Moje parkingi
         </h2>
 
         {myParkings.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            color: '#6b7280'
-          }}>
-            <p style={{ fontSize: '18px', marginBottom: '16px' }}>
+          <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
+            <p className="text-lg mb-4">
               Nie masz jeszcze żadnych parkingów
             </p>
             <button
               onClick={() => navigate('/add-parking')}
-              style={{
-                backgroundColor: '#6366F1',
-                color: 'white',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
+              className="bg-indigo-600 text-white py-2 px-5 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
             >
               Dodaj pierwszy parking
             </button>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gap: '16px'
-          }}>
+          <div className="grid gap-4">
             {myParkings.map(parking => {
-              const parkingReservations = allReservations.filter(r => r.lot_id === parking.id);
-              const activeReservations = parkingReservations.filter(r => r.status === 'pending' || r.status === 'active');
+              const activeReservations = allReservations.filter(
+                r => r.lot_id === parking.id && (r.status === 'pending' || r.status === 'active')
+              );
 
               return (
                 <div
                   key={parking.id}
-                  style={{
-                    backgroundColor: 'white',
-                    padding: '24px',
-                    borderRadius: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                  }}
+                  className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col sm:flex-row justify-between items-start gap-4"
                 >
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'start',
-                    marginBottom: '16px'
-                  }}>
-                    <div>
-                      <h3 style={{
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        margin: '0 0 8px 0',
-                        color: '#1f2937'
-                      }}>
-                        {parking.name}
-                      </h3>
-                      <p style={{
-                        fontSize: '14px',
-                        color: '#6b7280',
-                        margin: '0 0 8px 0'
-                      }}>
-                        {parking.address}
-                      </p>
-                      <p style={{
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        color: '#6366F1',
-                        margin: 0
-                      }}>
-                        {parking.price_per_hour} zł/godz
-                      </p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        backgroundColor: parking.available_spots > 0 ? '#d1fae5' : '#fee2e2',
-                        color: parking.available_spots > 0 ? '#065f46' : '#991b1b'
-                      }}>
-                        {parking.available_spots}/{parking.total_spots} miejsc
-                      </span>
-                      <p style={{
-                        fontSize: '14px',
-                        color: '#6b7280',
-                        margin: '8px 0 0 0'
-                      }}>
-                        {activeReservations.length} aktywnych rezerwacji
-                      </p>
-                    </div>
+                  {/* Info */}
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {parking.name}
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-2">
+                      {parking.address}
+                    </p>
+                    <p className="text-lg font-bold text-indigo-400">
+                      {parking.price_per_hour} zł/godz
+                    </p>
+                  </div>
+                  {/* Status */}
+                  <div className="text-left sm:text-right w-full sm:w-auto">
+                    <span
+                      className={`py-1.5 px-3 rounded-md text-sm font-bold whitespace-nowrap ${
+                        parking.available_spots > 0
+                          ? 'bg-green-900 text-green-200'
+                          : 'bg-red-900 text-red-200'
+                      }`}
+                    >
+                      {parking.available_spots}/{parking.total_spots} miejsc
+                    </span>
+                    <p className="text-sm text-gray-400 mt-2">
+                      {activeReservations.length} aktywnych rezerwacji
+                    </p>
                   </div>
                 </div>
               );
@@ -334,153 +234,63 @@ function OwnerDashboardPage() {
 
       {/* Rezerwacje */}
       <div>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#1f2937'
-        }}>
+        <h2 className="text-2xl font-bold mb-5 text-white">
           Rezerwacje na moich parkingach
         </h2>
 
         {allReservations.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            color: '#6b7280'
-          }}>
-            <p style={{ fontSize: '18px' }}>
+          <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
+            <p className="text-lg">
               Brak rezerwacji
             </p>
           </div>
         ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f9fafb' }}>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Parking
-                  </th>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Użytkownik
-                  </th>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Start
-                  </th>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Koniec
-                  </th>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Cena
-                  </th>
-                  <th style={{
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#6b7280'
-                  }}>
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {allReservations.map((reservation, index) => {
-                  const parking = myParkings.find(p => p.id === reservation.lot_id);
+          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Parking</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Użytkownik</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Start</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koniec</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cena</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-gray-800 divide-y divide-gray-700">
+                  {allReservations.map((reservation) => {
+                    const parking = myParkings.find(p => p.id === reservation.lot_id);
+                    const statusClasses = getStatusClasses(reservation.status);
 
-                  return (
-                    <tr
-                      key={reservation.id}
-                      style={{
-                        borderTop: index > 0 ? '1px solid #e5e7eb' : 'none'
-                      }}
-                    >
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#1f2937' }}>
-                        {parking?.name || 'Nieznany'}
-                      </td>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#1f2937' }}>
-                        {reservation.users?.full_name || reservation.users?.email || 'Nieznany'}
-                      </td>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#6b7280' }}>
-                        {formatDate(reservation.start_time)}
-                      </td>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#6b7280' }}>
-                        {formatDate(reservation.end_time)}
-                      </td>
-                      <td style={{
-                        padding: '16px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        color: '#059669'
-                      }}>
-                        {parseFloat(reservation.price).toFixed(2)} zł
-                      </td>
-                      <td style={{ padding: '16px' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '4px 12px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          backgroundColor:
-                            reservation.status === 'pending' ? '#dbeafe' :
-                            reservation.status === 'active' ? '#d1fae5' :
-                            reservation.status === 'completed' ? '#f3f4f6' :
-                            '#fee2e2',
-                          color:
-                            reservation.status === 'pending' ? '#1e40af' :
-                            reservation.status === 'active' ? '#065f46' :
-                            reservation.status === 'completed' ? '#6b7280' :
-                            '#991b1b'
-                        }}>
-                          {reservation.status === 'pending' ? 'Oczekująca' :
-                           reservation.status === 'active' ? 'Aktywna' :
-                           reservation.status === 'completed' ? 'Zakończona' :
-                           'Anulowana'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={reservation.id} className="hover:bg-gray-700 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                          {parking?.name || 'Nieznany'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {reservation.users?.full_name || reservation.users?.email || 'Nieznany'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                          {formatDate(reservation.start_time)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                          {formatDate(reservation.end_time)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">
+                          {parseFloat(reservation.price).toFixed(2)} zł
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`py-1.5 px-3 rounded-full text-xs font-bold ${statusClasses}`}>
+                            {getStatusText(reservation.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
