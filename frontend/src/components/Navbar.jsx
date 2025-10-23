@@ -42,6 +42,29 @@ function Navbar() {
                 <NavLink to="/map" className={getLinkClasses}>
                   Mapa
                 </NavLink>
+
+                {/* DeCharge Hackathon - Featured Links */}
+                <NavLink
+                  to="/live-feed"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-purple-600 text-white font-bold px-3 py-2 rounded-md text-sm'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 px-3 py-2 rounded-md text-sm font-bold transition-all'
+                  }
+                >
+                  ⚡ Live Feed
+                </NavLink>
+                <NavLink
+                  to="/marketplace"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-green-600 text-white font-bold px-3 py-2 rounded-md text-sm'
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 px-3 py-2 rounded-md text-sm font-bold transition-all'
+                  }
+                >
+                  💎 Marketplace
+                </NavLink>
+
                 <NavLink to="/add-parking" className={getLinkClasses}>
                   Dodaj parking
                 </NavLink>
