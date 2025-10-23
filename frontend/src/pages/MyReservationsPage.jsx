@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { reservationAPI } from '../services/api'; // Używamy tylko tego
+import EndChargingSessionModal from '../components/EndChargingSessionModal';
 
 function MyReservationsPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   // Ten stan będzie teraz przechowywał ustandaryzowane dane
-  const [reservations, setReservations] = useState([]); 
+  const [reservations, setReservations] = useState([]);
   const [stats, setStats] = useState({
     totalReservations: 0,
     activeReservations: 0,
@@ -15,6 +16,8 @@ function MyReservationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [showEndChargingModal, setShowEndChargingModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -117,7 +120,7 @@ function MyReservationsPage() {
     const confirmationText = type === 'parking'
       ? 'Czy na pewno chcesz anulować tę rezerwację?'
       : 'Czy na pewno chcesz anulować tę sesję ładowania?';
-      
+
     if (!window.confirm(confirmationText)) {
       return;
     }
@@ -130,7 +133,7 @@ function MyReservationsPage() {
         // Anulowanie sesji ładowania (musimy użyć fetch, jak zakładaliśmy)
         // Zakładam, że endpoint to /cancel, tak jak w Twoim API
         const response = await fetch(`http://localhost:3000/api/charging-sessions/${id}/cancel`, {
-          method: 'POST', 
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -139,13 +142,26 @@ function MyReservationsPage() {
           throw new Error('Nie udało się anulować sesji ładowania');
         }
       }
-      
+
       fetchData(); // Odświeżamy całą listę
       alert('Anulowano pomyślnie');
     } catch (err) {
       console.error(err);
       alert('Nie udało się anulować');
     }
+  };
+
+  // Funkcja do otwierania modala zakończenia sesji ładowania
+  const handleEndChargingSession = (reservation) => {
+    setSelectedSession(reservation);
+    setShowEndChargingModal(true);
+  };
+
+  // Funkcja wywoływana po zakończeniu sesji
+  const handleChargingSessionEnded = () => {
+    setShowEndChargingModal(false);
+    setSelectedSession(null);
+    fetchData(); // Odśwież listę rezerwacji
   };
 
   // Reszta funkcji pomocniczych (bez zmian)
@@ -283,19 +299,39 @@ function MyReservationsPage() {
                     )}
                   </div>
                   {['pending', 'active'].includes(reservation.status) && (
-                    <button
-                      // Przekazujemy ID i TYP do funkcji anulującej
-                      onClick={() => handleCancelReservation(reservation.id, reservation.type)}
-                      className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
-                    >
-                      Anuluj
-                    </button>
+                    <div className="flex flex-col gap-2 w-full md:w-auto">
+                      {/* Dla aktywnych sesji ładowania pokaż przycisk "Zakończ ładowanie" */}
+                      {reservation.type === 'charging' && reservation.status === 'active' && (
+                        <button
+                          onClick={() => handleEndChargingSession(reservation)}
+                          className="py-2 px-5 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 transition-colors"
+                        >
+                          ✅ Zakończ ładowanie
+                        </button>
+                      )}
+                      {/* Przycisk anuluj dla wszystkich pending/active */}
+                      <button
+                        onClick={() => handleCancelReservation(reservation.id, reservation.type)}
+                        className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
+                      >
+                        ❌ Anuluj
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Modal zakończenia sesji ładowania */}
+      {showEndChargingModal && selectedSession && (
+        <EndChargingSessionModal
+          session={selectedSession}
+          onClose={() => setShowEndChargingModal(false)}
+          onSuccess={handleChargingSessionEnded}
+        />
       )}
     </div>
   );
