@@ -135,20 +135,8 @@ const handleMapSelect = (details) => {
 
   if (!user) {
     return (
-      <div style={{
-        minHeight: 'calc(100vh - 64px)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px'
-      }}>
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
-          padding: '20px',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
+      <div className="min-h-screen flex justify-center items-center p-5 bg-gray-900">
+        <div className="bg-red-800 text-red-100 p-5 rounded-lg text-center">
           Musisz być zalogowany aby dodać parking
         </div>
       </div>
@@ -156,57 +144,25 @@ const handleMapSelect = (details) => {
   }
 
   return (
-    <div style={{
-      minHeight: 'calc(100vh - 64px)',
-      backgroundColor: 'black',
-      padding: '40px 20px'
-    }}>
-      <div style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-    
-        padding: '40px',
-        borderRadius: '15px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-      }}>
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 'bold',
-          marginBottom: '10px',
-          color: '#1f2937'
-        }}>
+    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-3">
           Dodaj nowy parking
         </h1>
-        
-        <p style={{
-          color: '#6b7280',
-          marginBottom: '30px',
-          fontSize: '14px'
-        }}>
+
+        <p className="text-gray-400 mb-8 text-sm">
           Wypełnij poniższy formularz, aby dodać swój parking do systemu
         </p>
 
         {error && (
-          <div style={{
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px'
-          }}>
+          <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6 text-sm">
             ❌ {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: 'bold',
-              color: '#374151'
-            }}>
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+          <div className="mb-5">
+            <label className="block mb-2 font-bold text-gray-300 text-sm">
               Nazwa parkingu *
             </label>
             <input
@@ -216,123 +172,70 @@ const handleMapSelect = (details) => {
               onChange={handleChange}
               required
               placeholder="np. Parking Centrum"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px'
-              }}
+              className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: 'bold',
-              color: '#374151'
-            }}>
+          <div className="mb-5">
+            <label className="block mb-2 font-bold text-gray-300 text-sm">
               Adres *
             </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            required
-            placeholder="ul. Marszałkowska 1, Warszawa"
-            style={{
-              flex: 1,
-              padding: '12px',
-              border: '2px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-          />
-          <button
-            type="button"
-            onClick={handleGeocodeAddress}
-            disabled={geocoding}
-            title="Znajdź współrzędne na podstawie adresu" // Tooltip
-            style={{
-              padding: '12px 20px',
-              backgroundColor: geocoding ? '#9ca3af' : '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: geocoding ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {geocoding ? '...' : 'Znajdź'}
-          </button>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+                placeholder="ul. Marszałkowska 1, Warszawa"
+                className="flex-1 p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleGeocodeAddress}
+                disabled={geocoding}
+                title="Znajdź współrzędne na podstawie adresu"
+                className={`py-3 px-5 rounded-lg font-bold text-white whitespace-nowrap transition-colors ${
+                  geocoding
+                    ? 'bg-gray-600 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 cursor-pointer'
+                }`}
+              >
+                {geocoding ? '...' : 'Znajdź'}
+              </button>
 
-          {/* === NOWY PRZYCISK Z IKONĄ MAPY === */}
-          <button
-            type="button"
-            onClick={() => setShowMapModal(true)}
-            title="Wybierz lokalizację z mapy" // Tooltip
-            style={{
-              padding: '12px 15px',
-              backgroundColor: '#6366F1', // Kolor fioletowy
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '18px' // Zwiększamy rozmiar dla ikony
-            }}
-          >
-            <FaMapMarkerAlt />
-          </button>
-          {/* === KONIEC NOWEGO PRZYCISKU === */}
-        </div>
-            <div style={{ marginBottom: '20px' }}>
-  <label style={{
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: 'bold',
-    color: '#374151'
-  }}>
-    Miasto *
-  </label>
-  <input
-    type="text"
-    name="city"
-    value={formData.city}
-    onChange={handleChange}
-    required
-    placeholder="Warszawa"
-    style={{
-      width: '100%',
-      padding: '12px',
-      border: '2px solid #e5e7eb',
-      borderRadius: '8px',
-      fontSize: '16px'
-    }}
-  />
-</div>
-            <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '5px', display: 'block' }}>
-          Wpisz adres i kliknij "Znajdź" lub wybierz lokalizację z mapy <FaMapMarkerAlt style={{ display: 'inline', margin: '0 2px' }}/>
-        </small>
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                title="Wybierz lokalizację z mapy"
+                className="py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold cursor-pointer text-lg transition-colors"
+              >
+                <FaMapMarkerAlt />
+              </button>
+            </div>
+            <small className="text-gray-400 text-xs mt-2 block">
+              Wpisz adres i kliknij "Znajdź" lub wybierz lokalizację z mapy <FaMapMarkerAlt className="inline mx-0.5"/>
+            </small>
           </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '20px',
-            marginBottom: '20px' 
-          }}>
+          <div className="mb-5">
+            <label className="block mb-2 font-bold text-gray-300 text-sm">
+              Miasto *
+            </label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              required
+              placeholder="Warszawa"
+              className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
+              <label className="block mb-2 font-bold text-gray-300 text-sm">
                 Szerokość geograficzna
               </label>
               <input
@@ -342,25 +245,13 @@ const handleMapSelect = (details) => {
                 value={formData.latitude}
                 onChange={handleChange}
                 placeholder="52.2297"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  backgroundColor: '#f9fafb'
-                }}
+                className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-gray-400"
                 readOnly
               />
             </div>
 
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
+              <label className="block mb-2 font-bold text-gray-300 text-sm">
                 Długość geograficzna
               </label>
               <input
@@ -370,56 +261,24 @@ const handleMapSelect = (details) => {
                 value={formData.longitude}
                 onChange={handleChange}
                 placeholder="21.0122"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  backgroundColor: '#f9fafb'
-                }}
+                className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-gray-400"
                 readOnly
               />
             </div>
           </div>
 
-                    {/* Sekcja cen */}
-          <div style={{
-            backgroundColor: '#f0f9ff',
-            padding: '20px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            border: '2px solid #bfdbfe'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              marginBottom: '15px',
-              color: '#1e40af'
-            }}>
+          {/* Sekcja cen */}
+          <div className="bg-blue-900 bg-opacity-30 p-5 rounded-xl mb-5 border-2 border-blue-700">
+            <h3 className="text-lg font-bold mb-4 text-blue-300">
               💰 Cennik (elastyczne taryfy)
             </h3>
-            <p style={{
-              fontSize: '13px',
-              color: '#6b7280',
-              marginBottom: '20px'
-            }}>
+            <p className="text-xs text-gray-400 mb-5">
               Ustaw ceny dla różnych okresów wynajmu. System automatycznie wybierze najtańszą opcję dla klienta.
             </p>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '15px'
-            }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: '#374151',
-                  fontSize: '14px'
-                }}>
+                <label className="block mb-2 font-bold text-gray-300 text-sm">
                   Cena za godzinę (zł) *
                 </label>
                 <input
@@ -430,27 +289,15 @@ const handleMapSelect = (details) => {
                   onChange={handleChange}
                   required
                   placeholder="10.00"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
+                  className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                 />
-                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                <small className="text-xs text-gray-400 mt-1 block">
                   Podstawowa stawka
                 </small>
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: '#374151',
-                  fontSize: '14px'
-                }}>
+                <label className="block mb-2 font-bold text-gray-300 text-sm">
                   Cena za dzień (zł)
                 </label>
                 <input
@@ -460,27 +307,15 @@ const handleMapSelect = (details) => {
                   value={formData.price_per_day}
                   onChange={handleChange}
                   placeholder="60.00"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
+                  className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                 />
-                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                <small className="text-xs text-gray-400 mt-1 block">
                   Opcjonalne (24h)
                 </small>
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: '#374151',
-                  fontSize: '14px'
-                }}>
+                <label className="block mb-2 font-bold text-gray-300 text-sm">
                   Cena za tydzień (zł)
                 </label>
                 <input
@@ -490,27 +325,15 @@ const handleMapSelect = (details) => {
                   value={formData.price_per_week}
                   onChange={handleChange}
                   placeholder="350.00"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
+                  className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                 />
-                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                <small className="text-xs text-gray-400 mt-1 block">
                   Opcjonalne (7 dni)
                 </small>
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: 'bold',
-                  color: '#374151',
-                  fontSize: '14px'
-                }}>
+                <label className="block mb-2 font-bold text-gray-300 text-sm">
                   Cena za miesiąc (zł)
                 </label>
                 <input
@@ -520,73 +343,23 @@ const handleMapSelect = (details) => {
                   value={formData.price_per_month}
                   onChange={handleChange}
                   placeholder="1200.00"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
+                  className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                 />
-                <small style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                <small className="text-xs text-gray-400 mt-1 block">
                   Opcjonalne (30 dni)
                 </small>
               </div>
             </div>
 
-            <div style={{
-              backgroundColor: '#eff6ff',
-              padding: '12px',
-              borderRadius: '8px',
-              marginTop: '15px',
-              fontSize: '12px',
-              color: '#1e40af'
-            }}>
+            <div className="bg-blue-900 bg-opacity-40 p-3 rounded-lg mt-4 text-xs text-blue-200">
               <strong>Wskazówka:</strong> Ustaw niższe ceny dla dłuższych okresów, aby zachęcić do długoterminowego wynajmu.
               Np. dzień = 20h godzinowa, tydzień = 30% taniej, miesiąc = 40% taniej.
             </div>
           </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '20px',
-            marginBottom: '20px' 
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
-                Cena za godzinę (zł) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                name="price_per_hour"
-                value={formData.price_per_hour}
-                onChange={handleChange}
-                required
-                placeholder="10.00"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 'bold',
-                color: '#374151'
-              }}>
+              <label className="block mb-2 font-bold text-gray-300 text-sm">
                 Liczba miejsc *
               </label>
               <input
@@ -596,13 +369,7 @@ const handleMapSelect = (details) => {
                 onChange={handleChange}
                 required
                 placeholder="50"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
+                className="w-full p-3 border-2 border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
               />
             </div>
           </div>
@@ -610,18 +377,11 @@ const handleMapSelect = (details) => {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              backgroundColor: loading ? '#9ca3af' : '#6366F1',
-              color: 'white',
-              padding: '15px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '10px'
-            }}
+            className={`w-full py-4 text-base font-bold text-white border-none rounded-lg mt-3 transition-colors ${
+              loading
+                ? 'bg-gray-600 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
+            }`}
           >
             {loading ? 'Dodawanie...' : '✅ Dodaj parking'}
           </button>
