@@ -5,6 +5,19 @@
 -- ========================================
 
 -- ========================================
+-- 0. FUNKCJE POMOCNICZE (wymagane przez triggery)
+-- ========================================
+
+-- Funkcja do automatycznej aktualizacji kolumny updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- ========================================
 -- 1. CHARGING STATIONS (Stacje ładowania)
 -- ========================================
 
