@@ -13,13 +13,17 @@ function HomePage() {
 
   // Auto-redirect timer
   useEffect(() => {
-    if (autoRedirectCancelled) return;
+    if (autoRedirectCancelled || isTransitioning) return;
 
     const interval = setInterval(() => {
       setAutoRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          handleGoToMap();
+          setAutoRedirectCancelled(true);
+          setIsTransitioning(true);
+          setTimeout(() => {
+            navigate('/map');
+          }, 600);
           return 0;
         }
         return prev - 1;
@@ -27,7 +31,7 @@ function HomePage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [autoRedirectCancelled]);
+  }, [autoRedirectCancelled, isTransitioning, navigate]);
 
   // Cancel auto-redirect on scroll
   useEffect(() => {
