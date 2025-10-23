@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { reservationAPI } from '../services/api';
-import axios from 'axios';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -44,25 +43,80 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     try {
       setCalculatingPrice(true);
-      const token = localStorage.getItem('token');
 
-      const response = await axios.post(
-        'http://localhost:3000/api/reservations/calculate-price',
-        {
-          lot_id: parking.id,
-          start_time: start.toISOString(),
-          end_time: end.toISOString()
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      // Oblicz czas trwania
+      const durationMs = end.getTime() - start.getTime();
+      const hours = durationMs / (1000 * 60 * 60);
+      const days = hours / 24;
+      const weeks = days / 7;
+      const months = days / 30;
+
+      // Dostępne opcje cenowe
+      const allOptions = [];
+
+      // Opcja 1: Cena godzinowa
+      if (parking.price_per_hour || parking.hourly_rate) {
+        const hourlyRate = parking.price_per_hour || parking.hourly_rate;
+        allOptions.push({
+          type: 'hourly',
+          label: 'Stawka godzinowa',
+          price: parseFloat((hours * hourlyRate).toFixed(2))
+        });
+      }
+
+      // Opcja 2: Cena dzienna (jeśli >= 1 dzień)
+      if (parking.price_per_day && days >= 1) {
+        const fullDays = Math.ceil(days);
+        allOptions.push({
+          type: 'daily',
+          label: 'Stawka dzienna',
+          price: parseFloat((fullDays * parking.price_per_day).toFixed(2))
+        });
+      }
+
+      // Opcja 3: Cena tygodniowa (jeśli >= 1 tydzień)
+      if (parking.price_per_week && weeks >= 1) {
+        const fullWeeks = Math.ceil(weeks);
+        allOptions.push({
+          type: 'weekly',
+          label: 'Stawka tygodniowa',
+          price: parseFloat((fullWeeks * parking.price_per_week).toFixed(2))
+        });
+      }
+
+      // Opcja 4: Cena miesięczna (jeśli >= 1 miesiąc)
+      if (parking.price_per_month && months >= 1) {
+        const fullMonths = Math.ceil(months);
+        allOptions.push({
+          type: 'monthly',
+          label: 'Stawka miesięczna',
+          price: parseFloat((fullMonths * parking.price_per_month).toFixed(2))
+        });
+      }
+
+      // Znajdź najtańszą opcję
+      if (allOptions.length === 0) {
+        console.error('❌ Brak dostępnych opcji cenowych dla parkingu');
+        setPriceCalculation(null);
+        setCalculatingPrice(false);
+        return;
+      }
+
+      const bestOption = allOptions.reduce((min, option) =>
+        option.price < min.price ? option : min
       );
 
-      console.log('💰 Obliczona cena:', response.data);
-      setPriceCalculation(response.data);
+      const calculation = {
+        price: bestOption.price,
+        pricingType: bestOption.type,
+        pricingLabel: bestOption.label,
+        hours: hours,
+        days: days,
+        allOptions: allOptions
+      };
+
+      console.log('💰 Obliczona cena:', calculation);
+      setPriceCalculation(calculation);
     } catch (err) {
       console.error('Błąd obliczania ceny:', err);
       setPriceCalculation(null);
