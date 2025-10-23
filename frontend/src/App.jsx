@@ -13,6 +13,8 @@ import OwnerDashboardPage from './pages/OwnerDashboardPage';
 import ChargingDashboardPage from './pages/ChargingDashboardPage';
 import LiveFeedPage from './pages/LiveFeedPage';
 import PointsMarketplacePage from './pages/PointsMarketplacePage';
+import BadgesPage from './pages/BadgesPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 function App() {
   return (
@@ -42,6 +44,8 @@ function App() {
               {/* DeCharge Hackathon */}
               <Route path="/live-feed" element={<LiveFeedPage />} />
               <Route path="/marketplace" element={<PointsMarketplacePage />} />
+              <Route path="/badges" element={<BadgesPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
             </Routes>
           </div>
         </BrowserRouter>

@@ -64,6 +64,16 @@ function Navbar() {
                 >
                   💎 Marketplace
                 </NavLink>
+                <NavLink
+                  to="/badges"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-amber-600 text-white font-bold px-3 py-2 rounded-md text-sm'
+                      : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700 px-3 py-2 rounded-md text-sm font-bold transition-all'
+                  }
+                >
+                  🏅 Badges
+                </NavLink>
 
                 <NavLink to="/add-parking" className={getLinkClasses}>
                   Dodaj parking
@@ -76,6 +86,9 @@ function Navbar() {
                 </NavLink>
                 <NavLink to="/my-chargers" className={getLinkClasses}>
                   Moje ładowarki
+                </NavLink>
+                <NavLink to="/analytics" className={getLinkClasses}>
+                  Analytics
                 </NavLink>
               </div>
             </div>

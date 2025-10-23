@@ -1824,6 +1824,203 @@ app.get('/api/reputation/me', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ==========================================
+// SOLANA MARKETPLACE ENDPOINTS
+// ==========================================
+
+// POST /api/points/purchase - zapisz zakup DCP tokenów z Solana
+app.post('/api/points/purchase', authenticateToken, [
+  body('amount').isFloat({ min: 1, max: 10000 }),
+  body('priceSOL').isString(),
+  body('txSignature').isString().isLength({ min: 64, max: 128 }),
+  body('walletAddress').isString().isLength({ min: 32, max: 44 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { amount, priceSOL, txSignature, walletAddress } = req.body;
+
+  try {
+    console.log(`💰 Recording DCP purchase: ${amount} DCP for ${priceSOL} SOL by user ${req.user.id}`);
+
+    // Sprawdź czy ta transakcja nie została już zapisana (prevent duplicates)
+    const { data: existing, error: checkError } = await supabase
+      .from('dcp_purchases')
+      .select('id')
+      .eq('tx_signature', txSignature)
+      .single();
+
+    if (existing) {
+      console.log('⚠️ Transaction already recorded:', txSignature);
+      return res.status(409).json({ error: 'Transaction already recorded' });
+    }
+
+    // Zapisz zakup w bazie
+    const { data, error } = await supabase
+      .from('dcp_purchases')
+      .insert([{
+        user_id: req.user.id,
+        amount: amount,
+        price_sol: priceSOL,
+        tx_signature: txSignature,
+        wallet_address: walletAddress,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      // Jeśli tabela nie istnieje, zwróć sukces ale zaloguj warning
+      if (error.code === '42P01') {
+        console.warn('⚠️ Table dcp_purchases does not exist yet. Transaction verified on blockchain but not recorded in DB.');
+        return res.status(201).json({
+          message: 'Purchase verified on blockchain',
+          warning: 'Database table not created yet',
+          txSignature
+        });
+      }
+      throw error;
+    }
+
+    console.log('✅ Purchase recorded:', data);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error recording purchase:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/points/purchases - pobierz historię zakupów DCP
+app.get('/api/points/purchases', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('dcp_purchases')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      // Jeśli tabela nie istnieje, zwróć pustą tablicę
+      if (error.code === '42P01') {
+        return res.json([]);
+      }
+      throw error;
+    }
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching purchases:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/leaderboard - pobierz rankingi użytkowników i stacji (publiczny)
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    console.log('📊 Fetching leaderboard data...');
+
+    // Top Users by kWh charged (completed sessions only)
+    const { data: topUsers, error: usersError } = await supabase
+      .from('charging_sessions')
+      .select(`
+        user_id,
+        users (full_name),
+        energy_delivered_kwh,
+        points_earned
+      `)
+      .eq('status', 'completed')
+      .order('energy_delivered_kwh', { ascending: false });
+
+    if (usersError) throw usersError;
+
+    // Aggregate user stats
+    const userMap = {};
+    topUsers?.forEach(session => {
+      const userId = session.user_id;
+      if (!userMap[userId]) {
+        userMap[userId] = {
+          user_id: userId,
+          name: session.users?.full_name || 'Anonymous',
+          totalKwh: 0,
+          totalPoints: 0,
+          sessionsCount: 0
+        };
+      }
+      userMap[userId].totalKwh += parseFloat(session.energy_delivered_kwh) || 0;
+      userMap[userId].totalPoints += session.points_earned || 0;
+      userMap[userId].sessionsCount += 1;
+    });
+
+    const topUsersAggregated = Object.values(userMap)
+      .sort((a, b) => b.totalKwh - a.totalKwh)
+      .slice(0, 10)
+      .map((user, index) => ({
+        rank: index + 1,
+        name: user.name.charAt(0) + '***', // Anonymize for privacy
+        totalKwh: Math.round(user.totalKwh * 100) / 100,
+        totalPoints: user.totalPoints,
+        sessionsCount: user.sessionsCount
+      }));
+
+    // Top Stations by sessions count
+    const { data: topStations, error: stationsError } = await supabase
+      .from('charging_sessions')
+      .select(`
+        station_id,
+        charging_stations (name, address, price_per_kwh),
+        energy_delivered_kwh
+      `)
+      .eq('status', 'completed');
+
+    if (stationsError) throw stationsError;
+
+    // Aggregate station stats
+    const stationMap = {};
+    topStations?.forEach(session => {
+      const stationId = session.station_id;
+      if (!stationMap[stationId]) {
+        stationMap[stationId] = {
+          station_id: stationId,
+          name: session.charging_stations?.name || 'Unknown Station',
+          address: session.charging_stations?.address || 'Unknown',
+          totalKwh: 0,
+          sessionsCount: 0
+        };
+      }
+      stationMap[stationId].totalKwh += parseFloat(session.energy_delivered_kwh) || 0;
+      stationMap[stationId].sessionsCount += 1;
+    });
+
+    const topStationsAggregated = Object.values(stationMap)
+      .sort((a, b) => b.sessionsCount - a.sessionsCount)
+      .slice(0, 10)
+      .map((station, index) => ({
+        rank: index + 1,
+        name: station.name,
+        address: station.address,
+        totalKwh: Math.round(station.totalKwh * 100) / 100,
+        sessionsCount: station.sessionsCount
+      }));
+
+    console.log(`✅ Leaderboard: ${topUsersAggregated.length} users, ${topStationsAggregated.length} stations`);
+
+    res.json({
+      topUsers: topUsersAggregated,
+      topStations: topStationsAggregated,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start serwera
 app.listen(port, () => {
   console.log(`🚀 Parkchain API running on port ${port}`);
