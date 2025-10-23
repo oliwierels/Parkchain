@@ -61,18 +61,28 @@ function MyReservationsPage() {
       }));
 
       // Mapowanie sesji ładowania
-      const mappedCharging = (chargingData.sessions || []).map(s => ({
-        id: s.id,
-        type: 'charging', // Dodajemy typ
-        name: s.charging_stations?.name || 'Nieznana stacja',
-        address: s.charging_stations?.address || 'Brak adresu',
-        startTime: s.start_time,
-        endTime: s.end_time,
-        price: s.total_cost, // Używamy total_cost
-        status: s.status,
-        details: `⚡ ${s.energy_delivered_kwh || 0} kWh`, // Dodatkowe info
-        originalData: s
-      }));
+      const mappedCharging = (chargingData.sessions || []).map(s => {
+        // Obliczamy cenę: jeśli total_cost istnieje (sesja zakończona), użyj go
+        // W przeciwnym razie oblicz bieżący koszt: energia * cena_za_kWh
+        let calculatedPrice = s.total_cost;
+        if (!calculatedPrice && s.energy_delivered_kwh && s.charging_stations?.price_per_kwh) {
+          calculatedPrice = (parseFloat(s.energy_delivered_kwh) * parseFloat(s.charging_stations.price_per_kwh)).toFixed(2);
+        }
+
+        return {
+          id: s.id,
+          type: 'charging', // Dodajemy typ
+          name: s.charging_stations?.name || 'Nieznana stacja',
+          address: s.charging_stations?.address || 'Brak adresu',
+          startTime: s.start_time,
+          endTime: s.end_time,
+          price: calculatedPrice, // Używamy obliczonej ceny
+          status: s.status,
+          details: `⚡ ${s.energy_delivered_kwh || 0} kWh`, // Dodatkowe info
+          isEstimated: !s.total_cost && s.status === 'active', // Flaga czy to szacunek
+          originalData: s
+        };
+      });
 
       // === KROK 3: Łączymy i sortujemy obie listy ===
       const combinedReservations = [...mappedParking, ...mappedCharging];
@@ -262,10 +272,16 @@ function MyReservationsPage() {
                   <div className={`py-1.5 px-3 rounded-full text-xs font-bold mb-3 ${statusClasses}`}>
                     {getStatusText(reservation.status)}
                   </div>
-                  <p className="text-2xl font-bold text-indigo-400 mb-4">
-                    {/* Aktywne sesje mogą nie mieć jeszcze ceny */}
-                    {reservation.price ? `${reservation.price} zł` : '-'}
-                  </p>
+                  <div className="mb-4">
+                    <p className="text-2xl font-bold text-indigo-400">
+                      {reservation.price ? `${reservation.isEstimated ? '~' : ''}${reservation.price} zł` : '-'}
+                    </p>
+                    {reservation.isEstimated && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        (w trakcie)
+                      </p>
+                    )}
+                  </div>
                   {['pending', 'active'].includes(reservation.status) && (
                     <button
                       // Przekazujemy ID i TYP do funkcji anulującej
