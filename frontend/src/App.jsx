@@ -15,7 +15,8 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-black">
+        {/* ZMIANA 1: Zmieniono tło na bg-gray-900 dla spójności */}
+        <div className="min-h-screen bg-gray-900">
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -25,7 +26,12 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-reservations" element={<MyReservationsPage />} />
-            <Route path="/owner-dashboard" element={<OwnerDashboardPage />} />
+            
+            {/* ZMIANA 2: POPRAWKA BŁĘDU */}
+            {/* Twój link w Navbarze to "/my-parkings", a trasa była "/owner-dashboard" */}
+            {/* Poprawiłem ścieżkę, aby pasowała do linku: */}
+            <Route path="/my-parkings" element={<OwnerDashboardPage />} />
+            
             <Route path="/my-chargers" element={<ChargingDashboardPage />} />
             <Route path="/dodaj-parking" element={<AddParkingPage />} />
           </Routes>

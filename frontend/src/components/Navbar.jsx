@@ -1,113 +1,98 @@
-// frontend/src/components/Navbar.jsx
-
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
-  // --- CAŁA TWOJA LOGIKA ZOSTAJE ---
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
+  };
+
+  const getLinkClasses = ({ isActive }) => {
+    return isActive
+      ? 'text-indigo-400 font-medium px-3 py-2 rounded-md text-sm'
+      : 'text-gray-300 hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors';
   };
 
   return (
-    // --- STYL PASKA NAWIGACJI OD KOLEGI ---
-    <nav style={{
-      backgroundColor: 'black',
-      color: 'white',
-      height: '100px',
-      paddingLeft: '1rem',
-      paddingRight: '1rem',
-      borderBottom: '1px solid #e5e7eb' // Dodałem delikatną granicę
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '100%'
-      }}>
+    <nav className="bg-gray-900 border-b border-gray-700 shadow-sm">
+      {/* Layout na całą szerokość (bez "max-w-7xl mx-auto") */}
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          
+          <div className="flex items-center">
+            
+            <NavLink to="/" className="flex-shrink-0 flex items-center gap-2">
+              {/* Ta ścieżka jest POPRAWNA, bo plik jest w /public */}
+              <img 
+                className="h-8 w-auto" 
+                src="/logo-no-background.svg" 
+                alt="ParkChain" 
+              />
+            </NavLink>
 
-        {/* --- LOGO OD KOLEGI (Z POPRAWIONĄ WYSOKOŚCIĄ) --- */}
-        <Link to="/">
-          <img
-            src="/Parkchain-logo.png"
-            alt="Parkchain Logo"
-            style={{
-              height: '200px', // <-- POPRAWKA (było 200px)
-              marginRight: '10px',
-              display: 'block' // Dla pewności
-            }}
-          />
-        </Link>
+            {/* Linki */}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                <NavLink to="/" className={getLinkClasses} end>
+                  Strona Główna
+                </NavLink>
+                <NavLink to="/map" className={getLinkClasses}>
+                  Mapa
+                </NavLink>
+                <NavLink to="/add-parking" className={getLinkClasses}>
+                  Dodaj parking
+                </NavLink>
+                <NavLink to="/my-reservations" className={getLinkClasses}>
+                  Moje Rezerwacje
+                </NavLink>
+                <NavLink to="/my-parkings" className={getLinkClasses}>
+                  Moje Parkingi
+                </NavLink>
+                <NavLink to="/my-chargers" className={getLinkClasses}>
+                  Moje ładowarki
+                </NavLink>
+              </div>
+            </div>
+          </div>
 
-        {/* --- KONTENER NA LINKI OD KOLEGI --- */}
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          {/* Sekcja Użytkownika */}
+          <div className="hidden md:block">
+            <div className="ml-4 flex items-center md:ml-6">
+              {isAuthenticated && user ? (
+                <>
+                  <span className="text-gray-300 text-sm font-medium mr-4">
+                    {user.full_name || user.email} 
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Wyloguj
+                  </button>
+                </>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Zaloguj
+                </NavLink>
+              )}
+            </div>
+          </div>
 
-          {/* --- Linki statyczne ze stylami (kolor 'black') od kolegi --- */}
-          <Link to="/" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-            Strona Główna
-          </Link>
-          <Link to="/map" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-            Mapa
-          </Link>
-          <Link to="/add-parking" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-            Dodaj parking
-          </Link>
-
-          {/* --- TWOJA LOGIKA POKAZYWANIA LINKÓW I PRZYCISKÓW --- */}
-          {isAuthenticated ? (
-            <>
-              {/* Linki dla zalogowanego, ze stylami od kolegi */}
-              <Link to="/my-reservations" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-                📋 Moje Rezerwacje
-              </Link>
-              <Link to="/owner-dashboard" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-                🏢 Moje Parkingi
-              </Link>
-              <Link to="/my-chargers" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-                ⚡ Moje Ładowarki
-              </Link>
-              <Link to="/profile" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-                👤 {user?.full_name}
-              </Link>
-
-              {/* Przycisk Wyloguj z Twoją logiką, ale stylem od kolegi */}
-              <button
-                onClick={handleLogout}
-                style={{
-                  backgroundColor: '#6366F1', // Styl kolegi
-                  color: 'white',            // Zmieniono na biały dla kontrastu
-                  padding: '8px 20px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                Wyloguj
-              </button>
-            </>
-          ) : (
-            // Przycisk Zaloguj z Twoją logiką (Link), ale stylem od kolegi
-            <Link to="/login">
-              <button style={{
-                backgroundColor: '#6366F1', // Styl kolegi
-                color: 'white',            // Zmieniono na biały dla kontrastu
-                padding: '8px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}>
-                Zaloguj się
-              </button>
-            </Link>
-          )}
+          {/* Menu mobilne (hamburger) */}
+          <div className="-mr-2 flex md:hidden">
+            <button className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700">
+              <span className="sr-only">Otwórz menu</span>
+              <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </nav>
