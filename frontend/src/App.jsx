@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
+import ChargingDashboardPage from './pages/ChargingDashboardPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-reservations" element={<MyReservationsPage />} />
             <Route path="/owner-dashboard" element={<OwnerDashboardPage />} />
+            <Route path="/my-chargers" element={<ChargingDashboardPage />} />
             <Route path="/dodaj-parking" element={<AddParkingPage />} />
           </Routes>
         </div>

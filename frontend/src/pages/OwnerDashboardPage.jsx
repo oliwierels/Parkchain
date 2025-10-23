@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 function OwnerDashboardPage() {
   const navigate = useNavigate();
   const [myParkings, setMyParkings] = useState([]);
-  const [myChargers, setMyChargers] = useState([]);
   const [allReservations, setAllReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,8 +14,7 @@ function OwnerDashboardPage() {
     totalParkings: 0,
     totalReservations: 0,
     totalEarnings: 0,
-    activeParkings: 0,
-    totalChargers: 0
+    activeParkings: 0
   });
 
   useEffect(() => {
@@ -72,29 +70,6 @@ function OwnerDashboardPage() {
           totalEarnings: totalEarnings.toFixed(2),
           activeParkings
         });
-      }
-
-      // Pobierz moje ładowarki
-      try {
-        const chargersResponse = await fetch('http://localhost:3000/api/ev-chargers/my', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (chargersResponse.ok) {
-          const chargersData = await chargersResponse.json();
-          setMyChargers(chargersData || []);
-
-          // Dodaj liczbę ładowarek do statystyk
-          setStats(prev => ({
-            ...prev,
-            totalChargers: chargersData.length
-          }));
-        }
-      } catch (err) {
-        console.error('Błąd pobierania ładowarek:', err);
-        setMyChargers([]);
       }
 
       setError(null);
@@ -240,20 +215,6 @@ function OwnerDashboardPage() {
             {stats.totalEarnings} zł
           </p>
         </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
-            Moje ładowarki
-          </p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-            {stats.totalChargers}
-          </p>
-        </div>
       </div>
 
       {/* Lista parkingów */}
@@ -367,130 +328,6 @@ function OwnerDashboardPage() {
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
-
-      {/* Moje ładowarki */}
-      <div style={{ marginBottom: '40px' }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#1f2937'
-        }}>
-          Moje ładowarki
-        </h2>
-
-        {myChargers.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            color: '#6b7280',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            Nie masz jeszcze żadnych ładowarek. Dodaj pierwszą na mapie!
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-            gap: '20px'
-          }}>
-            {myChargers.map((charger) => (
-              <div
-                key={charger.id}
-                style={{
-                  backgroundColor: 'white',
-                  padding: '20px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: '1px solid #e5e7eb'
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'start',
-                  marginBottom: '12px'
-                }}>
-                  <h3 style={{
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    color: '#1f2937',
-                    margin: 0
-                  }}>
-                    {charger.name}
-                  </h3>
-                  <span style={{
-                    backgroundColor: charger.available_connectors > 0 ? '#D1FAE5' : '#FEE2E2',
-                    color: charger.available_connectors > 0 ? '#059669' : '#DC2626',
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {charger.available_connectors}/{charger.total_connectors} dostępne
-                  </span>
-                </div>
-
-                <p style={{
-                  color: '#6b7280',
-                  fontSize: '14px',
-                  margin: '8px 0'
-                }}>
-                  {charger.address}
-                  {charger.city && `, ${charger.city}`}
-                </p>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  marginTop: '16px',
-                  paddingTop: '16px',
-                  borderTop: '1px solid #e5e7eb'
-                }}>
-                  <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Typ
-                    </p>
-                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                      {charger.charger_type}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Moc
-                    </p>
-                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                      {charger.max_power_kw} kW
-                    </p>
-                  </div>
-
-                  <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Cena za kWh
-                    </p>
-                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-                      {charger.price_per_kwh} zł
-                    </p>
-                  </div>
-
-                  <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
-                      Złącza
-                    </p>
-                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                      {charger.total_connectors}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>

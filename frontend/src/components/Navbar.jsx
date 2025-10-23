@@ -69,6 +69,9 @@ function Navbar() {
               <Link to="/owner-dashboard" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
                 🏢 Moje Parkingi
               </Link>
+              <Link to="/my-chargers" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
+                ⚡ Moje Ładowarki
+              </Link>
               <Link to="/profile" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>
                 👤 {user?.full_name}
               </Link>
