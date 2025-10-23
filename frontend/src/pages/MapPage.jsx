@@ -13,7 +13,28 @@ import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import { useAuth } from '../context/AuthContext';
-import { FaHome, FaCog, FaArrowLeft } from 'react-icons/fa';
+import {
+  FaHome,
+  FaCog,
+  FaArrowLeft,
+  FaParking,
+  FaMapMarkerAlt,
+  FaChargingStation,
+  FaCreditCard,
+  FaCalendarAlt,
+  FaCalendarWeek,
+  FaCalendar,
+  FaTicketAlt,
+  FaBolt,
+  FaPlug,
+  FaClock,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaTimesCircle,
+  FaTrophy,
+  FaWalking,
+  FaRoad
+} from 'react-icons/fa';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -505,75 +526,141 @@ function MapPage() {
           top: '20px',
           right: '20px',
           zIndex: 1000,
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
-          maxWidth: '400px',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.8)',
+          maxWidth: '420px',
           maxHeight: '80vh',
           overflow: 'auto'
         }}>
           <div style={{
-            padding: '16px',
-            borderBottom: '2px solid #E5E7EB',
+            padding: '20px',
+            borderBottom: '2px solid rgba(99, 102, 241, 0.1)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             position: 'sticky',
             top: 0,
-            backgroundColor: 'white',
-            borderRadius: '12px 12px 0 0'
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '16px 16px 0 0',
+            zIndex: 10
           }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#1F2937'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              🏆 Najlepsze parkingi
-            </h3>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+              }}>
+                <FaTrophy style={{ fontSize: '18px', color: 'white' }} />
+              </div>
+              <h3 style={{
+                margin: 0,
+                fontSize: '19px',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #1F2937 0%, #4B5563 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.5px'
+              }}>
+                Najlepsze parkingi
+              </h3>
+            </div>
             <button
               onClick={handleClearDestination}
               style={{
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 border: 'none',
-                fontSize: '20px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                fontSize: '18px',
                 cursor: 'pointer',
-                color: '#6B7280'
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                fontWeight: 'bold'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
               ✕
             </button>
           </div>
 
-          <div style={{ padding: '12px' }}>
+          <div style={{ padding: '16px' }}>
             {recommendedParkings.map((parking, index) => (
               <div
                 key={parking.id}
                 style={{
-                  backgroundColor: index === 0 ? '#FEF3C7' : '#F9FAFB',
-                  border: index === 0 ? '2px solid #F59E0B' : '1px solid #E5E7EB',
-                  borderRadius: '8px',
-                  padding: '12px',
+                  background: index === 0
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.12) 100%)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  border: index === 0
+                    ? '2px solid rgba(245, 158, 11, 0.4)'
+                    : '1px solid rgba(226, 232, 240, 0.8)',
+                  borderRadius: '12px',
+                  padding: '14px',
                   marginBottom: '12px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: index === 0
+                    ? '0 4px 12px rgba(245, 158, 11, 0.15)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.05)'
                 }}
                 onClick={() => {
                   if (mapRef.current) {
                     mapRef.current.setView([parking.latitude, parking.longitude], 16);
                   }
                 }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = index === 0
+                    ? '0 8px 20px rgba(245, 158, 11, 0.25)'
+                    : '0 6px 16px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = index === 0
+                    ? '0 4px 12px rgba(245, 158, 11, 0.15)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.05)';
+                }}
               >
                 {index === 0 && (
                   <div style={{
-                    backgroundColor: '#F59E0B',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                     color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
+                    padding: '5px 10px',
+                    borderRadius: '6px',
                     fontSize: '11px',
-                    fontWeight: 'bold',
-                    marginBottom: '8px',
-                    display: 'inline-block'
+                    fontWeight: '700',
+                    marginBottom: '10px',
+                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+                    letterSpacing: '0.5px'
                   }}>
+                    <FaTrophy style={{ fontSize: '10px' }} />
                     NAJLEPSZY WYBÓR
                   </div>
                 )}
@@ -582,56 +669,100 @@ function MapPage() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  marginBottom: '8px'
+                  marginBottom: '10px',
+                  gap: '8px'
                 }}>
                   <h4 style={{
                     margin: 0,
-                    fontSize: '15px',
-                    fontWeight: 'bold',
-                    color: '#1F2937'
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#1F2937',
+                    letterSpacing: '-0.3px'
                   }}>
                     {index + 1}. {parking.name}
                   </h4>
                   <div style={{
-                    backgroundColor: '#6366F1',
+                    background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                     color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap'
+                    padding: '5px 10px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
                   }}>
                     {parking.price_per_hour} zł/h
                   </div>
                 </div>
 
                 <p style={{
-                  margin: '4px 0',
-                  fontSize: '12px',
-                  color: '#6B7280'
+                  margin: '0 0 12px 0',
+                  fontSize: '13px',
+                  color: '#6B7280',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
+                  <FaMapMarkerAlt style={{ fontSize: '11px', color: '#6366F1', flexShrink: 0 }} />
                   {parking.address}
                 </p>
 
                 <div style={{
                   display: 'flex',
-                  gap: '12px',
-                  marginTop: '8px',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  marginBottom: '10px',
                   fontSize: '12px'
                 }}>
-                  <div style={{ color: '#059669', fontWeight: 'bold' }}>
-                    📍 {parking.distance} km
-                  </div>
-                  <div style={{ color: '#7C3AED', fontWeight: 'bold' }}>
-                    🚶 ~{parking.walkingTime} min
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    color: '#059669',
+                    fontWeight: '600',
+                    background: 'rgba(5, 150, 105, 0.08)',
+                    padding: '4px 8px',
+                    borderRadius: '6px'
+                  }}>
+                    <FaRoad style={{ fontSize: '11px' }} />
+                    {parking.distance} km
                   </div>
                   <div style={{
-                    color: parking.available_spots > 0 ? '#059669' : '#DC2626',
-                    fontWeight: 'bold'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    color: '#7C3AED',
+                    fontWeight: '600',
+                    background: 'rgba(124, 58, 237, 0.08)',
+                    padding: '4px 8px',
+                    borderRadius: '6px'
                   }}>
-                    {parking.available_spots > 0
-                      ? `✓ ${parking.available_spots} miejsc`
-                      : '✗ Brak miejsc'}
+                    <FaWalking style={{ fontSize: '11px' }} />
+                    ~{parking.walkingTime} min
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    color: parking.available_spots > 0 ? '#059669' : '#DC2626',
+                    fontWeight: '600',
+                    background: parking.available_spots > 0
+                      ? 'rgba(5, 150, 105, 0.08)'
+                      : 'rgba(220, 38, 38, 0.08)',
+                    padding: '4px 8px',
+                    borderRadius: '6px'
+                  }}>
+                    {parking.available_spots > 0 ? (
+                      <>
+                        <FaCheckCircle style={{ fontSize: '11px' }} />
+                        {parking.available_spots} miejsc
+                      </>
+                    ) : (
+                      <>
+                        <FaTimesCircle style={{ fontSize: '11px' }} />
+                        Brak miejsc
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -642,18 +773,33 @@ function MapPage() {
                       handleReserveClick(parking);
                     }}
                     style={{
-                      marginTop: '8px',
                       width: '100%',
-                      backgroundColor: '#6366F1',
+                      background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                       color: 'white',
-                      padding: '8px 16px',
+                      padding: '10px 16px',
                       border: 'none',
-                      borderRadius: '6px',
-                      fontWeight: 'bold',
+                      borderRadius: '10px',
+                      fontWeight: '700',
                       cursor: 'pointer',
-                      fontSize: '13px'
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                      letterSpacing: '0.3px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 102, 241, 0.35)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.25)';
                     }}
                   >
+                    <FaTicketAlt style={{ fontSize: '13px' }} />
                     Zarezerwuj teraz
                   </button>
                 )}
@@ -682,11 +828,54 @@ function MapPage() {
         {destination && (
           <Marker position={[destination.lat, destination.lng]} icon={DestinationIcon}>
             <Popup>
-              <div style={{ minWidth: '150px', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>
-                  🎯 Twoja destynacja
-                </h3>
-                <p style={{ margin: '4px 0', fontSize: '12px', color: '#6B7280' }}>
+              <div style={{
+                minWidth: '200px',
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.8)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
+                  }}>
+                    <FaMapMarkerAlt style={{ fontSize: '16px', color: 'white' }} />
+                  </div>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#1f2937',
+                    letterSpacing: '-0.3px'
+                  }}>
+                    Twoja destynacja
+                  </h3>
+                </div>
+                <p style={{
+                  margin: 0,
+                  fontSize: '13px',
+                  color: '#6B7280',
+                  background: 'rgba(99, 102, 241, 0.05)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  fontFamily: 'monospace'
+                }}>
                   {destination.lat.toFixed(5)}, {destination.lng.toFixed(5)}
                 </p>
               </div>
@@ -707,126 +896,213 @@ function MapPage() {
     icon={createParkingIcon(parking)}
   >
     <Popup>
-      <div style={{ minWidth: '240px' }}>
-        {/* Nagłówek */}
-        <h3 style={{
-          margin: '0 0 12px 0',
-          fontSize: '17px',
-          fontWeight: 'bold',
-          color: '#1f2937'
-        }}>
-          {parking.name}
-        </h3>
-
-        <p style={{
-          fontSize: '13px',
-          color: '#6b7280',
-          margin: '0 0 12px 0',
+      <div style={{
+        minWidth: '280px',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: '16px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+        border: '1px solid rgba(255, 255, 255, 0.8)'
+      }}>
+        {/* Nagłówek z ikoną */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '4px'
+          gap: '12px',
+          marginBottom: '16px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid rgba(99, 102, 241, 0.1)'
         }}>
-          📍 {parking.address}
-        </p>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+          }}>
+            <FaParking style={{ fontSize: '20px', color: 'white' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: '18px',
+              fontWeight: '700',
+              color: '#1f2937',
+              letterSpacing: '-0.5px'
+            }}>
+              {parking.name}
+            </h3>
+          </div>
+        </div>
+
+        {/* Adres */}
+        <div style={{
+          fontSize: '13px',
+          color: '#6b7280',
+          margin: '0 0 16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          background: 'rgba(99, 102, 241, 0.05)',
+          borderRadius: '8px'
+        }}>
+          <FaMapMarkerAlt style={{ fontSize: '14px', color: '#6366F1', flexShrink: 0 }} />
+          <span>{parking.address}</span>
+        </div>
 
         {/* Status dostępności z wizualnym wskaźnikiem */}
         <div style={{
-          marginBottom: '12px',
-          padding: '10px',
-          borderRadius: '8px',
+          marginBottom: '16px',
+          padding: '14px',
+          borderRadius: '12px',
           background: parking.available_spots > 0
-            ? (parking.available_spots / parking.total_spots > 0.5 ? '#D1FAE5' : '#FEF3C7')
-            : '#FEE2E2',
+            ? (parking.available_spots / parking.total_spots > 0.5
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)'
+              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)')
+            : 'linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)',
           border: `2px solid ${parking.available_spots > 0
-            ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
-            : '#DC2626'}`
+            ? (parking.available_spots / parking.total_spots > 0.5 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)')
+            : 'rgba(220, 38, 38, 0.3)'}`,
+          boxShadow: parking.available_spots > 0
+            ? (parking.available_spots / parking.total_spots > 0.5
+              ? '0 4px 12px rgba(16, 185, 129, 0.1)'
+              : '0 4px 12px rgba(245, 158, 11, 0.1)')
+            : '0 4px 12px rgba(220, 38, 38, 0.1)'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            marginBottom: '10px'
           }}>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 'bold',
-              color: parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
-                : '#991b1b'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
               {parking.available_spots > 0
                 ? (parking.available_spots / parking.total_spots > 0.5
-                  ? '✅ Dużo wolnych miejsc'
-                  : '⚠️ Mało wolnych miejsc')
-                : '❌ Brak wolnych miejsc'}
-            </span>
-            <span style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
-                : '#991b1b'
+                  ? <FaCheckCircle style={{ fontSize: '16px', color: '#10B981' }} />
+                  : <FaExclamationTriangle style={{ fontSize: '16px', color: '#F59E0B' }} />)
+                : <FaTimesCircle style={{ fontSize: '16px', color: '#DC2626' }} />}
+              <span style={{
+                fontSize: '14px',
+                fontWeight: '700',
+                color: parking.available_spots > 0
+                  ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
+                  : '#991b1b'
+              }}>
+                {parking.available_spots > 0
+                  ? (parking.available_spots / parking.total_spots > 0.5
+                    ? 'Dużo wolnych miejsc'
+                    : 'Mało wolnych miejsc')
+                  : 'Brak wolnych miejsc'}
+              </span>
+            </div>
+            <div style={{
+              background: parking.available_spots > 0
+                ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
+                : '#DC2626',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '700',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
             }}>
               {parking.available_spots}/{parking.total_spots}
-            </span>
+            </div>
           </div>
 
           {/* Pasek progresu */}
           <div style={{
-            marginTop: '6px',
-            height: '6px',
-            background: '#E5E7EB',
-            borderRadius: '3px',
-            overflow: 'hidden'
+            height: '8px',
+            background: 'rgba(0, 0, 0, 0.08)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{
               height: '100%',
               width: `${(parking.available_spots / parking.total_spots) * 100}%`,
               background: parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
-                : '#DC2626',
-              transition: 'width 0.3s ease'
+                ? (parking.available_spots / parking.total_spots > 0.5
+                  ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)'
+                  : 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)')
+                : 'linear-gradient(90deg, #DC2626 0%, #B91C1C 100%)',
+              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
             }}></div>
           </div>
         </div>
 
         {/* Cennik z ikonami */}
         <div style={{
-          margin: '12px 0',
-          padding: '10px',
-          background: '#F9FAFB',
-          borderRadius: '8px',
-          border: '1px solid #E5E7EB'
+          margin: '0 0 16px 0',
+          padding: '14px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+          borderRadius: '12px',
+          border: '2px solid rgba(99, 102, 241, 0.2)',
+          boxShadow: '0 4px 12px rgba(99, 102, 241, 0.08)'
         }}>
           <div style={{
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#6366F1',
-            marginBottom: '8px',
+            fontSize: '20px',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '8px'
           }}>
-            💳 {parking.price_per_hour} zł/godz
+            <FaCreditCard style={{ fontSize: '18px', color: '#6366F1' }} />
+            <span>{parking.price_per_hour} zł/godz</span>
           </div>
           {(parking.price_per_day || parking.price_per_week || parking.price_per_month) && (
             <div style={{
-              fontSize: '12px',
+              fontSize: '13px',
               color: '#6b7280',
-              lineHeight: '1.6'
+              lineHeight: '1.8',
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(99, 102, 241, 0.1)'
             }}>
               {parking.price_per_day && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  ☀️ Dzień: <strong>{parking.price_per_day} zł</strong>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '4px'
+                }}>
+                  <FaCalendarAlt style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
+                  <span>Dzień: <strong style={{ color: '#1F2937' }}>{parking.price_per_day} zł</strong></span>
                 </div>
               )}
               {parking.price_per_week && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  📅 Tydzień: <strong>{parking.price_per_week} zł</strong>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '4px'
+                }}>
+                  <FaCalendarWeek style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
+                  <span>Tydzień: <strong style={{ color: '#1F2937' }}>{parking.price_per_week} zł</strong></span>
                 </div>
               )}
               {parking.price_per_month && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  📆 Miesiąc: <strong>{parking.price_per_month} zł</strong>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaCalendar style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
+                  <span>Miesiąc: <strong style={{ color: '#1F2937' }}>{parking.price_per_month} zł</strong></span>
                 </div>
               )}
             </div>
@@ -834,30 +1110,39 @@ function MapPage() {
         </div>
 
         {/* Przyciski akcji */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {parking.available_spots > 0 && (
             <button
               onClick={() => handleReserveClick(parking)}
               style={{
                 width: '100%',
-                backgroundColor: '#6366F1',
+                background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                 color: 'white',
-                padding: '10px 16px',
+                padding: '12px 20px',
                 border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
+                borderRadius: '12px',
+                fontWeight: '700',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px',
-                transition: 'background-color 0.2s'
+                gap: '8px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                letterSpacing: '0.3px'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#4F46E5'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#6366F1'}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3)';
+              }}
             >
-              🎫 Zarezerwuj teraz
+              <FaTicketAlt style={{ fontSize: '16px' }} />
+              <span>Zarezerwuj teraz</span>
             </button>
           )}
 
@@ -865,24 +1150,33 @@ function MapPage() {
             onClick={() => handleReportClick(parking)}
             style={{
               width: '100%',
-              backgroundColor: '#10b981',
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               color: 'white',
-              padding: '10px 16px',
+              padding: '11px 18px',
               border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
+              borderRadius: '12px',
+              fontWeight: '600',
               cursor: 'pointer',
-              fontSize: '13px',
+              fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              transition: 'background-color 0.2s'
+              gap: '8px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+              letterSpacing: '0.2px'
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.35)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
+            }}
           >
-            📍 Zgłoś zajętość (CrowdScan)
+            <FaMapMarkerAlt style={{ fontSize: '14px' }} />
+            <span>Zgłoś zajętość (CrowdScan)</span>
           </button>
         </div>
       </div>
@@ -903,131 +1197,226 @@ function MapPage() {
     icon={createChargingIcon(station)}
   >
     <Popup>
-      <div style={{ minWidth: '240px' }}>
-        {/* Nagłówek */}
-        <h3 style={{
-          margin: '0 0 12px 0',
-          fontSize: '17px',
-          fontWeight: 'bold',
-          color: '#1f2937',
+      <div style={{
+        minWidth: '280px',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: '16px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+        border: '1px solid rgba(255, 255, 255, 0.8)'
+      }}>
+        {/* Nagłówek z ikoną */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '12px',
+          marginBottom: '16px',
+          paddingBottom: '12px',
+          borderBottom: '2px solid rgba(245, 158, 11, 0.1)'
         }}>
-          ⚡ {station.name}
-        </h3>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+          }}>
+            <FaBolt style={{ fontSize: '20px', color: 'white' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: '18px',
+              fontWeight: '700',
+              color: '#1f2937',
+              letterSpacing: '-0.5px'
+            }}>
+              {station.name}
+            </h3>
+          </div>
+        </div>
 
-        <p style={{
+        {/* Adres */}
+        <div style={{
           fontSize: '13px',
           color: '#6b7280',
-          margin: '0 0 12px 0',
+          margin: '0 0 16px 0',
           display: 'flex',
           alignItems: 'center',
-          gap: '4px'
+          gap: '8px',
+          padding: '8px 12px',
+          background: 'rgba(245, 158, 11, 0.05)',
+          borderRadius: '8px'
         }}>
-          📍 {station.address}
-        </p>
+          <FaMapMarkerAlt style={{ fontSize: '14px', color: '#F59E0B', flexShrink: 0 }} />
+          <span>{station.address}</span>
+        </div>
 
         {/* Status dostępności */}
         <div style={{
-          marginBottom: '12px',
-          padding: '10px',
-          borderRadius: '8px',
+          marginBottom: '16px',
+          padding: '14px',
+          borderRadius: '12px',
           background: station.available_connectors > 0
-            ? (station.available_connectors / station.total_connectors > 0.5 ? '#D1FAE5' : '#FEF3C7')
-            : '#FEE2E2',
+            ? (station.available_connectors / station.total_connectors > 0.5
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)'
+              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)')
+            : 'linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)',
           border: `2px solid ${station.available_connectors > 0
-            ? (station.available_connectors / station.total_connectors > 0.5 ? '#10B981' : '#F59E0B')
-            : '#DC2626'}`
+            ? (station.available_connectors / station.total_connectors > 0.5 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)')
+            : 'rgba(220, 38, 38, 0.3)'}`,
+          boxShadow: station.available_connectors > 0
+            ? (station.available_connectors / station.total_connectors > 0.5
+              ? '0 4px 12px rgba(16, 185, 129, 0.1)'
+              : '0 4px 12px rgba(245, 158, 11, 0.1)')
+            : '0 4px 12px rgba(220, 38, 38, 0.1)'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 'bold',
-              color: station.available_connectors > 0
-                ? (station.available_connectors / station.total_connectors > 0.5 ? '#065f46' : '#92400E')
-                : '#991b1b'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
               {station.available_connectors > 0
                 ? (station.available_connectors / station.total_connectors > 0.5
-                  ? '✅ Dużo wolnych złączy'
-                  : '⚠️ Mało wolnych złączy')
-                : '❌ Brak wolnych złączy'}
-            </span>
-            <span style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: station.available_connectors > 0
-                ? (station.available_connectors / station.total_connectors > 0.5 ? '#065f46' : '#92400E')
-                : '#991b1b'
+                  ? <FaCheckCircle style={{ fontSize: '16px', color: '#10B981' }} />
+                  : <FaExclamationTriangle style={{ fontSize: '16px', color: '#F59E0B' }} />)
+                : <FaTimesCircle style={{ fontSize: '16px', color: '#DC2626' }} />}
+              <span style={{
+                fontSize: '14px',
+                fontWeight: '700',
+                color: station.available_connectors > 0
+                  ? (station.available_connectors / station.total_connectors > 0.5 ? '#065f46' : '#92400E')
+                  : '#991b1b'
+              }}>
+                {station.available_connectors > 0
+                  ? (station.available_connectors / station.total_connectors > 0.5
+                    ? 'Dużo wolnych złączy'
+                    : 'Mało wolnych złączy')
+                  : 'Brak wolnych złączy'}
+              </span>
+            </div>
+            <div style={{
+              background: station.available_connectors > 0
+                ? (station.available_connectors / station.total_connectors > 0.5 ? '#10B981' : '#F59E0B')
+                : '#DC2626',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '700',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
             }}>
               {station.available_connectors}/{station.total_connectors}
-            </span>
+            </div>
           </div>
         </div>
 
         {/* Specyfikacja */}
         <div style={{
-          margin: '12px 0',
-          padding: '10px',
-          background: '#EFF6FF',
-          borderRadius: '8px',
-          border: '1px solid #DBEAFE'
+          margin: '0 0 16px 0',
+          padding: '14px',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%)',
+          borderRadius: '12px',
+          border: '2px solid rgba(59, 130, 246, 0.2)',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.08)'
         }}>
           <div style={{
-            fontSize: '12px',
-            color: '#6b7280',
-            lineHeight: '1.6'
+            fontSize: '13px',
+            color: '#4B5563',
+            lineHeight: '1.8'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-              <strong>Typ:</strong> {station.charger_type === 'AC' ? 'AC (wolne)' : station.charger_type === 'DC_FAST' ? 'DC Fast (szybkie)' : 'Ultra Fast (bardzo szybkie)'}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '8px',
+              padding: '6px 0'
+            }}>
+              <FaChargingStation style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
+              <span><strong style={{ color: '#1F2937' }}>Typ:</strong> {station.charger_type === 'AC' ? 'AC (wolne)' : station.charger_type === 'DC_FAST' ? 'DC Fast (szybkie)' : 'Ultra Fast (bardzo szybkie)'}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-              <strong>Moc:</strong> {station.max_power_kw} kW
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '8px',
+              padding: '6px 0'
+            }}>
+              <FaBolt style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
+              <span><strong style={{ color: '#1F2937' }}>Moc:</strong> {station.max_power_kw} kW</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <strong>Złącza:</strong> {station.connector_types?.join(', ') || 'Brak info'}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 0'
+            }}>
+              <FaPlug style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
+              <span><strong style={{ color: '#1F2937' }}>Złącza:</strong> {station.connector_types?.join(', ') || 'Brak info'}</span>
             </div>
           </div>
         </div>
 
         {/* Cennik */}
         <div style={{
-          margin: '12px 0',
-          padding: '10px',
-          background: '#F9FAFB',
-          borderRadius: '8px',
-          border: '1px solid #E5E7EB'
+          margin: '0 0 16px 0',
+          padding: '14px',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.08) 100%)',
+          borderRadius: '12px',
+          border: '2px solid rgba(245, 158, 11, 0.2)',
+          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.08)'
         }}>
           <div style={{
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#F59E0B',
-            marginBottom: '8px',
+            fontSize: '20px',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '8px'
           }}>
-            💳 {station.price_per_kwh} zł/kWh
+            <FaCreditCard style={{ fontSize: '18px', color: '#F59E0B' }} />
+            <span>{station.price_per_kwh} zł/kWh</span>
           </div>
           {(station.price_per_minute || station.price_per_session) && (
             <div style={{
-              fontSize: '12px',
+              fontSize: '13px',
               color: '#6b7280',
-              lineHeight: '1.6'
+              lineHeight: '1.8',
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(245, 158, 11, 0.1)'
             }}>
               {station.price_per_minute && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  ⏱️ Minuta: <strong>{station.price_per_minute} zł</strong>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '4px'
+                }}>
+                  <FaClock style={{ fontSize: '12px', color: '#F59E0B', flexShrink: 0 }} />
+                  <span>Minuta: <strong style={{ color: '#1F2937' }}>{station.price_per_minute} zł</strong></span>
                 </div>
               )}
               {station.price_per_session && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  🎫 Sesja: <strong>{station.price_per_session} zł</strong>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaTicketAlt style={{ fontSize: '12px', color: '#F59E0B', flexShrink: 0 }} />
+                  <span>Sesja: <strong style={{ color: '#1F2937' }}>{station.price_per_session} zł</strong></span>
                 </div>
               )}
             </div>
@@ -1035,7 +1424,7 @@ function MapPage() {
         </div>
 
         {/* Przyciski akcji */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {station.available_connectors > 0 && user && (
             <button
               onClick={() => {
@@ -1044,24 +1433,33 @@ function MapPage() {
               }}
               style={{
                 width: '100%',
-                backgroundColor: '#F59E0B',
+                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                 color: 'white',
-                padding: '10px 16px',
+                padding: '12px 20px',
                 border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
+                borderRadius: '12px',
+                fontWeight: '700',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px',
-                transition: 'background-color 0.2s'
+                gap: '8px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                letterSpacing: '0.3px'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#D97706'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#F59E0B'}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(245, 158, 11, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+              }}
             >
-              ⚡ Rozpocznij ładowanie
+              <FaBolt style={{ fontSize: '16px' }} />
+              <span>Rozpocznij ładowanie</span>
             </button>
           )}
         </div>
