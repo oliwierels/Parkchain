@@ -9,6 +9,7 @@ import ReservationModal from '../components/ReservationModal';
 import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
+import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import { useAuth } from '../context/AuthContext';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -195,6 +196,8 @@ function MapPage() {
   const [addChargingMode, setAddChargingMode] = useState(false);
   const [newChargingLocation, setNewChargingLocation] = useState(null);
   const [showAddChargingModal, setShowAddChargingModal] = useState(false);
+  const [showChargingSessionModal, setShowChargingSessionModal] = useState(false);
+  const [selectedChargingStation, setSelectedChargingStation] = useState(null);
 
   // Filtry
   const [showParkings, setShowParkings] = useState(true);
@@ -1174,8 +1177,8 @@ function MapPage() {
           {station.available_connectors > 0 && user && (
             <button
               onClick={() => {
-                alert('Rozpocznij sesję ładowania - funkcja w budowie!');
-                // TODO: Dodać modal do rozpoczęcia sesji ładowania
+                setSelectedChargingStation(station);
+                setShowChargingSessionModal(true);
               }}
               style={{
                 width: '100%',
@@ -1243,6 +1246,20 @@ function MapPage() {
             setNewChargingLocation(null);
           }}
           onSuccess={handleAddChargingSuccess}
+        />
+      )}
+
+      {showChargingSessionModal && selectedChargingStation && (
+        <StartChargingSessionModal
+          station={selectedChargingStation}
+          onClose={() => {
+            setShowChargingSessionModal(false);
+            setSelectedChargingStation(null);
+          }}
+          onSuccess={() => {
+            setShowChargingSessionModal(false);
+            setSelectedChargingStation(null);
+          }}
         />
       )}
     </div>

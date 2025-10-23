@@ -408,7 +408,7 @@ app.get('/api/chargers', async (req, res) => {
     console.log('🔍 Fetching EV chargers from Supabase...');
 
     const { data, error, count } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('*', { count: 'exact' });
 
     if (error) {
@@ -450,13 +450,13 @@ app.post('/api/chargers', authenticateToken, async (req, res) => {
     const owner_id = req.user.id;
     
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .insert([{
         name,
         address,
         city: city || null,
         charger_type: charger_type || 'AC',
-        power_kw: power_kw || 7,
+        max_power_kw: power_kw || 7,
         price_per_kwh: price_per_kwh || 0,
         total_connectors: total_connectors || 1,
         available_connectors: available_connectors !== undefined ? available_connectors : total_connectors || 1,
@@ -507,13 +507,13 @@ app.post('/api/ev-chargers', authenticateToken, [
     const owner_id = req.user.id;
     
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .insert([{
         name,
         address,
         city: city || null,
         charger_type,
-        power_kw,
+        max_power_kw: power_kw, // BACKWARD COMPATIBILITY: mapuj power_kw -> max_power_kw
         price_per_kwh,
         total_connectors,
         available_connectors: total_connectors,
@@ -523,9 +523,9 @@ app.post('/api/ev-chargers', authenticateToken, [
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     console.log('✅ Created EV charger:', data);
     res.status(201).json(data);
   } catch (error) {
@@ -538,7 +538,7 @@ app.post('/api/ev-chargers', authenticateToken, [
 app.get('/api/ev-chargers/my', authenticateToken, async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('*')
       .eq('owner_id', req.user.id)
       .order('created_at', { ascending: false });
@@ -559,7 +559,7 @@ app.get('/api/ev-chargers/:id', async (req, res) => {
     const { id } = req.params;
     
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('*')
       .eq('id', id)
       .single();
@@ -605,7 +605,7 @@ app.put('/api/ev-chargers/:id', authenticateToken, [
     
     // Sprawdź czy ładowarka należy do użytkownika
     const { data: charger, error: fetchError } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('owner_id')
       .eq('id', id)
       .single();
@@ -624,7 +624,7 @@ app.put('/api/ev-chargers/:id', authenticateToken, [
     if (address !== undefined) updateData.address = address;
     if (city !== undefined) updateData.city = city;
     if (charger_type !== undefined) updateData.charger_type = charger_type;
-    if (power_kw !== undefined) updateData.power_kw = power_kw;
+    if (power_kw !== undefined) updateData.max_power_kw = power_kw;
     if (price_per_kwh !== undefined) updateData.price_per_kwh = price_per_kwh;
     if (total_connectors !== undefined) updateData.total_connectors = total_connectors;
     if (latitude !== undefined) updateData.latitude = latitude;
@@ -632,7 +632,7 @@ app.put('/api/ev-chargers/:id', authenticateToken, [
 
     // Aktualizuj
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -655,7 +655,7 @@ app.delete('/api/ev-chargers/:id', authenticateToken, async (req, res) => {
     
     // Sprawdź czy ładowarka należy do użytkownika
     const { data: charger, error: fetchError } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('owner_id, name')
       .eq('id', id)
       .single();
@@ -670,7 +670,7 @@ app.delete('/api/ev-chargers/:id', authenticateToken, async (req, res) => {
 
     // Usuń
     const { error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .delete()
       .eq('id', id);
     
@@ -702,7 +702,7 @@ app.patch('/api/ev-chargers/:id/availability', authenticateToken, [
     
     // Sprawdź czy ładowarka istnieje i pobierz total_connectors
     const { data: charger, error: fetchError } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .select('owner_id, total_connectors')
       .eq('id', id)
       .single();
@@ -724,7 +724,7 @@ app.patch('/api/ev-chargers/:id/availability', authenticateToken, [
 
     // Aktualizuj dostępność
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .update({ available_connectors })
       .eq('id', id)
       .select()
@@ -751,7 +751,7 @@ app.get('/api/ev-chargers/search', async (req, res) => {
       available_only
     } = req.query;
 
-    let query = supabase.from('ev_chargers').select('*');
+    let query = supabase.from('charging_stations').select('*');
 
     // Filtry
     if (city) {
@@ -763,7 +763,7 @@ app.get('/api/ev-chargers/search', async (req, res) => {
     }
 
     if (min_power) {
-      query = query.gte('power_kw', parseFloat(min_power));
+      query = query.gte('max_power_kw', parseFloat(min_power));
     }
 
     if (max_price) {
@@ -821,16 +821,19 @@ app.post('/api/charging-stations', authenticateToken, [
 
     console.log('📝 Dane ładowarki do zapisania:', req.body);
 
-    // Mapuj max_power_kw na power_kw dla zgodności z tabelą
+    // Wstaw dane do tabeli charging_stations
     const { data, error } = await supabase
-      .from('ev_chargers')
+      .from('charging_stations')
       .insert([{
         name,
         address,
         city: city || null,
         charger_type,
-        power_kw: max_power_kw, // Mapowanie z max_power_kw na power_kw
+        connector_types: connector_types || ['Type2'],
+        max_power_kw,
         price_per_kwh,
+        price_per_minute: price_per_minute || null,
+        price_per_session: price_per_session || null,
         total_connectors,
         available_connectors: total_connectors,
         latitude,
@@ -852,6 +855,213 @@ app.post('/api/charging-stations', authenticateToken, [
     res.status(500).json({ error: error.message });
   }
 });
+
+// GET /api/charging-stations - pobierz wszystkie ładowarki (dla frontendu)
+app.get('/api/charging-stations', async (req, res) => {
+  try {
+    console.log('🔍 Fetching charging stations from Supabase...');
+
+    const { data, error, count } = await supabase
+      .from('charging_stations')
+      .select('*', { count: 'exact' });
+
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
+
+    console.log('✅ Found charging stations:', data?.length);
+    console.log('📊 Total count in database:', count);
+
+    if (data && data.length > 0) {
+      console.log('⚡ First charging station:', data[0]);
+      const withCoords = data.filter(c => c.latitude && c.longitude).length;
+      console.log(`📍 Charging stations with coordinates: ${withCoords}/${data.length}`);
+    }
+
+    res.json({ stations: data || [] });
+  } catch (error) {
+    console.error('❌ Error fetching charging stations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ========== SESJE ŁADOWANIA ==========
+
+// POST /api/charging-sessions - rozpocznij sesję ładowania
+app.post('/api/charging-sessions', authenticateToken, [
+  body('station_id').isInt().withMessage('ID stacji jest wymagane'),
+  body('vehicle_info').optional().isObject()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { station_id, vehicle_info } = req.body;
+    const user_id = req.user.id;
+
+    // Sprawdź czy stacja istnieje i jest dostępna
+    const { data: station, error: stationError } = await supabase
+      .from('charging_stations')
+      .select('*')
+      .eq('id', station_id)
+      .single();
+
+    if (stationError || !station) {
+      return res.status(404).json({ error: 'Stacja ładowania nie znaleziona' });
+    }
+
+    if (station.available_connectors <= 0) {
+      return res.status(400).json({ error: 'Brak dostępnych złączy' });
+    }
+
+    // Utwórz sesję ładowania
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .insert([{
+        station_id,
+        user_id,
+        start_time: new Date().toISOString(),
+        status: 'active',
+        vehicle_info: vehicle_info || null
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Zmniejsz dostępne złącza
+    await supabase
+      .from('charging_stations')
+      .update({ available_connectors: station.available_connectors - 1 })
+      .eq('id', station_id);
+
+    console.log('✅ Created charging session:', data);
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error creating charging session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/charging-sessions/my - pobierz moje sesje ładowania
+app.get('/api/charging-sessions/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .select(`
+        *,
+        charging_stations (
+          id,
+          name,
+          address,
+          city,
+          charger_type,
+          max_power_kw,
+          price_per_kwh,
+          price_per_minute,
+          price_per_session
+        )
+      `)
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    console.log(`✅ Found ${data?.length || 0} sessions for user ${req.user.id}`);
+    res.json({ sessions: data || [] });
+  } catch (error) {
+    console.error('Error fetching charging sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/charging-sessions/:id/end - zakończ sesję ładowania
+app.put('/api/charging-sessions/:id/end', authenticateToken, [
+  body('energy_delivered_kwh').optional().isFloat({ min: 0 }),
+  body('charging_duration_minutes').optional().isInt({ min: 0 })
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { energy_delivered_kwh, charging_duration_minutes } = req.body;
+
+    // Sprawdź czy sesja należy do użytkownika
+    const { data: session, error: fetchError } = await supabase
+      .from('charging_sessions')
+      .select(`
+        *,
+        charging_stations (*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !session) {
+      return res.status(404).json({ error: 'Sesja nie znaleziona' });
+    }
+
+    if (session.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Brak uprawnień' });
+    }
+
+    if (session.status !== 'active') {
+      return res.status(400).json({ error: 'Sesja już zakończona' });
+    }
+
+    // Oblicz koszt
+    const station = session.charging_stations;
+    let total_cost = 0;
+
+    if (energy_delivered_kwh) {
+      total_cost += energy_delivered_kwh * parseFloat(station.price_per_kwh);
+    }
+
+    if (charging_duration_minutes && station.price_per_minute) {
+      total_cost += charging_duration_minutes * parseFloat(station.price_per_minute);
+    }
+
+    if (station.price_per_session) {
+      total_cost += parseFloat(station.price_per_session);
+    }
+
+    // Punkty = kWh (zaokrąglone)
+    const points_earned = Math.round(energy_delivered_kwh || 0);
+
+    // Zaktualizuj sesję
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .update({
+        end_time: new Date().toISOString(),
+        energy_delivered_kwh: energy_delivered_kwh || null,
+        charging_duration_minutes: charging_duration_minutes || null,
+        total_cost: total_cost.toFixed(2),
+        points_earned,
+        status: 'completed',
+        payment_status: 'pending'
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Zwiększ dostępne złącza
+    await supabase
+      .from('charging_stations')
+      .update({
+        available_connectors: station.available_connectors + 1
+      })
+      .eq('id', session.station_id);
+
+    console.log('✅ Ended charging session:', data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error ending charging session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/reservations - pobierz wszystkie rezerwacje (admin)
 app.get('/api/reservations', authenticateToken, async (req, res) => {
   try {
@@ -1226,12 +1436,33 @@ app.post('/api/blockchain/verify', authenticateToken, async (req, res) => {
 
 // ========== HEALTH CHECK ==========
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Test tabeli charging_stations
+    const { data, error } = await supabase
+      .from('charging_stations')
+      .select('id')
+      .limit(1);
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        charging_stations_table: error ? `ERROR: ${error.message}` : 'EXISTS',
+        charging_stations_count: data ? data.length : 0
+      }
+    });
+  } catch (err) {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        charging_stations_table: `CATCH ERROR: ${err.message}`
+      }
+    });
+  }
 });
 
 app.get('/', (req, res) => {
