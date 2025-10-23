@@ -743,12 +743,12 @@ app.patch('/api/ev-chargers/:id/availability', authenticateToken, [
 // GET /api/ev-chargers/search - wyszukaj ładowarki z filtrami
 app.get('/api/ev-chargers/search', async (req, res) => {
   try {
-    const { 
-      city, 
-      charger_type, 
-      min_power, 
-      max_price, 
-      available_only 
+    const {
+      city,
+      charger_type,
+      min_power,
+      max_price,
+      available_only
     } = req.query;
 
     let query = supabase.from('ev_chargers').select('*');
@@ -757,31 +757,98 @@ app.get('/api/ev-chargers/search', async (req, res) => {
     if (city) {
       query = query.ilike('city', `%${city}%`);
     }
-    
+
     if (charger_type) {
       query = query.eq('charger_type', charger_type);
     }
-    
+
     if (min_power) {
       query = query.gte('power_kw', parseFloat(min_power));
     }
-    
+
     if (max_price) {
       query = query.lte('price_per_kwh', parseFloat(max_price));
     }
-    
+
     if (available_only === 'true') {
       query = query.gt('available_connectors', 0);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     console.log(`🔍 Search results: ${data?.length || 0} chargers found`);
     res.json(data || []);
   } catch (error) {
     console.error('Error searching EV chargers:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/charging-stations - dodaj ładowarkę (nowy format z AddChargingStationModal)
+app.post('/api/charging-stations', authenticateToken, [
+  body('name').notEmpty().withMessage('Nazwa ładowarki jest wymagana'),
+  body('address').notEmpty().withMessage('Adres jest wymagany'),
+  body('charger_type').notEmpty().withMessage('Typ ładowarki jest wymagany'),
+  body('max_power_kw').isNumeric().withMessage('Moc musi być liczbą'),
+  body('price_per_kwh').isNumeric().withMessage('Cena musi być liczbą'),
+  body('total_connectors').isInt({ min: 1 }).withMessage('Liczba złączy musi być większa od 0'),
+  body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Nieprawidłowa szerokość geograficzna'),
+  body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Nieprawidłowa długość geograficzna')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const {
+      name,
+      address,
+      city,
+      charger_type,
+      max_power_kw,
+      connector_types,
+      price_per_kwh,
+      price_per_minute,
+      price_per_session,
+      total_connectors,
+      latitude,
+      longitude
+    } = req.body;
+    const owner_id = req.user.id;
+
+    console.log('📝 Dane ładowarki do zapisania:', req.body);
+
+    // Mapuj max_power_kw na power_kw dla zgodności z tabelą
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .insert([{
+        name,
+        address,
+        city: city || null,
+        charger_type,
+        power_kw: max_power_kw, // Mapowanie z max_power_kw na power_kw
+        price_per_kwh,
+        total_connectors,
+        available_connectors: total_connectors,
+        latitude,
+        longitude,
+        owner_id
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Błąd Supabase:', error);
+      throw error;
+    }
+
+    console.log('✅ Ładowarka utworzona:', data);
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('❌ Błąd przy tworzeniu ładowarki:', error);
     res.status(500).json({ error: error.message });
   }
 });
