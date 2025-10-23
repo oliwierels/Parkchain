@@ -855,6 +855,37 @@ app.post('/api/charging-stations', authenticateToken, [
     res.status(500).json({ error: error.message });
   }
 });
+
+// GET /api/charging-stations - pobierz wszystkie ładowarki (dla frontendu)
+app.get('/api/charging-stations', async (req, res) => {
+  try {
+    console.log('🔍 Fetching charging stations from Supabase...');
+
+    const { data, error, count } = await supabase
+      .from('charging_stations')
+      .select('*', { count: 'exact' });
+
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
+
+    console.log('✅ Found charging stations:', data?.length);
+    console.log('📊 Total count in database:', count);
+
+    if (data && data.length > 0) {
+      console.log('⚡ First charging station:', data[0]);
+      const withCoords = data.filter(c => c.latitude && c.longitude).length;
+      console.log(`📍 Charging stations with coordinates: ${withCoords}/${data.length}`);
+    }
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('❌ Error fetching charging stations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/reservations - pobierz wszystkie rezerwacje (admin)
 app.get('/api/reservations', authenticateToken, async (req, res) => {
   try {
@@ -1229,12 +1260,33 @@ app.post('/api/blockchain/verify', authenticateToken, async (req, res) => {
 
 // ========== HEALTH CHECK ==========
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Test tabeli charging_stations
+    const { data, error } = await supabase
+      .from('charging_stations')
+      .select('id')
+      .limit(1);
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        charging_stations_table: error ? `ERROR: ${error.message}` : 'EXISTS',
+        charging_stations_count: data ? data.length : 0
+      }
+    });
+  } catch (err) {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        charging_stations_table: `CATCH ERROR: ${err.message}`
+      }
+    });
+  }
 });
 
 app.get('/', (req, res) => {
