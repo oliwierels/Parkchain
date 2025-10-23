@@ -1028,12 +1028,118 @@ app.put('/api/charging-sessions/:id/end', authenticateToken, [
     // Punkty = kWh (zaokrąglone)
     const points_earned = Math.round(energy_delivered_kwh || 0);
 
-    // Zaktualizuj sesję
+    // Zaktualizuj sesję - ustaw status na pending_verification
+    // Właściciel musi zweryfikować wartości przed finalizacją
     const { data, error } = await supabase
       .from('charging_sessions')
       .update({
         end_time: new Date().toISOString(),
         energy_delivered_kwh: energy_delivered_kwh || null,
+        charging_duration_minutes: charging_duration_minutes || null,
+        total_cost: total_cost.toFixed(2),
+        points_earned,
+        status: 'pending_verification', // ZMIENIONO: czeka na weryfikację właściciela
+        payment_status: 'pending'
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // NIE zwalniamy złącza - to zrobi właściciel po weryfikacji
+    // Zapobiega to oszustwom (użytkownik podaje mniej kWh niż faktycznie pobrał)
+
+    console.log('✅ Ended charging session (pending verification):', data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error ending charging session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/charging-sessions/:id/verify - właściciel weryfikuje i zatwierdza sesję
+app.put('/api/charging-sessions/:id/verify', authenticateToken, [
+  body('energy_delivered_kwh').isFloat({ min: 0 }),
+  body('charging_duration_minutes').optional().isInt({ min: 0 }),
+  body('approved').isBoolean()
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { energy_delivered_kwh, charging_duration_minutes, approved } = req.body;
+
+    // Pobierz sesję wraz ze stacją
+    const { data: session, error: fetchError } = await supabase
+      .from('charging_sessions')
+      .select(`
+        *,
+        charging_stations (*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !session) {
+      return res.status(404).json({ error: 'Sesja nie znaleziona' });
+    }
+
+    // Sprawdź czy użytkownik jest właścicielem stacji
+    if (session.charging_stations.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Brak uprawnień - musisz być właścicielem ładowarki' });
+    }
+
+    if (session.status !== 'pending_verification') {
+      return res.status(400).json({ error: 'Sesja nie oczekuje na weryfikację' });
+    }
+
+    if (!approved) {
+      // Właściciel odrzucił - anuluj sesję
+      const { data, error } = await supabase
+        .from('charging_sessions')
+        .update({
+          status: 'cancelled',
+          payment_status: 'cancelled'
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Zwolnij złącze
+      await supabase
+        .from('charging_stations')
+        .update({
+          available_connectors: session.charging_stations.available_connectors + 1
+        })
+        .eq('id', session.station_id);
+
+      console.log('❌ Session rejected by owner:', data);
+      return res.json(data);
+    }
+
+    // Właściciel zatwierdził - oblicz finalny koszt na podstawie zweryfikowanych wartości
+    const station = session.charging_stations;
+    let total_cost = 0;
+
+    if (energy_delivered_kwh) {
+      total_cost += energy_delivered_kwh * parseFloat(station.price_per_kwh);
+    }
+
+    if (charging_duration_minutes && station.price_per_minute) {
+      total_cost += charging_duration_minutes * parseFloat(station.price_per_minute);
+    }
+
+    if (station.price_per_session) {
+      total_cost += parseFloat(station.price_per_session);
+    }
+
+    const points_earned = Math.round(energy_delivered_kwh || 0);
+
+    // Zaktualizuj sesję - teraz już completed
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .update({
+        energy_delivered_kwh: energy_delivered_kwh,
         charging_duration_minutes: charging_duration_minutes || null,
         total_cost: total_cost.toFixed(2),
         points_earned,
@@ -1046,7 +1152,7 @@ app.put('/api/charging-sessions/:id/end', authenticateToken, [
 
     if (error) throw error;
 
-    // Zwiększ dostępne złącza
+    // Teraz zwolnij złącze
     await supabase
       .from('charging_stations')
       .update({
@@ -1054,10 +1160,10 @@ app.put('/api/charging-sessions/:id/end', authenticateToken, [
       })
       .eq('id', session.station_id);
 
-    console.log('✅ Ended charging session:', data);
+    console.log('✅ Session verified and completed by owner:', data);
     res.json(data);
   } catch (error) {
-    console.error('Error ending charging session:', error);
+    console.error('Error verifying charging session:', error);
     res.status(500).json({ error: error.message });
   }
 });

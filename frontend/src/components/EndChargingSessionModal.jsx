@@ -53,7 +53,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
 
       const data = await response.json();
       console.log('✅ Sesja zakończona:', data);
-      alert('✅ Sesja ładowania zakończona pomyślnie!');
+      alert('✅ Sesja zakończona! Oczekuje na weryfikację przez właściciela ładowarki.');
       onSuccess();
     } catch (err) {
       console.error('❌ Błąd kończenia sesji:', err);
@@ -109,6 +109,13 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="bg-yellow-900 bg-opacity-20 p-3 rounded-lg mb-5 border border-yellow-700">
+          <p className="text-yellow-200 text-xs">
+            ⚠️ <strong>Uwaga:</strong> Twoje dane będą zweryfikowane przez właściciela ładowarki.
+            Podaj prawdziwe wartości z wyświetlacza ładowarki.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>

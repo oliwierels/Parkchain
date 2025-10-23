@@ -12,7 +12,13 @@ function ChargingDashboardPage() {
     activeChargers: 0,
     totalSessions: 0,
     activeSessions: 0,
-    totalEnergy: 0
+    totalEnergy: 0,
+    pendingVerification: 0
+  });
+  const [verifyingSession, setVerifyingSession] = useState(null);
+  const [verifyFormData, setVerifyFormData] = useState({
+    energy_delivered_kwh: '',
+    charging_duration_minutes: ''
   });
 
   useEffect(() => {
@@ -55,6 +61,7 @@ function ChargingDashboardPage() {
         setMySessions(sessionsData.sessions || []);
 
         const activeSessions = sessionsData.sessions?.filter(s => s.status === 'active').length || 0;
+        const pendingVerification = sessionsData.sessions?.filter(s => s.status === 'pending_verification').length || 0;
         const totalEnergy = sessionsData.sessions
           ?.filter(s => s.energy_delivered_kwh)
           .reduce((sum, s) => sum + parseFloat(s.energy_delivered_kwh || 0), 0) || 0;
@@ -63,6 +70,7 @@ function ChargingDashboardPage() {
           ...prev,
           totalSessions: sessionsData.sessions?.length || 0,
           activeSessions,
+          pendingVerification,
           totalEnergy: totalEnergy.toFixed(2)
         }));
       }
@@ -87,6 +95,48 @@ function ChargingDashboardPage() {
     });
   };
 
+  const handleVerifySession = (session) => {
+    setVerifyingSession(session);
+    setVerifyFormData({
+      energy_delivered_kwh: session.energy_delivered_kwh || '',
+      charging_duration_minutes: session.charging_duration_minutes || ''
+    });
+  };
+
+  const handleVerifySubmit = async (approved) => {
+    if (approved && !verifyFormData.energy_delivered_kwh) {
+      alert('Podaj ilość dostarczonej energii');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/charging-sessions/${verifyingSession.id}/verify`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          energy_delivered_kwh: parseFloat(verifyFormData.energy_delivered_kwh),
+          charging_duration_minutes: verifyFormData.charging_duration_minutes ? parseInt(verifyFormData.charging_duration_minutes) : null,
+          approved
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Nie udało się zweryfikować sesji');
+      }
+
+      alert(approved ? '✅ Sesja zatwierdzona!' : '❌ Sesja odrzucona');
+      setVerifyingSession(null);
+      fetchChargingData();
+    } catch (err) {
+      console.error('Błąd weryfikacji:', err);
+      alert('Nie udało się zweryfikować sesji: ' + err.message);
+    }
+  };
+
   // Zwracamy klasy Tailwind dla DARK MODE
   const getStatusClasses = (status) => {
     switch (status) {
@@ -96,6 +146,8 @@ function ChargingDashboardPage() {
         return 'bg-green-900 text-green-200';
       case 'cancelled':
         return 'bg-red-900 text-red-200';
+      case 'pending_verification':
+        return 'bg-yellow-900 text-yellow-200';
       default:
         return 'bg-gray-700 text-gray-200';
     }
@@ -134,14 +186,14 @@ function ChargingDashboardPage() {
       )}
 
       {/* Statystyki */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
-        
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
+
         {/* Karta statystyk (ciemne tło) */}
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border-2 border-amber-500">
           <p className="text-sm text-gray-400 mb-1">Moje ładowarki</p>
           <p className="text-4xl font-bold text-amber-500">{stats.totalChargers}</p>
         </div>
-        
+
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
           <p className="text-sm text-gray-400 mb-1">Aktywne złącza</p>
           <p className="text-4xl font-bold text-green-500">{stats.activeChargers}</p>
@@ -157,11 +209,88 @@ function ChargingDashboardPage() {
           <p className="text-4xl font-bold text-blue-400">{stats.activeSessions}</p>
         </div>
 
+        <div className={`bg-gray-800 p-6 rounded-xl shadow-lg border-2 ${stats.pendingVerification > 0 ? 'border-yellow-500 animate-pulse' : 'border-gray-700'}`}>
+          <p className="text-sm text-gray-400 mb-1">Do weryfikacji</p>
+          <p className={`text-4xl font-bold ${stats.pendingVerification > 0 ? 'text-yellow-500' : 'text-gray-500'}`}>{stats.pendingVerification}</p>
+        </div>
+
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
           <p className="text-sm text-gray-400 mb-1">Energia dostarczona</p>
           <p className="text-4xl font-bold text-green-500">{stats.totalEnergy} kWh</p>
         </div>
       </div>
+
+      {/* Sesje do weryfikacji */}
+      {stats.pendingVerification > 0 && (
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold mb-5 text-yellow-500 flex items-center gap-3">
+            ⚠️ Sesje oczekujące na weryfikację ({stats.pendingVerification})
+          </h2>
+
+          <div className="bg-yellow-900 bg-opacity-20 border-2 border-yellow-500 rounded-xl p-4 mb-5">
+            <p className="text-yellow-200 text-sm">
+              <strong>Ważne:</strong> Zweryfikuj wartości podane przez użytkowników przed zatwierdzeniem.
+              Możesz skorygować ilość pobranej energii jeśli użytkownik podał nieprawdziwe dane.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {mySessions.filter(s => s.status === 'pending_verification').map((session) => (
+              <div key={session.id} className="bg-gray-800 p-6 rounded-xl shadow-lg border-2 border-yellow-500">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white mb-2">
+                      {session.charging_stations?.name || 'Nieznana stacja'}
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-1">
+                      📍 {session.charging_stations?.address}
+                    </p>
+                    <p className="text-sm text-gray-400 mb-1">
+                      👤 Użytkownik: {session.users?.full_name || session.users?.email || 'Nieznany'}
+                    </p>
+                    <p className="text-sm text-gray-300 mb-2">
+                      🕐 {formatDate(session.start_time)} → {formatDate(session.end_time)}
+                    </p>
+                    <div className="bg-gray-700 p-3 rounded-lg mt-3">
+                      <p className="text-xs text-gray-400 mb-2">Dane zgłoszone przez użytkownika:</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-gray-400">Energia</p>
+                          <p className="text-base font-bold text-amber-400">{session.energy_delivered_kwh || '-'} kWh</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Szacowany koszt</p>
+                          <p className="text-base font-bold text-green-400">{session.total_cost || '-'} zł</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 w-full md:w-auto">
+                    <button
+                      onClick={() => handleVerifySession(session)}
+                      className="py-2 px-5 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
+                    >
+                      ✅ Weryfikuj i zatwierdź
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Czy na pewno chcesz odrzucić tę sesję?')) {
+                          setVerifyingSession(session);
+                          handleVerifySubmit(false);
+                        }
+                      }}
+                      className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors whitespace-nowrap"
+                    >
+                      ❌ Odrzuć
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Moje ładowarki */}
       <div className="mb-10">
@@ -282,7 +411,9 @@ function ChargingDashboardPage() {
                           <span className={`py-1.5 px-3 rounded-full text-xs font-bold ${statusClasses}`}>
                             {session.status === 'active' ? 'Aktywna' :
                              session.status === 'completed' ? 'Zakończona' :
-                             session.status === 'cancelled' ? 'Anulowana' : session.status}
+                             session.status === 'cancelled' ? 'Anulowana' :
+                             session.status === 'pending_verification' ? 'Oczekuje weryfikacji' :
+                             session.status}
                           </span>
                         </td>
                       </tr>
@@ -294,6 +425,112 @@ function ChargingDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Modal weryfikacji sesji */}
+      {verifyingSession && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-70 flex justify-center items-center z-[2000] p-5">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-auto shadow-2xl border border-gray-700">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="m-0 text-xl font-bold text-white">
+                ⚠️ Weryfikacja sesji
+              </h2>
+              <button
+                onClick={() => setVerifyingSession(null)}
+                className="bg-transparent border-none text-2xl cursor-pointer text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-gray-700 p-4 rounded-lg mb-5 border border-gray-600">
+              <h3 className="text-sm font-bold text-white mb-3">
+                {verifyingSession.charging_stations?.name}
+              </h3>
+              <p className="text-xs text-gray-400 mb-1">
+                👤 {verifyingSession.users?.full_name || verifyingSession.users?.email}
+              </p>
+              <p className="text-xs text-gray-400 mb-1">
+                🕐 {formatDate(verifyingSession.start_time)} → {formatDate(verifyingSession.end_time)}
+              </p>
+              <div className="mt-3 pt-3 border-t border-gray-600">
+                <p className="text-xs text-yellow-400 mb-2">Wartości zgłoszone przez użytkownika:</p>
+                <p className="text-sm text-gray-300">
+                  Energia: <strong>{verifyingSession.energy_delivered_kwh} kWh</strong>
+                </p>
+                <p className="text-sm text-gray-300">
+                  Koszt: <strong>{verifyingSession.total_cost} zł</strong>
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleVerifySubmit(true); }}>
+              <p className="text-sm text-yellow-200 mb-4 bg-yellow-900 bg-opacity-30 p-3 rounded-lg">
+                Sprawdź wartości na wyświetlaczu ładowarki. Możesz je skorygować jeśli użytkownik podał nieprawdziwe dane.
+              </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Dostarczona energia (kWh) *
+                </label>
+                <input
+                  type="number"
+                  value={verifyFormData.energy_delivered_kwh}
+                  onChange={(e) => setVerifyFormData({ ...verifyFormData, energy_delivered_kwh: e.target.value })}
+                  placeholder="np. 42.5"
+                  min="0"
+                  step="0.1"
+                  required
+                  className="w-full p-3 border border-gray-600 rounded-lg text-sm bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Czas ładowania (minuty)
+                </label>
+                <input
+                  type="number"
+                  value={verifyFormData.charging_duration_minutes}
+                  onChange={(e) => setVerifyFormData({ ...verifyFormData, charging_duration_minutes: e.target.value })}
+                  placeholder="np. 45"
+                  min="0"
+                  className="w-full p-3 border border-gray-600 rounded-lg text-sm bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              {verifyFormData.energy_delivered_kwh && (
+                <div className="bg-green-900 bg-opacity-30 p-4 rounded-lg mb-5 border border-green-700">
+                  <p className="text-xs text-gray-400 mb-1">Finalny koszt</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {(parseFloat(verifyFormData.energy_delivered_kwh) * parseFloat(verifyingSession.charging_stations?.price_per_kwh || 0)).toFixed(2)} zł
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setVerifyingSession(null)}
+                  className="flex-1 py-3 border border-gray-600 rounded-lg text-sm font-bold text-gray-300 bg-transparent hover:bg-gray-700 transition-colors cursor-pointer"
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="submit"
+                  disabled={!verifyFormData.energy_delivered_kwh}
+                  className={`flex-1 py-3 border-none rounded-lg text-sm font-bold text-white transition-colors ${
+                    !verifyFormData.energy_delivered_kwh
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 cursor-pointer'
+                  }`}
+                >
+                  ✅ Zatwierdź sesję
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
