@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS charging_stations (
     price_per_session DECIMAL(6, 2), -- opcjonalnie: opłata startowa
 
     -- Właściciel i status
-    owner_id UUID REFERENCES users(id),
+    owner_id BIGINT REFERENCES users(id),
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN DEFAULT FALSE, -- weryfikacja przez DeCharge
 
@@ -68,7 +68,7 @@ CREATE TRIGGER charging_stations_updated_at_trigger
 CREATE TABLE IF NOT EXISTS charging_sessions (
     id BIGSERIAL PRIMARY KEY,
     station_id BIGINT NOT NULL REFERENCES charging_stations(id),
-    user_id UUID NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
 
     -- Czas trwania
     start_time TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -118,7 +118,7 @@ CREATE TRIGGER charging_sessions_updated_at_trigger
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS user_points (
-    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     total_points INTEGER DEFAULT 0,
     available_points INTEGER DEFAULT 0, -- punkty dostępne do sprzedaży
     locked_points INTEGER DEFAULT 0, -- punkty wystawione na sprzedaż
@@ -143,8 +143,8 @@ CREATE TRIGGER user_points_updated_at_trigger
 
 CREATE TABLE IF NOT EXISTS points_listings (
     id BIGSERIAL PRIMARY KEY,
-    seller_id UUID NOT NULL REFERENCES users(id),
-    buyer_id UUID REFERENCES users(id),
+    seller_id BIGINT NOT NULL REFERENCES users(id),
+    buyer_id BIGINT REFERENCES users(id),
 
     -- Oferta
     points_amount INTEGER NOT NULL,
