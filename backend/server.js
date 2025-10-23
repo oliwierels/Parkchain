@@ -879,7 +879,7 @@ app.get('/api/charging-stations', async (req, res) => {
       console.log(`📍 Charging stations with coordinates: ${withCoords}/${data.length}`);
     }
 
-    res.json(data || []);
+    res.json({ stations: data || [] });
   } catch (error) {
     console.error('❌ Error fetching charging stations:', error);
     res.status(500).json({ error: error.message });
