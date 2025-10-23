@@ -1,21 +1,25 @@
 // frontend/src/pages/HomePage.jsx
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown, FaChargingStation, FaUsers, FaClock } from "react-icons/fa";
+import { useAuth } from '../context/AuthContext';
 
 function HomePage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(8);
   const [autoRedirectCancelled, setAutoRedirectCancelled] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 300], [0, 100]);
   const y2 = useTransform(scrollY, [0, 300], [0, -50]);
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
+  const navbarOpacity = useTransform(scrollY, [0, 100], [0, 1]);
 
   // Auto-redirect timer (zwiększono do 8s żeby dać czas na eksplorację)
   useEffect(() => {
@@ -50,6 +54,16 @@ function HomePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [autoRedirectCancelled]);
+
+  // Mouse tracking for interactive effects
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleNavigate = (path) => {
     if (isTransitioning) return;
@@ -105,6 +119,60 @@ function HomePage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      {/* Floating Minimal Navbar */}
+      <motion.nav
+        className="fixed top-0 left-0 right-0 z-40 px-6 py-4"
+        style={{ opacity: navbarOpacity }}
+      >
+        <motion.div
+          className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10"
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        >
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-parkchain-400 to-parkchain-600 rounded-xl flex items-center justify-center">
+              <FaParking className="text-white text-xl" />
+            </div>
+            <span className="text-white font-bold text-lg">Parkchain</span>
+          </Link>
+
+          <div className="flex items-center gap-4">
+            {!isAuthenticated ? (
+              <Link to="/login">
+                <motion.button
+                  className="px-6 py-2 bg-gradient-to-r from-parkchain-500 to-parkchain-600 text-white rounded-xl font-medium"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)" }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  Zaloguj się
+                </motion.button>
+              </Link>
+            ) : (
+              <Link to="/map">
+                <motion.button
+                  className="px-6 py-2 bg-white/10 text-white rounded-xl font-medium border border-white/20"
+                  whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  Dashboard
+                </motion.button>
+              </Link>
+            )}
+          </div>
+        </motion.div>
+      </motion.nav>
+
+      {/* Mouse follower gradient */}
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-30"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(99, 102, 241, 0.05), transparent 40%)`
+        }}
+      />
+
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -322,14 +390,15 @@ function HomePage() {
                 <motion.button
                   onClick={() => handleNavigate(feature.path)}
                   disabled={isTransitioning}
-                  className="relative w-full h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative w-full h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-black/20"
                   whileHover={{
-                    scale: 1.02,
-                    y: -8,
-                    borderColor: "rgba(255, 255, 255, 0.3)"
+                    scale: 1.03,
+                    y: -12,
+                    borderColor: "rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.5)"
                   }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   {/* Badge */}
                   {feature.badge && (

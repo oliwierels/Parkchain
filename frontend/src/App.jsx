@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SolanaWalletProvider } from './context/SolanaWalletContext';
 import Navbar from './components/Navbar';
@@ -16,15 +16,15 @@ import PointsMarketplacePage from './pages/PointsMarketplacePage';
 import BadgesPage from './pages/BadgesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
   return (
-    <SolanaWalletProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          {/* ZMIANA 1: Zmieniono tło na bg-gray-900 dla spójności */}
-          <div className="min-h-screen bg-gray-900">
-            <Navbar />
-            <Routes>
+    <div className="min-h-screen bg-gray-900">
+      {/* Ukryj navbar na stronie głównej dla immersive experience */}
+      {!isHomePage && <Navbar />}
+      <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/add-parking" element={<AddParkingPage />} />
@@ -48,6 +48,15 @@ function App() {
               <Route path="/analytics" element={<AnalyticsPage />} />
             </Routes>
           </div>
+  );
+}
+
+function App() {
+  return (
+    <SolanaWalletProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppContent />
         </BrowserRouter>
       </AuthProvider>
     </SolanaWalletProvider>
