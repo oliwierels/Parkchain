@@ -946,6 +946,62 @@ app.post('/api/charging-sessions', authenticateToken, [
   }
 });
 
+// GET /api/live-sessions - PUBLIC endpoint for live charging feed (DeCharge hackathon)
+app.get('/api/live-sessions', async (req, res) => {
+  try {
+    // Get all active charging sessions
+    const { data: sessions, error } = await supabase
+      .from('charging_sessions')
+      .select(`
+        *,
+        charging_stations (
+          id,
+          name,
+          address,
+          city,
+          charger_type,
+          max_power_kw,
+          price_per_kwh
+        ),
+        users (
+          id,
+          full_name
+        )
+      `)
+      .eq('status', 'active')
+      .order('start_time', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    // Calculate live stats
+    const stats = {
+      activeSessions: sessions?.length || 0,
+      totalEnergyNow: sessions?.reduce((sum, s) => sum + (parseFloat(s.energy_delivered_kwh) || 0), 0) || 0,
+      totalPointsEarned: sessions?.reduce((sum, s) => sum + (s.points_earned || 0), 0) || 0,
+      activeChargers: new Set(sessions?.map(s => s.station_id)).size || 0
+    };
+
+    // Anonymize user data for privacy
+    const anonymizedSessions = sessions?.map(s => ({
+      ...s,
+      users: {
+        id: null, // Don't expose user ID
+        full_name: s.users?.full_name ? s.users.full_name.charAt(0) + '***' : 'Anonymous'
+      }
+    })) || [];
+
+    res.json({
+      sessions: anonymizedSessions,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching live sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/charging-sessions/my - pobierz moje sesje ładowania
 app.get('/api/charging-sessions/my', authenticateToken, async (req, res) => {
   try {
