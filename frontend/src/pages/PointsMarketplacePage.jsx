@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { QRCodeSVG } from 'qrcode.react';
+import BigNumber from 'bignumber.js';
+
+// Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
+const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
 
 function PointsMarketplacePage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, sendTransaction } = useWallet();
+  const { connection } = useConnection();
   const [pointsStats, setPointsStats] = useState({
     totalPointsAvailable: 0,
     topEarners: [],
@@ -11,6 +18,8 @@ function PointsMarketplacePage() {
   });
   const [buyAmount, setBuyAmount] = useState('100');
   const [loading, setLoading] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [txSignature, setTxSignature] = useState(null);
 
   useEffect(() => {
     fetchPointsData();
@@ -42,21 +51,93 @@ function PointsMarketplacePage() {
   };
 
   const handleBuyPoints = async () => {
-    if (!connected) {
-      alert('Please connect your Solana wallet first!');
+    if (!connected || !publicKey) {
+      alert('❌ Please connect your Solana wallet first!');
+      return;
+    }
+
+    const amount = parseFloat(buyAmount);
+    if (!amount || amount <= 0 || amount > 10000) {
+      alert('❌ Invalid amount. Please enter between 1 and 10,000 DCP.');
       return;
     }
 
     setLoading(true);
-    try {
-      // TODO: Implement actual Solana transaction
-      // For now, show a proof of concept
-      const regularPrice = parseFloat(buyAmount) * 1.0; // 1 PLN per point
-      const discountedPrice = regularPrice * 0.5; // 50% discount
+    setTxSignature(null);
 
-      alert(`🎉 Purchase Successful (Proof of Concept)!\n\nPoints: ${buyAmount} DCP\nRegular Price: ${regularPrice} PLN\nYou Pay: ${discountedPrice} PLN (50% discount)\n\nSolana Wallet: ${publicKey.toString().slice(0, 8)}...${publicKey.toString().slice(-8)}\n\nThis would be recorded on Solana blockchain.`);
+    try {
+      // Oblicz cenę w SOL (zakładamy 1 DCP = 0.5 PLN, 1 SOL = ~$150, 1 PLN = ~$0.25)
+      // Więc: 1 DCP = 0.5 PLN = ~$0.125 = ~0.00083 SOL
+      // Dla uproszczenia: 100 DCP = 0.1 SOL (można dostosować)
+      const priceInSOL = new BigNumber(amount).dividedBy(1000); // 100 DCP = 0.1 SOL
+      const lamports = priceInSOL.multipliedBy(LAMPORTS_PER_SOL).toNumber();
+
+      console.log(`💰 Buying ${amount} DCP for ${priceInSOL.toFixed(4)} SOL (${lamports} lamports)`);
+
+      // Utwórz transakcję transferu SOL do treasury
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: TREASURY_WALLET,
+          lamports: Math.floor(lamports),
+        })
+      );
+
+      // Pobierz recent blockhash
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+
+      console.log('📤 Sending transaction...');
+
+      // Wyślij transakcję
+      const signature = await sendTransaction(transaction, connection);
+      console.log('✅ Transaction sent:', signature);
+      setTxSignature(signature);
+
+      // Czekaj na potwierdzenie
+      alert(`⏳ Transaction sent!\nSignature: ${signature.slice(0, 16)}...\n\nWaiting for confirmation...`);
+
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight
+      });
+
+      if (confirmation.value.err) {
+        throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+      }
+
+      console.log('✅ Transaction confirmed!');
+
+      // Zapisz zakup w bazie danych
+      const response = await fetch('http://localhost:3000/api/points/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          amount: amount,
+          priceSOL: priceInSOL.toFixed(6),
+          txSignature: signature,
+          walletAddress: publicKey.toString()
+        })
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to record purchase in database, but blockchain transaction succeeded');
+      }
+
+      alert(`🎉 Purchase Successful!\n\n✓ Bought: ${amount} DCP tokens\n✓ Paid: ${priceInSOL.toFixed(4)} SOL (50% discount)\n✓ Transaction: ${signature.slice(0, 16)}...\n\n🔗 View on Solana Explorer:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+
+      // Refresh stats
+      fetchPointsData();
+      setBuyAmount('100');
+
     } catch (err) {
-      alert('Transaction failed: ' + err.message);
+      console.error('Transaction error:', err);
+      alert(`❌ Transaction Failed\n\n${err.message}\n\nPlease ensure you have enough SOL for the transaction and fees.`);
     } finally {
       setLoading(false);
     }
@@ -181,12 +262,55 @@ function PointsMarketplacePage() {
                     : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
                 }`}
               >
-                {loading ? 'Processing...' : `💎 Buy ${buyAmount} DCP for ${pricing.discounted} PLN`}
+                {loading ? '⏳ Processing Transaction...' : `💎 Buy ${buyAmount} DCP (${new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL)`}
               </button>
 
-              <p className="text-xs text-gray-400 text-center mt-4">
-                Connected: {publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}
-              </p>
+              {txSignature && (
+                <div className="mt-4 p-4 bg-green-900 bg-opacity-30 border border-green-600 rounded-lg">
+                  <p className="text-green-400 font-bold mb-2">✅ Transaction Successful!</p>
+                  <p className="text-xs text-gray-300 mb-2 break-all">
+                    Signature: {txSignature}
+                  </p>
+                  <a
+                    href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline text-sm"
+                  >
+                    🔗 View on Solana Explorer
+                  </a>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-xs text-gray-400">
+                  Connected: {publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}
+                </p>
+                <button
+                  onClick={() => setShowQR(!showQR)}
+                  className="text-xs text-purple-400 hover:text-purple-300 underline"
+                >
+                  {showQR ? 'Hide' : 'Show'} Payment QR
+                </button>
+              </div>
+
+              {showQR && (
+                <div className="mt-4 p-4 bg-gray-700 rounded-lg text-center">
+                  <p className="text-sm text-gray-300 mb-3">Scan with Solana Pay compatible wallet</p>
+                  <div className="flex justify-center">
+                    <QRCodeSVG
+                      value={`solana:${TREASURY_WALLET.toString()}?amount=${new BigNumber(buyAmount).dividedBy(1000).toFixed(6)}&label=DeCharge%20Points&message=Buy%20${buyAmount}%20DCP`}
+                      size={200}
+                      bgColor="#1f2937"
+                      fgColor="#ffffff"
+                      level="H"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Amount: {new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -245,11 +369,11 @@ function PointsMarketplacePage() {
         </div>
       </div>
 
-      {/* Proof of Concept Notice */}
-      <div className="mt-8 bg-blue-900 bg-opacity-30 border border-blue-600 rounded-xl p-5 text-center">
-        <p className="text-blue-200 text-sm">
-          <strong>🔧 Proof of Concept:</strong> This marketplace demonstrates the DeCharge economy concept.
-          Full Solana Pay integration and SPL token transfers will be implemented in production.
+      {/* Blockchain Notice */}
+      <div className="mt-8 bg-gradient-to-r from-purple-900 to-blue-900 border-2 border-purple-600 rounded-xl p-5 text-center">
+        <p className="text-purple-100 text-sm">
+          <strong>⛓️ Real Blockchain Transactions:</strong> All purchases are executed as actual SOL transfers on Solana Devnet.
+          Each transaction is recorded on-chain and can be verified on Solana Explorer. This demonstrates real Web3 integration for the DeCharge economy.
         </p>
       </div>
     </div>

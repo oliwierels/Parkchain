@@ -11,12 +11,20 @@ function LiveFeedPage() {
     totalPointsEarned: 0,
     activeChargers: 0
   });
+  const [leaderboard, setLeaderboard] = useState({
+    topUsers: [],
+    topStations: []
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLiveData();
+    fetchLeaderboard();
     // Refresh every 5 seconds for real-time effect
-    const interval = setInterval(fetchLiveData, 5000);
+    const interval = setInterval(() => {
+      fetchLiveData();
+      fetchLeaderboard();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -37,6 +45,21 @@ function LiveFeedPage() {
       console.error('Error fetching live data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/leaderboard');
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard({
+          topUsers: data.topUsers || [],
+          topStations: data.topStations || []
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err);
     }
   };
 
@@ -191,6 +214,117 @@ function LiveFeedPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Leaderboards */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Users */}
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <span className="text-3xl">🏆</span>
+            Top EV Drivers
+          </h3>
+
+          {leaderboard.topUsers.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">No data yet. Start charging to appear here!</p>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard.topUsers.map((user, index) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const colors = [
+                  'from-yellow-600 to-amber-700',
+                  'from-gray-400 to-gray-600',
+                  'from-orange-600 to-orange-800'
+                ];
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                      index < 3
+                        ? `bg-gradient-to-r ${colors[index]} border-white`
+                        : 'bg-gray-700 border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">
+                        {index < 3 ? medals[index] : `#${user.rank}`}
+                      </div>
+                      <div>
+                        <p className={`font-bold ${index < 3 ? 'text-white' : 'text-gray-200'}`}>
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-gray-300">
+                          {user.sessionsCount} sessions
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xl font-bold ${index < 3 ? 'text-white' : 'text-gray-200'}`}>
+                        {user.totalKwh}
+                      </p>
+                      <p className="text-xs text-gray-300">kWh</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Top Stations */}
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <span className="text-3xl">⚡</span>
+            Top Charging Stations
+          </h3>
+
+          {leaderboard.topStations.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">No stations data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard.topStations.map((station, index) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const colors = [
+                  'from-green-600 to-emerald-700',
+                  'from-blue-400 to-blue-600',
+                  'from-purple-600 to-purple-800'
+                ];
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                      index < 3
+                        ? `bg-gradient-to-r ${colors[index]} border-white`
+                        : 'bg-gray-700 border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="text-3xl flex-shrink-0">
+                        {index < 3 ? medals[index] : `#${station.rank}`}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-bold truncate ${index < 3 ? 'text-white' : 'text-gray-200'}`}>
+                          {station.name}
+                        </p>
+                        <p className="text-xs text-gray-300 truncate">
+                          {station.address}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-4">
+                      <p className={`text-xl font-bold ${index < 3 ? 'text-white' : 'text-gray-200'}`}>
+                        {station.sessionsCount}
+                      </p>
+                      <p className="text-xs text-gray-300">sessions</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Info Box */}
