@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { reservationAPI } from '../services/api';
+import { reservationAPI } from '../services/api'; // Używamy tylko tego
 
 function MyReservationsPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const [reservations, setReservations] = useState([]);
+  // Ten stan będzie teraz przechowywał ustandaryzowane dane
+  const [reservations, setReservations] = useState([]); 
   const [stats, setStats] = useState({
     totalReservations: 0,
     activeReservations: 0,
@@ -13,7 +14,7 @@ function MyReservationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'active', 'pending', 'past', 'cancelled'
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -24,12 +25,67 @@ function MyReservationsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const reservationsData = await reservationAPI.getMyReservations();
-      setReservations(reservationsData);
 
-      const total = reservationsData.length;
-      const active = reservationsData.filter(r => r.status === 'active').length;
-      const pending = reservationsData.filter(r => r.status === 'pending').length;
+      // === KROK 1: Pobieramy OBA typy rezerwacji równolegle ===
+      const parkingPromise = reservationAPI.getMyReservations();
+      
+      const chargingPromise = fetch('http://localhost:3000/api/charging-sessions/my', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      }).then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Nie udało się pobrać sesji ładowania');
+      });
+
+      // Czekamy na oba
+      const [parkingData, chargingData] = await Promise.all([
+        parkingPromise,
+        chargingPromise
+      ]);
+
+      // === KROK 2: Standaryzujemy dane do wspólnego formatu ===
+
+      // Mapowanie rezerwacji parkingowych
+      const mappedParking = parkingData.map(r => ({
+        id: r.id,
+        type: 'parking', // Dodajemy typ, aby wiedzieć, co anulować
+        name: r.parking_lots.name,
+        address: `${r.parking_lots.address}, ${r.parking_lots.city}`,
+        startTime: r.start_time,
+        endTime: r.end_time,
+        price: r.price,
+        status: r.status,
+        details: `🚗 ${r.license_plate}`, // Dodatkowe info
+        originalData: r
+      }));
+
+      // Mapowanie sesji ładowania
+      const mappedCharging = (chargingData.sessions || []).map(s => ({
+        id: s.id,
+        type: 'charging', // Dodajemy typ
+        name: s.charging_stations?.name || 'Nieznana stacja',
+        address: s.charging_stations?.address || 'Brak adresu',
+        startTime: s.start_time,
+        endTime: s.end_time,
+        price: s.total_cost, // Używamy total_cost
+        status: s.status,
+        details: `⚡ ${s.energy_delivered_kwh || 0} kWh`, // Dodatkowe info
+        originalData: s
+      }));
+
+      // === KROK 3: Łączymy i sortujemy obie listy ===
+      const combinedReservations = [...mappedParking, ...mappedCharging];
+      
+      // Sortujemy po dacie rozpoczęcia (najnowsze na górze)
+      combinedReservations.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+      setReservations(combinedReservations);
+
+      // === KROK 4: Obliczamy statystyki na podstawie połączonych danych ===
+      const total = combinedReservations.length;
+      const active = combinedReservations.filter(r => r.status === 'active').length;
+      const pending = combinedReservations.filter(r => r.status === 'pending').length;
 
       setStats({
         totalReservations: total,
@@ -46,31 +102,50 @@ function MyReservationsPage() {
     }
   };
 
-  const handleCancelReservation = async (id) => {
-    if (!window.confirm('Czy na pewno chcesz anulować tę rezerwację?')) {
+  // === KROK 5: Aktualizujemy logikę anulowania ===
+  const handleCancelReservation = async (id, type) => {
+    const confirmationText = type === 'parking'
+      ? 'Czy na pewno chcesz anulować tę rezerwację?'
+      : 'Czy na pewno chcesz anulować tę sesję ładowania?';
+      
+    if (!window.confirm(confirmationText)) {
       return;
     }
+
     try {
-      await reservationAPI.cancelReservation(id);
-      fetchData();
-      alert('Rezerwacja została anulowana');
+      if (type === 'parking') {
+        // Anulowanie rezerwacji parkingu
+        await reservationAPI.cancelReservation(id);
+      } else if (type === 'charging') {
+        // Anulowanie sesji ładowania (musimy użyć fetch, jak zakładaliśmy)
+        // Zakładam, że endpoint to /cancel, tak jak w Twoim API
+        const response = await fetch(`http://localhost:3000/api/charging-sessions/${id}/cancel`, {
+          method: 'POST', 
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Nie udało się anulować sesji ładowania');
+        }
+      }
+      
+      fetchData(); // Odświeżamy całą listę
+      alert('Anulowano pomyślnie');
     } catch (err) {
-      alert('Nie udało się anulować rezerwacji');
+      console.error(err);
+      alert('Nie udało się anulować');
     }
   };
 
+  // Reszta funkcji pomocniczych (bez zmian)
   const getStatusClasses = (status) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-900 text-yellow-200';
-      case 'active':
-        return 'bg-green-900 text-green-200';
-      case 'completed':
-        return 'bg-gray-700 text-gray-200';
-      case 'cancelled':
-        return 'bg-red-900 text-red-200';
-      default:
-        return 'bg-gray-700 text-gray-200';
+      case 'pending': return 'bg-yellow-900 text-yellow-200';
+      case 'active': return 'bg-green-900 text-green-200';
+      case 'completed': return 'bg-gray-700 text-gray-200';
+      case 'cancelled': return 'bg-red-900 text-red-200';
+      default: return 'bg-gray-700 text-gray-200';
     }
   };
 
@@ -84,31 +159,19 @@ function MyReservationsPage() {
     }
   };
 
-  // ========= ⬇️ TUTAJ JEST POPRAWKA ⬇️ =========
-  // Poprawiona logika filtrowania z 5 kategoriami
+  // Logika filtrowania (bez zmian, działa na ustandaryzowanym 'status')
   const filteredReservations = reservations.filter(r => {
     switch (filter) {
-      case 'active':
-        return r.status === 'active';
-      case 'pending':
-        return r.status === 'pending';
-      case 'past':
-        return r.status === 'completed';
-      case 'cancelled':
-        return r.status === 'cancelled';
-      case 'all':
-      default:
-        return true;
+      case 'active': return r.status === 'active';
+      case 'pending': return r.status === 'pending';
+      case 'past': return r.status === 'completed';
+      case 'cancelled': return r.status === 'cancelled';
+      case 'all': default: return true;
     }
   });
-  // =============================================
 
   if (authLoading || loading) {
-    return (
-      <div className="p-10 text-center text-lg text-indigo-400">
-        Ładowanie...
-      </div>
-    );
+    return <div className="p-10 text-center text-lg text-indigo-400">Ładowanie...</div>;
   }
 
   if (!isAuthenticated) {
@@ -121,38 +184,23 @@ function MyReservationsPage() {
         Moje Rezerwacje
       </h1>
 
+      {/* Statystyki (bez zmian) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">
-            Wszystkie rezerwacje
-          </p>
-          <p className="text-4xl font-bold text-white">
-            {stats.totalReservations}
-          </p>
+          <p className="text-sm text-gray-400 mb-1">Wszystkie rezerwacje</p>
+          <p className="text-4xl font-bold text-white">{stats.totalReservations}</p>
         </div>
-
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">
-            Aktywne rezerwacje
-          </p>
-          <p className="text-4xl font-bold text-green-500">
-            {stats.activeReservations}
-          </p>
+          <p className="text-sm text-gray-400 mb-1">Aktywne rezerwacje</p>
+          <p className="text-4xl font-bold text-green-500">{stats.activeReservations}</p>
         </div>
-
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">
-            Oczekujące rezerwacje
-          </p>
-          <p className="text-4xl font-bold text-yellow-500">
-            {stats.pendingReservations}
-          </p>
+          <p className="text-sm text-gray-400 mb-1">Oczekujące rezerwacje</p>
+          <p className="text-4xl font-bold text-yellow-500">{stats.pendingReservations}</p>
         </div>
       </div>
 
-      {/* ========= ⬇️ TUTAJ JEST POPRAWKA ⬇️ ========= */}
-      {/* Dodaliśmy przycisk "Oczekujące" */}
+      {/* Filtry (bez zmian) */}
       <div className="flex gap-3 mb-6 flex-wrap">
         {['all', 'active', 'pending', 'past', 'cancelled'].map(f => (
           <button
@@ -164,7 +212,6 @@ function MyReservationsPage() {
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
-            {/* Dodaliśmy logikę wyświetlania dla "pending" */}
             {f === 'all' ? 'Wszystkie' :
              f === 'active' ? 'Aktywne' :
              f === 'pending' ? 'Oczekujące' :
@@ -173,7 +220,6 @@ function MyReservationsPage() {
           </button>
         ))}
       </div>
-      {/* ============================================= */}
 
       {error && (
         <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
@@ -181,34 +227,35 @@ function MyReservationsPage() {
         </div>
       )}
 
-      {/* Reszta kodu bez zmian */}
+      {/* === KROK 6: Aktualizujemy renderowanie listy === */}
       {filteredReservations.length === 0 ? (
         <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
           <p className="text-lg">Brak rezerwacji w tej kategorii</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {filteredReservations.map(reservation => {
+          {filteredReservations.map(reservation => { // 'reservation' to teraz nasz ustandaryzowany obiekt
             const statusClasses = getStatusClasses(reservation.status);
             return (
               <div
-                key={reservation.id}
+                key={`${reservation.type}-${reservation.id}`} // Unikalny klucz
                 className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col md:flex-row justify-between items-start gap-6"
               >
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-white mb-2">
-                    {reservation.parking_lots.name}
+                    {reservation.name} {/* Używamy ustandaryzowanego pola */}
                   </h3>
                   <p className="text-gray-400 text-sm mb-1">
-                    📍 {reservation.parking_lots.address}, {reservation.parking_lots.city}
+                    📍 {reservation.address} {/* Używamy ustandaryzowanego pola */}
                   </p>
                   <p className="text-gray-400 text-sm mb-1">
-                    🚗 {reservation.license_plate}
+                    {reservation.details} {/* Używamy ustandaryzowanego pola */}
                   </p>
                   <p className="text-gray-300 text-sm mt-2">
-                    📅 {new Date(reservation.start_time).toLocaleString('pl-PL')}
+                    📅 {new Date(reservation.startTime).toLocaleString('pl-PL')}
                     {' → '}
-                    {new Date(reservation.end_time).toLocaleString('pl-PL')}
+                    {/* Aktywne sesje ładowania mogą nie mieć czasu końca */}
+                    {reservation.endTime ? new Date(reservation.endTime).toLocaleString('pl-PL') : '...'}
                   </p>
                 </div>
                 <div className="flex flex-col items-start md:items-end w-full md:w-auto">
@@ -216,11 +263,13 @@ function MyReservationsPage() {
                     {getStatusText(reservation.status)}
                   </div>
                   <p className="text-2xl font-bold text-indigo-400 mb-4">
-                    {reservation.price} zł
+                    {/* Aktywne sesje mogą nie mieć jeszcze ceny */}
+                    {reservation.price ? `${reservation.price} zł` : '-'}
                   </p>
                   {['pending', 'active'].includes(reservation.status) && (
                     <button
-                      onClick={() => handleCancelReservation(reservation.id)}
+                      // Przekazujemy ID i TYP do funkcji anulującej
+                      onClick={() => handleCancelReservation(reservation.id, reservation.type)}
                       className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
                     >
                       Anuluj
