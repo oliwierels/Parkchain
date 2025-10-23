@@ -1,6 +1,6 @@
 // frontend/src/pages/HomePage.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown } from "react-icons/fa";
@@ -8,11 +8,43 @@ import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown } from "react-
 function HomePage() {
   const navigate = useNavigate();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(5);
+  const [autoRedirectCancelled, setAutoRedirectCancelled] = useState(false);
+
+  // Auto-redirect timer
+  useEffect(() => {
+    if (autoRedirectCancelled) return;
+
+    const interval = setInterval(() => {
+      setAutoRedirectCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleGoToMap();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoRedirectCancelled]);
+
+  // Cancel auto-redirect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50 && !autoRedirectCancelled) {
+        setAutoRedirectCancelled(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [autoRedirectCancelled]);
 
   const handleGoToMap = () => {
-    if (isTransitioning) return; // Zapobiegaj wielokrotnym kliknięciom
+    if (isTransitioning) return;
+    setAutoRedirectCancelled(true);
     setIsTransitioning(true);
-    // Po animacji przejdź do mapy
     setTimeout(() => {
       navigate('/map');
     }, 600);
@@ -151,7 +183,7 @@ function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6, ease: [0.6, 0.01, 0.05, 0.95] }}
-            className="mb-8"
+            className="mb-4"
           >
             <motion.button
               onClick={handleGoToMap}
@@ -165,12 +197,44 @@ function HomePage() {
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               <span className="relative z-10 flex items-center gap-3">
-                <motion.div
-                  animate={isTransitioning ? { rotate: 360 } : {}}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                >
-                  <FaMapMarkedAlt className="text-3xl" />
-                </motion.div>
+                <div className="relative">
+                  <motion.div
+                    animate={isTransitioning ? { rotate: 360 } : {}}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                  >
+                    <FaMapMarkedAlt className="text-3xl" />
+                  </motion.div>
+
+                  {/* Circular countdown progress */}
+                  {!autoRedirectCancelled && autoRedirectCountdown > 0 && (
+                    <svg className="absolute -inset-2 w-14 h-14" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="24"
+                        stroke="rgba(255, 255, 255, 0.2)"
+                        strokeWidth="3"
+                        fill="none"
+                      />
+                      <motion.circle
+                        cx="28"
+                        cy="28"
+                        r="24"
+                        stroke="white"
+                        strokeWidth="3"
+                        fill="none"
+                        strokeLinecap="round"
+                        initial={{ pathLength: 1 }}
+                        animate={{ pathLength: autoRedirectCountdown / 5 }}
+                        transition={{ duration: 0.3, ease: "linear" }}
+                        style={{
+                          strokeDasharray: "150.8",
+                          filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.8))"
+                        }}
+                      />
+                    </svg>
+                  )}
+                </div>
                 Zobacz mapę parkingów
               </span>
 
@@ -182,6 +246,48 @@ function HomePage() {
                 transition={{ duration: 0.3 }}
               />
             </motion.button>
+          </motion.div>
+
+          {/* Auto-redirect info */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55, duration: 0.6 }}
+            className="mb-8"
+          >
+            <AnimatePresence mode="wait">
+              {!autoRedirectCancelled && autoRedirectCountdown > 0 ? (
+                <motion.p
+                  key="countdown"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-gray-400 text-sm"
+                >
+                  Automatyczne przejście za{' '}
+                  <motion.span
+                    key={autoRedirectCountdown}
+                    initial={{ scale: 1.3, color: '#ffffff' }}
+                    animate={{ scale: 1, color: '#9ca3af' }}
+                    transition={{ duration: 0.3 }}
+                    className="font-bold"
+                  >
+                    {autoRedirectCountdown}s
+                  </motion.span>
+                  {' '}• Scrolluj aby anulować
+                </motion.p>
+              ) : autoRedirectCancelled ? (
+                <motion.p
+                  key="cancelled"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-green-400 text-sm"
+                >
+                  ✓ Automatyczne przekierowanie anulowane
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
           </motion.div>
 
           {/* Dodatkowe info */}
