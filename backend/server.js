@@ -1,7 +1,7 @@
 // backend/server.js
-import 'dotenv/config';
 
 import express from 'express';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -10,9 +10,11 @@ import { body, validationResult } from 'express-validator';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import cron from 'node-cron';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
+
+// Załaduj zmienne środowiskowe
+dotenv.config();
 
 // ========== MIDDLEWARE DLA RÓL ==========
 
@@ -199,132 +201,10 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 });
 // ========== PARKINGI ==========
 
-// Funkcja pomocnicza do obliczania odległości (formuła Haversine)
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Promień Ziemi w km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // Odległość w km
-}
-
-// Funkcja rankingowa dla parkingów
-function rankParking(parking, destinationLat, destinationLng, maxDistance = 5) {
-  if (!parking.latitude || !parking.longitude) {
-    return null; // Parking bez współrzędnych
-  }
-
-  const distance = calculateDistance(
-    destinationLat,
-    destinationLng,
-    parking.latitude,
-    parking.longitude
-  );
-
-  if (distance > maxDistance) {
-    return null; // Za daleko
-  }
-
-  // Normalizacja ceny (zakładamy max 50 zł/godz)
-  const normalizedPrice = Math.min(parking.price_per_hour / 50, 1);
-
-  // Normalizacja odległości (0-5km → 0-1)
-  const normalizedDistance = distance / maxDistance;
-
-  // Brak dostępnych miejsc to duży minus
-  const availabilityFactor = parking.available_spots > 0 ? 1 : 0.1;
-
-  // Ranking: mniejszy = lepszy
-  // 40% waga odległości, 30% waga ceny, 30% waga dostępności
-  const score = (
-    normalizedDistance * 0.4 +
-    normalizedPrice * 0.3 +
-    (1 - availabilityFactor) * 0.3
-  );
-
-  return {
-    ...parking,
-    distance: parseFloat(distance.toFixed(2)),
-    score: parseFloat(score.toFixed(4)),
-    walkingTime: Math.ceil(distance * 12) // ~12 minut na km
-  };
-}
-
-// GET /api/lots/nearby - znajdź najlepsze parkingi w pobliżu destynacji
-app.get('/api/lots/nearby', async (req, res) => {
-  try {
-    const { lat, lng, maxDistance = 5, limit = 10 } = req.query;
-
-    if (!lat || !lng) {
-      return res.status(400).json({ error: 'Wymagane parametry: lat, lng' });
-    }
-
-    const destinationLat = parseFloat(lat);
-    const destinationLng = parseFloat(lng);
-
-    console.log(`🔍 Szukam parkingów w pobliżu: [${destinationLat}, ${destinationLng}]`);
-
-    // Aktualizuj statusy rezerwacji
-    await updateReservationStatuses();
-
-    // Pobierz wszystkie parkingi
-    const { data: parkings, error } = await supabase
-      .from('parking_lots')
-      .select('*');
-
-    if (error) {
-      console.error('❌ Supabase error:', error);
-      throw error;
-    }
-
-    // Oblicz dostępność dla każdego parkingu
-    const now = new Date();
-    const parkingsWithAvailability = await Promise.all(
-      parkings.map(async (parking) => {
-        const availableSpots = await calculateAvailableSpots(parking.id, now);
-        return {
-          ...parking,
-          available_spots: availableSpots
-        };
-      })
-    );
-
-    // Oceń i posortuj parkingi
-    const rankedParkings = parkingsWithAvailability
-      .map(parking => rankParking(parking, destinationLat, destinationLng, parseFloat(maxDistance)))
-      .filter(p => p !== null) // Usuń parkingi bez współrzędnych lub za daleko
-      .sort((a, b) => a.score - b.score) // Sortuj według score (mniejszy = lepszy)
-      .slice(0, parseInt(limit)); // Ogranicz do limitu
-
-    console.log(`✅ Znaleziono ${rankedParkings.length} parkingów w promieniu ${maxDistance}km`);
-
-    if (rankedParkings.length > 0) {
-      console.log('🏆 Najlepszy parking:', rankedParkings[0].name,
-        `(${rankedParkings[0].distance}km, ${rankedParkings[0].price_per_hour}zł/h, score: ${rankedParkings[0].score})`);
-    }
-
-    res.json({
-      destination: { lat: destinationLat, lng: destinationLng },
-      parkings: rankedParkings,
-      count: rankedParkings.length
-    });
-  } catch (error) {
-    console.error('❌ Error finding nearby parkings:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // GET /api/lots - pobierz wszystkie parkingi
 app.get('/api/lots', async (req, res) => {
   try {
     console.log('🔍 Fetching parking lots from Supabase...');
-
-    // Aktualizuj statusy rezerwacji przed pobraniem parkingów
-    await updateReservationStatuses();
 
     // Zwiększ limit dla dużej liczby parkingów (domyślnie Supabase ma limit 1000)
     const { data, error, count } = await supabase
@@ -339,26 +219,13 @@ app.get('/api/lots', async (req, res) => {
     console.log('✅ Found parking lots:', data?.length);
     console.log('📊 Total count in database:', count);
 
-    // Oblicz dostępność dla każdego parkingu dynamicznie
     if (data && data.length > 0) {
-      const now = new Date();
-      const lotsWithAvailability = await Promise.all(
-        data.map(async (lot) => {
-          const availableSpots = await calculateAvailableSpots(lot.id, now);
-          return {
-            ...lot,
-            available_spots: availableSpots
-          };
-        })
-      );
-
-      const withCoords = lotsWithAvailability.filter(p => p.latitude && p.longitude).length;
-      console.log(`📍 Parkings with coordinates: ${withCoords}/${lotsWithAvailability.length}`);
-
-      res.json({ lots: lotsWithAvailability });
-    } else {
-      res.json({ lots: [] });
+      console.log('📍 First parking:', data[0]);
+      const withCoords = data.filter(p => p.latitude && p.longitude).length;
+      console.log(`📍 Parkings with coordinates: ${withCoords}/${data.length}`);
     }
+
+    res.json({ lots: data || [] });
   } catch (error) {
     console.error('❌ Error fetching parking lots:', error);
     res.status(500).json({ error: error.message });
@@ -408,30 +275,15 @@ app.post('/api/parking-lots', authenticateToken, [
   }
 
   try {
-    const {
-      name,
-      address,
-      city,
-      price_per_hour,
-      price_per_day,
-      price_per_week,
-      price_per_month,
-      total_spots,
-      latitude,
-      longitude
-    } = req.body;
+    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
     const owner_id = req.user.id;
-
+    
     const { data, error } = await supabase
       .from('parking_lots')
       .insert([{
         name,
         address,
-        city: city || null,
         price_per_hour,
-        price_per_day: price_per_day || null,
-        price_per_week: price_per_week || null,
-        price_per_month: price_per_month || null,
         total_spots,
         available_spots: total_spots,
         latitude: latitude || null,
@@ -440,9 +292,9 @@ app.post('/api/parking-lots', authenticateToken, [
       }])
       .select()
       .single();
-
+    
     if (error) throw error;
-
+    
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating parking lot:', error);
@@ -548,88 +400,391 @@ app.delete('/api/parking-lots/:id', authenticateToken, async (req, res) => {
 });
 
 // ========== REZERWACJE ==========
+// ========== ŁADOWARKI EV ==========
 
-// Funkcja do obliczania dostępnych miejsc w danym czasie
-async function calculateAvailableSpots(lotId, checkTime = new Date()) {
+// GET /api/chargers - pobierz wszystkie ładowarki
+app.get('/api/chargers', async (req, res) => {
   try {
-    // Pobierz total_spots dla parkingu
-    const { data: parking, error: parkingError } = await supabase
-      .from('parking_lots')
-      .select('total_spots')
-      .eq('id', lotId)
+    console.log('🔍 Fetching EV chargers from Supabase...');
+
+    const { data, error, count } = await supabase
+      .from('ev_chargers')
+      .select('*', { count: 'exact' });
+
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
+
+    console.log('✅ Found EV chargers:', data?.length);
+    console.log('📊 Total count in database:', count);
+
+    if (data && data.length > 0) {
+      console.log('⚡ First charger:', data[0]);
+      const withCoords = data.filter(c => c.latitude && c.longitude).length;
+      console.log(`📍 Chargers with coordinates: ${withCoords}/${data.length}`);
+    }
+
+    res.json({ chargers: data || [] });
+  } catch (error) {
+    console.error('❌ Error fetching EV chargers:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/chargers - dodaj ładowarkę (BACKWARD COMPATIBILITY)
+app.post('/api/chargers', authenticateToken, async (req, res) => {
+  try {
+    const { 
+      name, 
+      address, 
+      city,
+      charger_type, 
+      power_kw, 
+      price_per_kwh, 
+      total_connectors, 
+      available_connectors,
+      latitude, 
+      longitude 
+    } = req.body;
+    const owner_id = req.user.id;
+    
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .insert([{
+        name,
+        address,
+        city: city || null,
+        charger_type: charger_type || 'AC',
+        power_kw: power_kw || 7,
+        price_per_kwh: price_per_kwh || 0,
+        total_connectors: total_connectors || 1,
+        available_connectors: available_connectors !== undefined ? available_connectors : total_connectors || 1,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        owner_id
+      }])
+      .select()
       .single();
-
-    if (parkingError || !parking) {
-      console.error('❌ Błąd pobierania parkingu:', parkingError);
-      return 0;
-    }
-
-    // Pobierz aktywne rezerwacje które nakładają się z checkTime
-    const { data: activeReservations, error: resError } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('lot_id', lotId)
-      .neq('status', 'cancelled')
-      .lte('start_time', checkTime.toISOString())
-      .gte('end_time', checkTime.toISOString());
-
-    if (resError) {
-      console.error('❌ Błąd pobierania rezerwacji:', resError);
-      return parking.total_spots;
-    }
-
-    const occupiedSpots = activeReservations?.length || 0;
-    const availableSpots = Math.max(0, parking.total_spots - occupiedSpots);
-
-    return availableSpots;
+    
+    if (error) throw error;
+    
+    res.status(201).json(data);
   } catch (error) {
-    console.error('❌ Błąd obliczania dostępności:', error);
-    return 0;
+    console.error('Error creating EV charger:', error);
+    res.status(500).json({ error: error.message });
   }
-}
+});
 
-// Funkcja do aktualizacji statusów rezerwacji bazując na czasie
-async function updateReservationStatuses() {
+// POST /api/ev-chargers - dodaj ładowarkę (tylko dla zalogowanych)
+app.post('/api/ev-chargers', authenticateToken, [
+  body('name').notEmpty().withMessage('Nazwa ładowarki jest wymagana'),
+  body('address').notEmpty().withMessage('Adres jest wymagany'),
+  body('charger_type').isIn(['AC', 'DC', 'Tesla Supercharger']).withMessage('Nieprawidłowy typ ładowarki'),
+  body('power_kw').isNumeric().withMessage('Moc musi być liczbą'),
+  body('price_per_kwh').isNumeric().withMessage('Cena musi być liczbą'),
+  body('total_connectors').isInt({ min: 1 }).withMessage('Liczba złączy musi być większa od 0'),
+  body('latitude').optional().isFloat({ min: -90, max: 90 }),
+  body('longitude').optional().isFloat({ min: -180, max: 180 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const now = new Date().toISOString();
-
-    // Aktywuj rezerwacje które się rozpoczęły
-    const { data: activated, error: activateError } = await supabase
-      .from('reservations')
-      .update({ status: 'active' })
-      .eq('status', 'pending')
-      .lte('start_time', now)
-      .gte('end_time', now)
-      .select();
-
-    if (activateError) {
-      console.error('❌ Błąd aktywacji rezerwacji:', activateError);
-    } else if (activated && activated.length > 0) {
-      console.log(`✅ Aktywowano ${activated.length} rezerwacji`);
-    }
-
-    // Zakończ rezerwacje które się skończyły
-    const { data: completed, error: completeError } = await supabase
-      .from('reservations')
-      .update({ status: 'completed' })
-      .eq('status', 'active')
-      .lt('end_time', now)
-      .select();
-
-    if (completeError) {
-      console.error('❌ Błąd kończenia rezerwacji:', completeError);
-    } else if (completed && completed.length > 0) {
-      console.log(`✅ Zakończono ${completed.length} rezerwacji`);
-    }
-
-    if ((!activated || activated.length === 0) && (!completed || completed.length === 0)) {
-      console.log('ℹ️ Brak rezerwacji do aktualizacji');
-    }
+    const { 
+      name, 
+      address, 
+      city,
+      charger_type, 
+      power_kw, 
+      price_per_kwh, 
+      total_connectors, 
+      latitude, 
+      longitude 
+    } = req.body;
+    const owner_id = req.user.id;
+    
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .insert([{
+        name,
+        address,
+        city: city || null,
+        charger_type,
+        power_kw,
+        price_per_kwh,
+        total_connectors,
+        available_connectors: total_connectors,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        owner_id
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    console.log('✅ Created EV charger:', data);
+    res.status(201).json(data);
   } catch (error) {
-    console.error('❌ Błąd aktualizacji statusów:', error);
+    console.error('Error creating EV charger:', error);
+    res.status(500).json({ error: error.message });
   }
-}
+});
 
+// GET /api/ev-chargers/my - pobierz ładowarki zalogowanego właściciela
+app.get('/api/ev-chargers/my', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .select('*')
+      .eq('owner_id', req.user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    console.log(`✅ Found ${data?.length || 0} chargers for user ${req.user.id}`);
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching my EV chargers:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/ev-chargers/:id - pobierz szczegóły ładowarki
+app.get('/api/ev-chargers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error || !data) {
+      return res.status(404).json({ error: 'EV charger not found' });
+    }
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching EV charger:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/ev-chargers/:id - edytuj ładowarkę (tylko właściciel)
+app.put('/api/ev-chargers/:id', authenticateToken, [
+  body('name').optional().notEmpty(),
+  body('address').optional().notEmpty(),
+  body('charger_type').optional().isIn(['AC', 'DC', 'Tesla Supercharger']),
+  body('power_kw').optional().isNumeric(),
+  body('price_per_kwh').optional().isNumeric(),
+  body('total_connectors').optional().isInt({ min: 1 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { 
+      name, 
+      address, 
+      city,
+      charger_type, 
+      power_kw, 
+      price_per_kwh, 
+      total_connectors, 
+      latitude, 
+      longitude 
+    } = req.body;
+    
+    // Sprawdź czy ładowarka należy do użytkownika
+    const { data: charger, error: fetchError } = await supabase
+      .from('ev_chargers')
+      .select('owner_id')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !charger) {
+      return res.status(404).json({ error: 'EV charger not found' });
+    }
+    
+    if (charger.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized - you can only edit your own chargers' });
+    }
+
+    // Przygotuj dane do aktualizacji (tylko pola, które zostały przesłane)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (address !== undefined) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
+    if (charger_type !== undefined) updateData.charger_type = charger_type;
+    if (power_kw !== undefined) updateData.power_kw = power_kw;
+    if (price_per_kwh !== undefined) updateData.price_per_kwh = price_per_kwh;
+    if (total_connectors !== undefined) updateData.total_connectors = total_connectors;
+    if (latitude !== undefined) updateData.latitude = latitude;
+    if (longitude !== undefined) updateData.longitude = longitude;
+
+    // Aktualizuj
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    console.log('✅ Updated EV charger:', data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error updating EV charger:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/ev-chargers/:id - usuń ładowarkę (tylko właściciel)
+app.delete('/api/ev-chargers/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Sprawdź czy ładowarka należy do użytkownika
+    const { data: charger, error: fetchError } = await supabase
+      .from('ev_chargers')
+      .select('owner_id, name')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !charger) {
+      return res.status(404).json({ error: 'EV charger not found' });
+    }
+    
+    if (charger.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized - you can only delete your own chargers' });
+    }
+
+    // Usuń
+    const { error } = await supabase
+      .from('ev_chargers')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    console.log(`✅ Deleted EV charger: ${charger.name} (ID: ${id})`);
+    res.json({ 
+      message: 'EV charger deleted successfully',
+      deleted_charger: charger.name 
+    });
+  } catch (error) {
+    console.error('Error deleting EV charger:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/ev-chargers/:id/availability - aktualizuj dostępność złączy
+app.patch('/api/ev-chargers/:id/availability', authenticateToken, [
+  body('available_connectors').isInt({ min: 0 }).withMessage('Liczba dostępnych złączy musi być większa lub równa 0')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { available_connectors } = req.body;
+    
+    // Sprawdź czy ładowarka istnieje i pobierz total_connectors
+    const { data: charger, error: fetchError } = await supabase
+      .from('ev_chargers')
+      .select('owner_id, total_connectors')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !charger) {
+      return res.status(404).json({ error: 'EV charger not found' });
+    }
+    
+    if (charger.owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Sprawdź czy liczba dostępnych nie przekracza całkowitej
+    if (available_connectors > charger.total_connectors) {
+      return res.status(400).json({ 
+        error: `Available connectors (${available_connectors}) cannot exceed total connectors (${charger.total_connectors})` 
+      });
+    }
+
+    // Aktualizuj dostępność
+    const { data, error } = await supabase
+      .from('ev_chargers')
+      .update({ available_connectors })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    console.log(`✅ Updated availability for charger ${id}: ${available_connectors}/${charger.total_connectors}`);
+    res.json(data);
+  } catch (error) {
+    console.error('Error updating charger availability:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/ev-chargers/search - wyszukaj ładowarki z filtrami
+app.get('/api/ev-chargers/search', async (req, res) => {
+  try {
+    const { 
+      city, 
+      charger_type, 
+      min_power, 
+      max_price, 
+      available_only 
+    } = req.query;
+
+    let query = supabase.from('ev_chargers').select('*');
+
+    // Filtry
+    if (city) {
+      query = query.ilike('city', `%${city}%`);
+    }
+    
+    if (charger_type) {
+      query = query.eq('charger_type', charger_type);
+    }
+    
+    if (min_power) {
+      query = query.gte('power_kw', parseFloat(min_power));
+    }
+    
+    if (max_price) {
+      query = query.lte('price_per_kwh', parseFloat(max_price));
+    }
+    
+    if (available_only === 'true') {
+      query = query.gt('available_connectors', 0);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    console.log(`🔍 Search results: ${data?.length || 0} chargers found`);
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error searching EV chargers:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // GET /api/reservations - pobierz wszystkie rezerwacje (admin)
 app.get('/api/reservations', authenticateToken, async (req, res) => {
   try {
@@ -685,85 +840,6 @@ app.get('/api/reservations', authenticateToken, async (req, res) => {
   }
 });
 
-// Funkcja pomocnicza do obliczania najlepszej ceny
-function calculateBestPrice(parking, startTime, endTime) {
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  const hours = (end - start) / (1000 * 60 * 60);
-  const days = hours / 24;
-
-  // Oblicz cenę godzinową (zawsze dostępna)
-  const hourlyPrice = hours * parking.price_per_hour;
-
-  // Buduj listę dostępnych opcji cenowych
-  const options = [
-    { price: hourlyPrice, type: 'hourly', label: 'Godzinowa', available: true }
-  ];
-
-  // Dodaj dzienną tylko jeśli jest ustawiona i ma sens czasowo
-  if (parking.price_per_day && days >= 1) {
-    const dailyPrice = Math.ceil(days) * parking.price_per_day;
-    options.push({ price: dailyPrice, type: 'daily', label: 'Dzienna', available: true });
-  }
-
-  // Dodaj tygodniową tylko jeśli jest ustawiona i ma sens czasowo
-  if (parking.price_per_week && days >= 7) {
-    const weeklyPrice = Math.ceil(days / 7) * parking.price_per_week;
-    options.push({ price: weeklyPrice, type: 'weekly', label: 'Tygodniowa', available: true });
-  }
-
-  // Dodaj miesięczną tylko jeśli jest ustawiona i ma sens czasowo
-  if (parking.price_per_month && days >= 30) {
-    const monthlyPrice = Math.ceil(days / 30) * parking.price_per_month;
-    options.push({ price: monthlyPrice, type: 'monthly', label: 'Miesięczna', available: true });
-  }
-
-  // Znajdź najtańszą opcję
-  const best = options.reduce((min, opt) => opt.price < min.price ? opt : min);
-
-  return {
-    price: parseFloat(best.price.toFixed(2)),
-    pricingType: best.type,
-    pricingLabel: best.label,
-    hours: parseFloat(hours.toFixed(2)),
-    days: parseFloat(days.toFixed(2)),
-    allOptions: options.map(opt => ({
-      type: opt.type,
-      label: opt.label,
-      price: parseFloat(opt.price.toFixed(2))
-    }))
-  };
-}
-
-// POST /api/reservations/calculate-price - oblicz cenę (bez tworzenia rezerwacji)
-app.post('/api/reservations/calculate-price', authenticateToken, async (req, res) => {
-  try {
-    const { lot_id, start_time, end_time } = req.body;
-
-    if (!lot_id || !start_time || !end_time) {
-      return res.status(400).json({ error: 'Brakuje wymaganych danych' });
-    }
-
-    // Pobierz ceny parkingu
-    const { data: parking, error: parkingError } = await supabase
-      .from('parking_lots')
-      .select('price_per_hour, price_per_day, price_per_week, price_per_month')
-      .eq('id', lot_id)
-      .single();
-
-    if (parkingError || !parking) {
-      return res.status(404).json({ error: 'Parking lot not found' });
-    }
-
-    const calculation = calculateBestPrice(parking, start_time, end_time);
-
-    res.json(calculation);
-  } catch (error) {
-    console.error('Error calculating price:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // POST /api/reservations - stwórz rezerwację
 app.post('/api/reservations', authenticateToken, [
   body('lot_id').isInt(),
@@ -776,36 +852,30 @@ app.post('/api/reservations', authenticateToken, [
   }
 
   try {
-    const { lot_id, start_time, end_time, license_plate, pricing_type } = req.body;
+    const { lot_id, start_time, end_time, license_plate } = req.body;
     const user_id = req.user.id;
-
-    // Sprawdź dostępność w czasie rezerwacji i pobierz ceny
+    
+    // Sprawdź dostępność i pobierz cenę
     const { data: parking, error: parkingError } = await supabase
       .from('parking_lots')
-      .select('total_spots, price_per_hour, price_per_day, price_per_week, price_per_month')
+      .select('available_spots, price_per_hour')
       .eq('id', lot_id)
       .single();
-
+    
     if (parkingError || !parking) {
       return res.status(404).json({ error: 'Parking lot not found' });
     }
-
-    // Sprawdź dostępność w czasie START rezerwacji
-    const startTime = new Date(start_time);
-    const availableSpotsAtStart = await calculateAvailableSpots(lot_id, startTime);
-
-    if (availableSpotsAtStart <= 0) {
-      return res.status(400).json({
-        error: 'No available spots at the requested time',
-        message: `Brak wolnych miejsc w czasie rozpoczęcia rezerwacji (${start_time})`
-      });
+    
+    if (parking.available_spots <= 0) {
+      return res.status(400).json({ error: 'No available spots' });
     }
-
-    // Oblicz najlepszą cenę
-    const calculation = calculateBestPrice(parking, start_time, end_time);
-
-    console.log('💰 Obliczona cena:', calculation.price, 'zł (', calculation.pricingLabel, ') za', calculation.hours, 'godzin');
-
+    
+    // WAŻNE: Oblicz cenę
+    const hours = (new Date(end_time) - new Date(start_time)) / (1000 * 60 * 60);
+    const price = hours * parking.price_per_hour;
+    
+    console.log('💰 Obliczona cena:', price, 'zł za', hours, 'godzin');
+    
     // Stwórz rezerwację z ceną
     const { data, error } = await supabase
       .from('reservations')
@@ -815,36 +885,26 @@ app.post('/api/reservations', authenticateToken, [
         start_time,
         end_time,
         license_plate: license_plate || null,
-        price: calculation.price,
-        pricing_type: pricing_type || calculation.pricingType,
+        price: price, // DODAJ TO
         status: 'pending'
       }])
       .select()
       .single();
-
+    
     if (error) {
       console.error('❌ Błąd tworzenia rezerwacji:', error);
       throw error;
     }
-
-    // NIE zmniejszamy available_spots od razu - będzie liczone dynamicznie
-    console.log(`✅ Rezerwacja utworzona (${data.id}) - start: ${start_time}, status: pending`);
-
+    
+    // Zmniejsz dostępne miejsca
+    await supabase
+      .from('parking_lots')
+      .update({ available_spots: parking.available_spots - 1 })
+      .eq('id', lot_id);
+    
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating reservation:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/reservations/sync-statuses - ręcznie synchronizuj statusy rezerwacji
-app.post('/api/reservations/sync-statuses', async (req, res) => {
-  try {
-    console.log('🔄 Ręczna synchronizacja statusów rezerwacji...');
-    await updateReservationStatuses();
-    res.json({ message: 'Statusy rezerwacji zsynchronizowane', timestamp: new Date().toISOString() });
-  } catch (error) {
-    console.error('❌ Błąd synchronizacji:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -962,10 +1022,21 @@ app.put('/api/reservations/:id/cancel', authenticateToken, async (req, res) => {
       .single();
     
     if (error) throw error;
-
-    // NIE zwiększamy available_spots - jest liczone dynamicznie
-    console.log(`✅ Rezerwacja anulowana (${id})`);
-
+    
+    // Zwiększ dostępne miejsca
+    const { data: parking } = await supabase
+      .from('parking_lots')
+      .select('available_spots')
+      .eq('id', reservation.lot_id)
+      .single();
+    
+    if (parking) {
+      await supabase
+        .from('parking_lots')
+        .update({ available_spots: parking.available_spots + 1 })
+        .eq('id', reservation.lot_id);
+    }
+    
     res.json(data);
   } catch (error) {
     console.error('Error cancelling reservation:', error);
@@ -998,12 +1069,23 @@ app.delete('/api/reservations/:id', authenticateToken, async (req, res) => {
       .from('reservations')
       .delete()
       .eq('id', id);
-
+    
     if (error) throw error;
-
-    // NIE zwiększamy available_spots - jest liczone dynamicznie
-    console.log(`✅ Rezerwacja usunięta (${id})`);
-
+    
+    // Zwiększ dostępne miejsca
+    const { data: parking } = await supabase
+      .from('parking_lots')
+      .select('available_spots')
+      .eq('id', reservation.lot_id)
+      .single();
+    
+    if (parking) {
+      await supabase
+        .from('parking_lots')
+        .update({ available_spots: parking.available_spots + 1 })
+        .eq('id', reservation.lot_id);
+    }
+    
     res.json({ message: 'Reservation deleted successfully' });
   } catch (error) {
     console.error('Error deleting reservation:', error);
@@ -1140,10 +1222,6 @@ app.get('/api/users/stats', authenticateToken, async (req, res) => {
   }
 });
 
-// ========== INSPEKCJE (CROWDSCAN) ==========
-
-// 1. ZGŁASZANIE (dla kierowcy)
-// Używamy 'authenticateToken' (to jest POPRAWNA nazwa)
 app.post('/api/inspections', authenticateToken, async (req, res) => {
   const { lot_id, reported_occupancy } = req.body;
   const reporter_id = req.user.id; // ID z tokena JWT
@@ -1171,6 +1249,14 @@ app.post('/api/inspections', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ========== INSPEKCJE (CROWDSCAN) ==========
+
+// 1. ZGŁASZANIE (dla kierowcy)
+// Używamy 'authenticateToken' (to jest POPRAWNA nazwa)
+
+
+
 
 // 2. POBIERANIE ZGŁOSZEŃ (dla inspektora)
 // Używamy 'authenticateToken' ORAZ 'isInspector'
@@ -1278,577 +1364,14 @@ app.get('/api/reputation/me', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// ========================================
-// EV CHARGING NETWORK - DeCharge Hackathon
-// ========================================
-
-// ========== CHARGING STATIONS ==========
-
-// GET /api/charging-stations - pobierz wszystkie stacje ładowania
-app.get('/api/charging-stations', async (req, res) => {
-  try {
-    console.log('🔋 Fetching charging stations from Supabase...');
-
-    const { data, error, count } = await supabase
-      .from('charging_stations')
-      .select('*', { count: 'exact' })
-      .eq('is_active', true);
-
-    if (error) {
-      console.error('❌ Supabase error:', error);
-      throw error;
-    }
-
-    console.log('✅ Found charging stations:', data?.length);
-    console.log('📊 Total count:', count);
-
-    res.json({ stations: data || [] });
-  } catch (error) {
-    console.error('❌ Error fetching charging stations:', error);
-    res.status(500).json({ error: error.message });
-  }
+// Start serwera
+app.listen(port, () => {
+  console.log(`🚀 Parkchain API running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// POST /api/charging-stations - dodaj nową stację ładowania (tylko dla zalogowanych)
-app.post('/api/charging-stations', authenticateToken, [
-  body('name').notEmpty(),
-  body('address').notEmpty(),
-  body('charger_type').isIn(['AC', 'DC_FAST', 'ULTRA_FAST']),
-  body('max_power_kw').isNumeric(),
-  body('price_per_kwh').isNumeric(),
-  body('total_connectors').isInt({ min: 1 })
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const {
-      name,
-      address,
-      city,
-      latitude,
-      longitude,
-      charger_type,
-      connector_types,
-      max_power_kw,
-      total_connectors,
-      price_per_kwh,
-      price_per_minute,
-      price_per_session
-    } = req.body;
-    const owner_id = req.user.id;
-
-    const { data, error } = await supabase
-      .from('charging_stations')
-      .insert([{
-        name,
-        address,
-        city: city || null,
-        latitude: latitude || null,
-        longitude: longitude || null,
-        charger_type,
-        connector_types: connector_types || ['Type2'],
-        max_power_kw,
-        total_connectors,
-        available_connectors: total_connectors,
-        price_per_kwh,
-        price_per_minute: price_per_minute || null,
-        price_per_session: price_per_session || null,
-        owner_id,
-        is_active: true,
-        is_verified: false
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    console.log('✅ Charging station created:', data.id);
-    res.status(201).json(data);
-  } catch (error) {
-    console.error('Error creating charging station:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/charging-stations/my - pobierz moje stacje ładowania
-app.get('/api/charging-stations/my', authenticateToken, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('charging_stations')
-      .select('*')
-      .eq('owner_id', req.user.id);
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('Error fetching my charging stations:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== CHARGING SESSIONS ==========
-
-// POST /api/charging-sessions/start - rozpocznij sesję ładowania
-app.post('/api/charging-sessions/start', authenticateToken, [
-  body('station_id').isInt(),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const { station_id, vehicle_info } = req.body;
-    const user_id = req.user.id;
-
-    // Sprawdź dostępność stacji
-    const { data: station, error: stationError } = await supabase
-      .from('charging_stations')
-      .select('*')
-      .eq('id', station_id)
-      .single();
-
-    if (stationError) throw stationError;
-
-    if (!station || !station.is_active) {
-      return res.status(400).json({ error: 'Stacja niedostępna' });
-    }
-
-    if (station.available_connectors <= 0) {
-      return res.status(400).json({ error: 'Brak wolnych złączy' });
-    }
-
-    // Utwórz sesję
-    const { data: session, error: sessionError } = await supabase
-      .from('charging_sessions')
-      .insert([{
-        station_id,
-        user_id,
-        start_time: new Date().toISOString(),
-        status: 'active',
-        vehicle_info: vehicle_info || null,
-        payment_status: 'pending'
-      }])
-      .select()
-      .single();
-
-    if (sessionError) throw sessionError;
-
-    // Zmniejsz liczbę dostępnych złączy
-    const { error: updateError } = await supabase
-      .from('charging_stations')
-      .update({ available_connectors: station.available_connectors - 1 })
-      .eq('id', station_id);
-
-    if (updateError) throw updateError;
-
-    // Utwórz event dla live feed
-    await supabase
-      .from('charging_events')
-      .insert([{
-        session_id: session.id,
-        event_type: 'session_started',
-        event_data: {
-          station_name: station.name,
-          user_id: user_id,
-          start_time: session.start_time
-        }
-      }]);
-
-    console.log('✅ Charging session started:', session.id);
-    res.status(201).json(session);
-  } catch (error) {
-    console.error('Error starting charging session:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// PUT /api/charging-sessions/:id/complete - zakończ sesję ładowania
-app.put('/api/charging-sessions/:id/complete', authenticateToken, [
-  body('energy_delivered_kwh').isNumeric(),
-  body('charging_duration_minutes').isInt({ min: 0 })
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const { id } = req.params;
-    const { energy_delivered_kwh, charging_duration_minutes, payment_method, solana_tx_signature } = req.body;
-
-    // Pobierz sesję
-    const { data: session, error: sessionError } = await supabase
-      .from('charging_sessions')
-      .select('*, charging_stations(*)')
-      .eq('id', id)
-      .single();
-
-    if (sessionError) throw sessionError;
-
-    if (session.user_id !== req.user.id) {
-      return res.status(403).json({ error: 'Brak uprawnień' });
-    }
-
-    if (session.status !== 'active') {
-      return res.status(400).json({ error: 'Sesja nie jest aktywna' });
-    }
-
-    // Oblicz koszt za pomocą funkcji z bazy danych
-    const { data: costData, error: costError } = await supabase
-      .rpc('calculate_session_cost', {
-        p_station_id: session.station_id,
-        p_energy_kwh: energy_delivered_kwh,
-        p_duration_minutes: charging_duration_minutes
-      });
-
-    if (costError) throw costError;
-
-    const total_cost = costData || 0;
-    const average_power_kw = charging_duration_minutes > 0
-      ? (energy_delivered_kwh / (charging_duration_minutes / 60)).toFixed(2)
-      : 0;
-
-    // Zaktualizuj sesję (trigger automatycznie doda punkty)
-    const { data: updatedSession, error: updateError } = await supabase
-      .from('charging_sessions')
-      .update({
-        end_time: new Date().toISOString(),
-        energy_delivered_kwh,
-        charging_duration_minutes,
-        average_power_kw,
-        total_cost,
-        status: 'completed',
-        payment_method: payment_method || 'fiat',
-        payment_status: 'completed',
-        solana_tx_signature: solana_tx_signature || null,
-        on_chain_verified: solana_tx_signature ? true : false
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    // Zwiększ liczbę dostępnych złączy
-    const { error: connectorError } = await supabase
-      .from('charging_stations')
-      .update({
-        available_connectors: session.charging_stations.available_connectors + 1
-      })
-      .eq('id', session.station_id);
-
-    if (connectorError) throw connectorError;
-
-    // Utwórz event dla live feed
-    await supabase
-      .from('charging_events')
-      .insert([{
-        session_id: id,
-        event_type: 'session_completed',
-        event_data: {
-          energy_delivered_kwh,
-          points_earned: updatedSession.points_earned,
-          total_cost,
-          on_chain_verified: updatedSession.on_chain_verified
-        }
-      }]);
-
-    console.log('✅ Charging session completed:', id, 'Points awarded:', updatedSession.points_earned);
-    res.json(updatedSession);
-  } catch (error) {
-    console.error('Error completing charging session:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/charging-sessions/active - pobierz aktywne sesje użytkownika
-app.get('/api/charging-sessions/active', authenticateToken, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('charging_sessions')
-      .select('*, charging_stations(*)')
-      .eq('user_id', req.user.id)
-      .eq('status', 'active')
-      .order('start_time', { ascending: false });
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('Error fetching active sessions:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/charging-sessions/my - pobierz wszystkie sesje użytkownika
-app.get('/api/charging-sessions/my', authenticateToken, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('charging_sessions')
-      .select('*, charging_stations(*)')
-      .eq('user_id', req.user.id)
-      .order('start_time', { ascending: false })
-      .limit(50);
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('Error fetching my sessions:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== LIVE FEED ==========
-
-// GET /api/live-feed - pobierz live feed aktywnych sesji ładowania
-app.get('/api/live-feed', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('live_charging_feed')
-      .select('*')
-      .limit(50);
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('Error fetching live feed:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========== POINTS SYSTEM ==========
-
-// GET /api/points/my - pobierz moje punkty
-app.get('/api/points/my', authenticateToken, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', req.user.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
-
-    if (!data) {
-      // Utwórz rekord jeśli nie istnieje
-      const { data: newData, error: insertError } = await supabase
-        .from('user_points')
-        .insert([{ user_id: req.user.id }])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      return res.json(newData);
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('Error fetching my points:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/points/marketplace - pobierz oferty punktów
-app.get('/api/points/marketplace', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('points_listings')
-      .select(`
-        *,
-        seller:users!seller_id(id, full_name)
-      `)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) throw error;
-
-    res.json(data || []);
-  } catch (error) {
-    console.error('Error fetching marketplace:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/points/listings - utwórz ofertę sprzedaży punktów
-app.post('/api/points/listings', authenticateToken, [
-  body('points_amount').isInt({ min: 1 }),
-  body('price_per_point').isNumeric(),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const { points_amount, price_per_point, discount_percentage } = req.body;
-    const seller_id = req.user.id;
-
-    // Sprawdź czy użytkownik ma wystarczająco punktów
-    const { data: userPoints, error: pointsError } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', seller_id)
-      .single();
-
-    if (pointsError) throw pointsError;
-
-    if (!userPoints || userPoints.available_points < points_amount) {
-      return res.status(400).json({ error: 'Niewystarczająca liczba punktów' });
-    }
-
-    const total_price = (points_amount * price_per_point).toFixed(2);
-
-    // Utwórz ofertę
-    const { data: listing, error: listingError } = await supabase
-      .from('points_listings')
-      .insert([{
-        seller_id,
-        points_amount,
-        price_per_point,
-        total_price,
-        discount_percentage: discount_percentage || 50,
-        status: 'active',
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 dni
-      }])
-      .select()
-      .single();
-
-    if (listingError) throw listingError;
-
-    // Zablokuj punkty
-    const { error: lockError } = await supabase
-      .from('user_points')
-      .update({
-        available_points: userPoints.available_points - points_amount,
-        locked_points: userPoints.locked_points + points_amount
-      })
-      .eq('user_id', seller_id);
-
-    if (lockError) throw lockError;
-
-    console.log('✅ Points listing created:', listing.id);
-    res.status(201).json(listing);
-  } catch (error) {
-    console.error('Error creating listing:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/points/buy/:id - kup punkty z marketplace
-app.post('/api/points/buy/:id', authenticateToken, [
-  body('solana_tx_signature').optional().isString()
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const { id } = req.params;
-    const { solana_tx_signature } = req.body;
-    const buyer_id = req.user.id;
-
-    // Pobierz ofertę
-    const { data: listing, error: listingError } = await supabase
-      .from('points_listings')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (listingError) throw listingError;
-
-    if (listing.status !== 'active') {
-      return res.status(400).json({ error: 'Oferta nieaktywna' });
-    }
-
-    if (listing.seller_id === buyer_id) {
-      return res.status(400).json({ error: 'Nie możesz kupić własnych punktów' });
-    }
-
-    // Zaktualizuj ofertę
-    const { error: updateListingError } = await supabase
-      .from('points_listings')
-      .update({
-        status: 'sold',
-        buyer_id,
-        sold_at: new Date().toISOString(),
-        solana_sale_tx: solana_tx_signature || null
-      })
-      .eq('id', id);
-
-    if (updateListingError) throw updateListingError;
-
-    // Przenieś punkty od sprzedawcy do kupującego
-    // 1. Odblokuj punkty sprzedawcy i odejmij je
-    const { data: sellerPoints } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', listing.seller_id)
-      .single();
-
-    await supabase
-      .from('user_points')
-      .update({
-        total_points: sellerPoints.total_points - listing.points_amount,
-        locked_points: sellerPoints.locked_points - listing.points_amount,
-        total_traded: sellerPoints.total_traded + listing.points_amount
-      })
-      .eq('user_id', listing.seller_id);
-
-    // 2. Dodaj punkty kupującemu
-    const { data: buyerPoints } = await supabase
-      .from('user_points')
-      .select('*')
-      .eq('user_id', buyer_id)
-      .maybeSingle();
-
-    if (buyerPoints) {
-      await supabase
-        .from('user_points')
-        .update({
-          total_points: buyerPoints.total_points + listing.points_amount,
-          available_points: buyerPoints.available_points + listing.points_amount
-        })
-        .eq('user_id', buyer_id);
-    } else {
-      await supabase
-        .from('user_points')
-        .insert([{
-          user_id: buyer_id,
-          total_points: listing.points_amount,
-          available_points: listing.points_amount
-        }]);
-    }
-
-    console.log('✅ Points purchased:', listing.points_amount, 'from', listing.seller_id, 'to', buyer_id);
-    res.json({
-      success: true,
-      points_amount: listing.points_amount,
-      total_price: listing.total_price
-    });
-  } catch (error) {
-    console.error('Error buying points:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ========================================
-// ERROR HANDLERS - MUSZĄ BYĆ NA KOŃCU!
-// ========================================
-
-// 404 handler
+// 404 handler - LEAVE THIS AT THE END.
+// OTHERWISE YOU'LL GET NOT FOUND ERRORS ON ENDPOINTS BELOW
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -1863,26 +1386,6 @@ app.use((err, req, res, next) => {
     error: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
-});
-
-// ========================================
-// CRON JOBS & SERVER START
-// ========================================
-
-// Cron job - aktualizuj statusy rezerwacji co minutę
-cron.schedule('* * * * *', async () => {
-  console.log('⏰ Uruchamiam automatyczną aktualizację statusów rezerwacji...');
-  await updateReservationStatuses();
-});
-
-// Start serwera
-app.listen(port, () => {
-  console.log(`🚀 Parkchain API running on port ${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('⏰ Cron job uruchomiony - statusy rezerwacji będą aktualizowane co minutę');
-
-  // Uruchom raz na starcie
-  updateReservationStatuses();
 });
 
 export { supabase };
