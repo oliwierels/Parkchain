@@ -10,6 +10,7 @@ import { transactionStorage } from '../services/transactionStorage';
 import { premiumTierService } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
 import { notify } from '../components/LiveNotifications';
+import BatchTransactionModal from '../components/BatchTransactionModal';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
@@ -30,9 +31,12 @@ function PointsMarketplacePage() {
   const [gatewayProgress, setGatewayProgress] = useState(null);
   const [gatewayMetrics, setGatewayMetrics] = useState(null);
   const [useGateway, setUseGateway] = useState(true); // Toggle Gateway on/off
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [currentTier, setCurrentTier] = useState(null);
 
   useEffect(() => {
     fetchPointsData();
+    loadTierInfo();
   }, []);
 
   const fetchPointsData = async () => {
@@ -58,6 +62,11 @@ function PointsMarketplacePage() {
     } catch (err) {
       console.error('Error fetching points data:', err);
     }
+  };
+
+  const loadTierInfo = () => {
+    const tier = premiumTierService.getCurrentTier();
+    setCurrentTier(tier);
   };
 
   const handleBuyPoints = async () => {
@@ -410,17 +419,34 @@ function PointsMarketplacePage() {
                 </p>
               </div>
 
-              <button
-                onClick={handleBuyPoints}
-                disabled={loading || !buyAmount || parseFloat(buyAmount) <= 0}
-                className={`w-full py-4 rounded-lg font-bold text-lg transition-all ${
-                  loading || !buyAmount || parseFloat(buyAmount) <= 0
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                }`}
-              >
-                {loading ? '⏳ Processing Transaction...' : `💎 Buy ${buyAmount} DCP (${new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL)`}
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={handleBuyPoints}
+                  disabled={loading || !buyAmount || parseFloat(buyAmount) <= 0}
+                  className={`w-full py-4 rounded-lg font-bold text-lg transition-all ${
+                    loading || !buyAmount || parseFloat(buyAmount) <= 0
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                  }`}
+                >
+                  {loading ? '⏳ Processing Transaction...' : `💎 Buy ${buyAmount} DCP (${new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL)`}
+                </button>
+
+                {/* Batch Purchase Button */}
+                {currentTier && currentTier.benefits.maxBatchSize > 1 && (
+                  <button
+                    onClick={() => setShowBatchModal(true)}
+                    disabled={loading}
+                    className="w-full py-3 rounded-lg font-semibold text-base transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-gray-600 disabled:to-gray-600 text-white flex items-center justify-center gap-2"
+                  >
+                    <span>⚡</span>
+                    Batch Purchase (Save up to 90%)
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                      {currentTier.name}
+                    </span>
+                  </button>
+                )}
+              </div>
 
               {txSignature && (
                 <div className="mt-4 p-4 bg-green-900 bg-opacity-30 border border-green-600 rounded-lg space-y-3">
@@ -580,6 +606,25 @@ function PointsMarketplacePage() {
           </p>
         </div>
       </div>
+
+      {/* Batch Transaction Modal */}
+      <BatchTransactionModal
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        onExecute={(batch) => {
+          console.log('Batch executed:', batch);
+          notify.batch(
+            'Batch Transaction Complete!',
+            `Successfully processed ${batch.transactions.length} transactions`,
+            [
+              `Saved ${batch.estimatedSavings.toFixed(6)} SOL in fees`,
+              `Total: ${batch.transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)} DCP`,
+              `Tier: ${currentTier?.name || 'Unknown'}`
+            ]
+          );
+          loadTierInfo();
+        }}
+      />
     </div>
   );
 }
