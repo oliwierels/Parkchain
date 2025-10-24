@@ -555,7 +555,6 @@ function ChargingDashboardPage() {
           )}
         </motion.div>
       </div>
-    </div>
 
       {/* Modal weryfikacji sesji */}
       <Modal
