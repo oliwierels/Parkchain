@@ -2,11 +2,13 @@
 // Comprehensive analytics with Premium Tiers, Batch Transactions, and Smart Routing
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaTimes } from 'react-icons/fa';
 import {
   FaCrown, FaRocket, FaLayerGroup, FaRoute, FaChartLine,
   FaStar, FaBolt, FaShieldAlt, FaTrophy, FaFire,
-  FaArrowUp, FaClock, FaCoins, FaNetworkWired
+  FaArrowUp, FaClock, FaCoins, FaNetworkWired, FaPlay,
+  FaTrash, FaDownload, FaInfoCircle
 } from 'react-icons/fa';
 import { premiumTierService, USER_TIERS } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
@@ -21,6 +23,7 @@ const AdvancedGatewayDashboard = () => {
   const [routingStats, setRoutingStats] = useState(null);
   const [networkConditions, setNetworkConditions] = useState('normal');
   const [activeTab, setActiveTab] = useState('overview'); // overview, tiers, batching, routing
+  const [showDemoInfo, setShowDemoInfo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -59,6 +62,83 @@ const AdvancedGatewayDashboard = () => {
     } else {
       alert('Keep transacting to unlock the next tier!');
     }
+  };
+
+  const generateDemoData = () => {
+    if (confirm('Generate demo data? This will add 20 sample transactions and batches.')) {
+      // Generate transaction data
+      transactionStorage.generateDemoData(20);
+
+      // Generate batch data (simulate some batches)
+      for (let i = 0; i < 5; i++) {
+        try {
+          const batch = batchTransactionService.createBatch({ atomic: true });
+          const txCount = Math.floor(Math.random() * 5) + 2; // 2-6 transactions
+
+          for (let j = 0; j < txCount; j++) {
+            batchTransactionService.addToBatch(batch.id, {
+              amount: 100 + Math.random() * 900,
+              type: 'demo'
+            });
+          }
+
+          // Mark as completed
+          const b = batchTransactionService.getBatch(batch.id);
+          b.status = 'success';
+          b.completedAt = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
+        } catch (error) {
+          console.error('Error generating demo batch:', error);
+        }
+      }
+
+      // Generate routing data
+      const channels = ['rpc', 'jito', 'gateway', 'triton'];
+      for (let i = 0; i < 30; i++) {
+        const channel = channels[Math.floor(Math.random() * channels.length)];
+        smartRoutingService.recordRoutingResult({
+          channel,
+          success: Math.random() > 0.1,
+          confirmationTime: 2000 + Math.random() * 5000,
+          signature: `demo_${i}`
+        });
+      }
+
+      alert('✅ Demo data generated! Refresh to see the results.');
+      loadData();
+    }
+  };
+
+  const clearAllData = () => {
+    if (confirm('⚠️ Clear all data? This cannot be undone!')) {
+      transactionStorage.clearAll();
+      batchTransactionService.clearHistory();
+      smartRoutingService.resetPerformanceData();
+      alert('✅ All data cleared!');
+      loadData();
+    }
+  };
+
+  const exportAllData = () => {
+    const allData = {
+      transactions: transactionStorage.getTransactions(),
+      metrics: transactionStorage.getMetrics(),
+      batches: batchTransactionService.getBatchHistory(),
+      batchStats: batchTransactionService.getBatchStats(),
+      routing: smartRoutingService.getRoutingStats(),
+      tier: premiumTierService.getCurrentTier(),
+      tierStats: premiumTierService.getTierStats(),
+      exportedAt: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gateway-pro-data-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Tier Badge Component
@@ -120,31 +200,102 @@ const AdvancedGatewayDashboard = () => {
             <div className="flex items-center gap-4">
               <NetworkStatus />
               {currentTier && <TierBadge tier={currentTier} size="large" />}
+
+              {/* Demo Controls */}
+              <div className="flex items-center gap-2 ml-4">
+                <button
+                  onClick={() => setShowDemoInfo(!showDemoInfo)}
+                  className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  title="Demo Mode Info"
+                >
+                  <FaInfoCircle className="text-gray-300" />
+                </button>
+                <button
+                  onClick={generateDemoData}
+                  className="px-3 py-2 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  title="Generate Demo Data"
+                >
+                  <FaPlay className="text-sm" />
+                  <span className="hidden md:inline">Demo</span>
+                </button>
+                <button
+                  onClick={exportAllData}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  title="Export All Data"
+                >
+                  <FaDownload className="text-sm" />
+                  <span className="hidden md:inline">Export</span>
+                </button>
+                <button
+                  onClick={clearAllData}
+                  className="px-3 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  title="Clear All Data"
+                >
+                  <FaTrash className="text-sm" />
+                  <span className="hidden md:inline">Clear</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mt-6 border-b border-gray-700">
-            {[
-              { id: 'overview', label: 'Overview', icon: FaChartLine },
-              { id: 'tiers', label: 'Premium Tiers', icon: FaCrown },
-              { id: 'batching', label: 'Batch Transactions', icon: FaLayerGroup },
-              { id: 'routing', label: 'Smart Routing', icon: FaRoute }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <tab.icon />
-                {tab.label}
-              </button>
-            ))}
+          {/* Demo Info Banner */}
+          {showDemoInfo && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-blue-900/20 border-t border-blue-700 px-6 py-4"
+            >
+              <div className="flex items-start gap-3">
+                <FaInfoCircle className="text-blue-400 text-xl mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-300 mb-2">Demo Mode</h4>
+                  <p className="text-sm text-gray-300 mb-3">
+                    Try out all Gateway Pro features without real transactions:
+                  </p>
+                  <ul className="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                    <li><strong>Demo:</strong> Generate 20 sample transactions, 5 batches, and routing data</li>
+                    <li><strong>Export:</strong> Download all your data as JSON</li>
+                    <li><strong>Clear:</strong> Reset everything to start fresh</li>
+                    <li>All data is stored locally in your browser</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => setShowDemoInfo(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="border-b border-gray-700">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex gap-2">
+                {[
+                  { id: 'overview', label: 'Overview', icon: FaChartLine },
+                  { id: 'tiers', label: 'Premium Tiers', icon: FaCrown },
+                  { id: 'batching', label: 'Batch Transactions', icon: FaLayerGroup },
+                  { id: 'routing', label: 'Smart Routing', icon: FaRoute }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-4 py-3 font-medium transition-all ${
+                      activeTab === tab.id
+                        ? 'text-blue-400 border-b-2 border-blue-400'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <tab.icon />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 

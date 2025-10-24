@@ -7,6 +7,8 @@ import BigNumber from 'bignumber.js';
 import gatewayService from '../services/gatewayService';
 import { getGatewayStatus } from '../config/gateway';
 import { transactionStorage } from '../services/transactionStorage';
+import { premiumTierService } from '../services/premiumTierService';
+import { batchTransactionService } from '../services/batchTransactionService';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
@@ -163,6 +165,15 @@ function PointsMarketplacePage() {
           walletAddress: publicKey.toString()
         }
       });
+
+      // Check for tier upgrade
+      const tierUpgrade = premiumTierService.updateTier();
+      if (tierUpgrade.upgraded) {
+        console.log('🎉 Tier upgraded!', tierUpgrade);
+        setTimeout(() => {
+          alert(`🎉 ${tierUpgrade.message}\n\nNew benefits unlocked:\n✓ ${tierUpgrade.newTier.benefits.confirmationSpeedBoost}x faster confirmations\n✓ ${(tierUpgrade.newTier.benefits.feeDiscount * 100).toFixed(0)}% fee discount\n✓ Batch up to ${tierUpgrade.newTier.benefits.maxBatchSize} transactions`);
+        }, 1000);
+      }
 
       // Zapisz zakup w bazie danych
       const response = await fetch('http://localhost:3000/api/points/purchase', {

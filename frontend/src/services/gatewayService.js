@@ -10,6 +10,8 @@
 
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import GATEWAY_CONFIG from '../config/gateway.js';
+import { premiumTierService } from './premiumTierService.js';
+import { smartRoutingService } from './smartRoutingService.js';
 
 /**
  * Gateway Transaction Service
@@ -41,6 +43,25 @@ class GatewayService {
     this.log('optimize', 'Building Gateway transaction...', { transaction });
 
     try {
+      // Get user tier and priority lane
+      const tier = premiumTierService.getCurrentTier();
+      const priorityLane = premiumTierService.getPriorityLane();
+
+      // Calculate tier-adjusted fees
+      const baseFee = 0.0001;
+      const gatewayFee = premiumTierService.calculateGatewayFee(baseFee);
+
+      this.log('optimize', `Using ${tier.name} tier with ${priorityLane.lane} lane`, {
+        tier: tier.name,
+        lane: priorityLane.lane,
+        fee: gatewayFee
+      });
+
+      // Add tier info to options
+      options.tier = tier;
+      options.priorityLane = priorityLane;
+      options.gatewayFee = gatewayFee;
+
       // If Gateway API is available, use it for optimization
       if (this.config.apiKey && this.config.endpoint) {
         return await this._buildWithGatewayAPI(transaction, options);
@@ -164,17 +185,42 @@ class GatewayService {
     try {
       this.metrics.totalTransactions++;
 
+      // Get smart routing recommendation
+      const route = smartRoutingService.selectRoute({
+        conditions: smartRoutingService.getNetworkConditions(),
+        prioritize: options.prioritize || 'balanced'
+      });
+
+      this.log('send', `Smart routing selected: ${route.primary.channel}`, {
+        route: route.primary.channel,
+        conditions: route.conditions,
+        recommendation: route.recommendation
+      });
+
+      // Add routing info to options
+      options.selectedRoute = route;
+
       // If Gateway API is available, use it for delivery
       if (this.config.apiKey && this.config.endpoint) {
         const signature = await this._sendWithGatewayAPI(transaction, connection, options);
 
         this.metrics.successfulTransactions++;
-        this.metrics.totalGatewayFees += this.config.costs.gatewayFee;
+        const gatewayFee = options.gatewayFee || this.config.costs.gatewayFee;
+        this.metrics.totalGatewayFees += gatewayFee;
+
+        // Record routing result
+        smartRoutingService.recordRoutingResult({
+          channel: route.primary.channel,
+          success: true,
+          confirmationTime: Date.now() - startTime,
+          signature
+        });
 
         this.log('send', `✅ Transaction sent successfully via Gateway`, {
           signature,
           txId,
-          duration: Date.now() - startTime
+          duration: Date.now() - startTime,
+          route: route.primary.channel
         });
 
         return signature;
@@ -186,6 +232,14 @@ class GatewayService {
 
       this.metrics.successfulTransactions++;
 
+      // Record routing result
+      smartRoutingService.recordRoutingResult({
+        channel: 'rpc',
+        success: true,
+        confirmationTime: Date.now() - startTime,
+        signature
+      });
+
       this.log('send', `✅ Transaction sent via standard RPC`, {
         signature,
         txId,
@@ -196,6 +250,16 @@ class GatewayService {
 
     } catch (error) {
       this.metrics.failedTransactions++;
+
+      // Record failed routing result
+      if (options.selectedRoute) {
+        smartRoutingService.recordRoutingResult({
+          channel: options.selectedRoute.primary.channel,
+          success: false,
+          confirmationTime: 0,
+          signature: null
+        });
+      }
 
       this.log('send', `❌ Transaction failed`, {
         error: error.message,
