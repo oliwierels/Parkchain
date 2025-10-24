@@ -95,7 +95,7 @@ class GatewayService {
 
   /**
    * Build transaction using Gateway API
-   * Makes API call to Gateway for optimization
+   * Makes API call to Gateway for optimization using optimizeTransaction RPC method
    */
   async _buildWithGatewayAPI(transaction, options) {
     // Serialize transaction for API call
@@ -104,8 +104,8 @@ class GatewayService {
       verifySignatures: false,
     }).toString('base64');
 
-    // Call Gateway API
-    const response = await fetch(`${this.config.endpoint}/v1/optimize`, {
+    // Call Gateway optimizeTransaction RPC method
+    const response = await fetch(`${this.config.endpoint}/rpc`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,19 +113,18 @@ class GatewayService {
         'X-Project-Id': this.config.projectId,
       },
       body: JSON.stringify({
-        transaction: serializedTx,
-        network: this.config.network,
-        optimization: {
-          autoComputeUnits: this.config.optimization.autoComputeUnits,
-          autoPriorityFees: this.config.optimization.autoPriorityFees,
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method: 'optimizeTransaction',
+        params: {
+          transaction: serializedTx,
+          network: this.config.network,
+          computeUnitLimit: options.computeUnitLimit,
+          priorityLevel: options.priorityLane?.level || 'medium',
+          dynamicComputeUnits: this.config.optimization.autoComputeUnits,
+          dynamicPriorityFees: this.config.optimization.autoPriorityFees,
           computeUnitMargin: this.config.optimization.computeUnitMargin,
-        },
-        delivery: {
-          methods: this.config.delivery.methods,
-          weights: this.config.delivery.weights,
-          autoRefundJitoTips: this.config.delivery.autoRefundJitoTips,
-        },
-        ...options
+        }
       })
     });
 
@@ -135,15 +134,20 @@ class GatewayService {
 
     const data = await response.json();
 
+    if (data.error) {
+      throw new Error(`Gateway RPC error: ${data.error.message}`);
+    }
+
     return {
-      transaction: data.optimizedTransaction,
+      transaction: data.result.optimizedTransaction,
       optimized: true,
       metadata: {
-        computeUnits: data.computeUnits,
-        priorityFee: data.priorityFee,
-        deliveryMethods: data.deliveryMethods,
-        estimatedCost: data.estimatedCost,
+        computeUnits: data.result.computeUnits,
+        priorityFee: data.result.priorityFee,
+        deliveryMethods: this.config.delivery.methods,
+        estimatedCost: data.result.estimatedCost || 0.0001,
         gatewayUsed: true,
+        optimizationTime: data.result.optimizationTime,
       }
     };
   }
@@ -272,17 +276,15 @@ class GatewayService {
   }
 
   /**
-   * Send transaction via Gateway API
+   * Send transaction via Gateway API using sendTransaction RPC method
+   * Routes through multiple delivery channels (RPC + Jito bundles)
    */
   async _sendWithGatewayAPI(transaction, connection, options) {
-    // For hackathon demo: Gateway API integration
-    // In production, this would call Gateway's sendTransaction endpoint
-
     // Serialize signed transaction
     const serializedTx = transaction.serialize().toString('base64');
 
-    // Call Gateway API
-    const response = await fetch(`${this.config.endpoint}/v1/send`, {
+    // Call Gateway sendTransaction RPC method
+    const response = await fetch(`${this.config.endpoint}/rpc`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -290,13 +292,18 @@ class GatewayService {
         'X-Project-Id': this.config.projectId,
       },
       body: JSON.stringify({
-        transaction: serializedTx,
-        network: this.config.network,
-        delivery: {
-          methods: this.config.delivery.methods,
-          timeout: this.config.delivery.confirmationTimeout,
-        },
-        ...options
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method: 'sendTransaction',
+        params: {
+          transaction: serializedTx,
+          network: this.config.network,
+          deliveryMethods: this.config.delivery.methods,
+          methodWeights: this.config.delivery.weights,
+          autoRefundJitoTips: this.config.delivery.autoRefundJitoTips,
+          confirmationTimeout: this.config.delivery.confirmationTimeout,
+          priorityLevel: options.selectedRoute?.primary?.channel || 'rpc',
+        }
       })
     });
 
@@ -306,13 +313,23 @@ class GatewayService {
 
     const data = await response.json();
 
-    // Track Jito tip refunds
-    if (data.jitoTipRefunded) {
-      this.metrics.totalJitoTipsRefunded += data.jitoTipAmount;
-      this.log('send', `💰 Jito tip refunded: ${data.jitoTipAmount} SOL`);
+    if (data.error) {
+      throw new Error(`Gateway RPC error: ${data.error.message}`);
     }
 
-    return data.signature;
+    // Track Jito tip refunds
+    if (data.result.jitoTipRefunded) {
+      const refundAmount = data.result.jitoTipAmount || 0.001;
+      this.metrics.totalJitoTipsRefunded += refundAmount;
+      this.log('send', `💰 Jito tip refunded: ${refundAmount} SOL saved!`);
+    }
+
+    // Log delivery method used
+    if (data.result.deliveryMethod) {
+      this.log('send', `📡 Delivered via: ${data.result.deliveryMethod}`);
+    }
+
+    return data.result.signature;
   }
 
   /**
