@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +13,21 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Card,
+  Button,
+  SkeletonCard
+} from '../components/ui';
+import {
+  FaBolt,
+  FaChartLine,
+  FaChargingStation,
+  FaWallet,
+  FaClock,
+  FaLightbulb,
+  FaCheckCircle,
+  FaLink
+} from 'react-icons/fa';
 
 // Register ChartJS components
 ChartJS.register(
@@ -268,140 +284,218 @@ function AnalyticsPage() {
     },
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="h-10 w-64 bg-slate-800 rounded-lg mb-8 animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map(i => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <SkeletonCard />
+            <SkeletonCard className="lg:col-span-2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const metricCards = [
+    {
+      icon: FaBolt,
+      label: 'Total Energy',
+      value: analytics.totalEnergy,
+      unit: 'kWh delivered',
+      gradient: 'from-blue-500 to-cyan-600',
+      bg: 'bg-blue-500/10',
+      color: 'text-blue-400'
+    },
+    {
+      icon: FaChargingStation,
+      label: 'Total Sessions',
+      value: analytics.totalSessions,
+      unit: 'charging sessions',
+      gradient: 'from-green-500 to-emerald-600',
+      bg: 'bg-green-500/10',
+      color: 'text-green-400'
+    },
+    {
+      icon: FaWallet,
+      label: 'Total Revenue',
+      value: analytics.totalRevenue,
+      unit: 'PLN earned',
+      gradient: 'from-purple-500 to-pink-600',
+      bg: 'bg-purple-500/10',
+      color: 'text-purple-400'
+    },
+    {
+      icon: FaClock,
+      label: 'Avg Duration',
+      value: analytics.avgSessionDuration,
+      unit: 'minutes per session',
+      gradient: 'from-amber-500 to-orange-600',
+      bg: 'bg-amber-500/10',
+      color: 'text-amber-400'
+    }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            📊 Analytics Dashboard
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Insights into your EV charging network performance
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4"
+        >
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+              <FaChartLine className="text-purple-500" />
+              Analytics Dashboard
+            </h1>
+            <p className="text-gray-400 text-sm">
+              Insights into your EV charging network performance
+            </p>
+          </div>
 
-        {/* Time Range Selector */}
-        <div className="flex gap-2">
-          {['7days', '30days', 'all'].map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                timeRange === range
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+          {/* Time Range Selector */}
+          <div className="flex gap-2">
+            {[
+              { key: '7days', label: '7 Days' },
+              { key: '30days', label: '30 Days' },
+              { key: 'all', label: 'All Time' }
+            ].map((range) => (
+              <Button
+                key={range.key}
+                onClick={() => setTimeRange(range.key)}
+                variant={timeRange === range.key ? 'primary' : 'ghost'}
+                size="md"
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Key Metrics */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          {metricCards.map((metric, index) => (
+            <motion.div
+              key={metric.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
             >
-              {range === '7days' ? '7 Days' : range === '30days' ? '30 Days' : 'All Time'}
-            </button>
+              <Card variant="gradient" hoverable className={metric.bg}>
+                <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${metric.gradient} opacity-10 blur-2xl`} />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300 text-sm font-medium">{metric.label}</span>
+                    <metric.icon className={`text-3xl ${metric.color}`} />
+                  </div>
+                  <div className="text-3xl font-bold text-white mb-1">{metric.value}</div>
+                  <div className="text-gray-400 text-xs">{metric.unit}</div>
+                </div>
+              </Card>
+            </motion.div>
           ))}
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-xl p-6 border border-blue-600">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-blue-200 text-sm font-medium">Total Energy</span>
-            <span className="text-3xl">⚡</span>
-          </div>
-          <div className="text-3xl font-bold text-white mb-1">{analytics.totalEnergy}</div>
-          <div className="text-blue-300 text-xs">kWh delivered</div>
-        </div>
+        {/* Charts Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+        >
+          {/* Energy Over Time */}
+          <Card variant="glass">
+            <Line data={energyChartData} options={energyChartOptions} />
+          </Card>
 
-        <div className="bg-gradient-to-br from-green-900 to-green-800 rounded-xl p-6 border border-green-600">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-green-200 text-sm font-medium">Total Sessions</span>
-            <span className="text-3xl">🔋</span>
-          </div>
-          <div className="text-3xl font-bold text-white mb-1">{analytics.totalSessions}</div>
-          <div className="text-green-300 text-xs">charging sessions</div>
-        </div>
+          {/* Sessions by Station */}
+          <Card variant="glass">
+            <Bar data={stationsChartData} options={stationsChartOptions} />
+          </Card>
+        </motion.div>
 
-        <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-xl p-6 border border-purple-600">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-purple-200 text-sm font-medium">Total Revenue</span>
-            <span className="text-3xl">💰</span>
-          </div>
-          <div className="text-3xl font-bold text-white mb-1">{analytics.totalRevenue}</div>
-          <div className="text-purple-300 text-xs">PLN earned</div>
-        </div>
+        {/* Status Distribution */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        >
+          <Card variant="glass" className="lg:col-span-1">
+            <Doughnut data={statusChartData} options={statusChartOptions} />
+          </Card>
 
-        <div className="bg-gradient-to-br from-amber-900 to-amber-800 rounded-xl p-6 border border-amber-600">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-amber-200 text-sm font-medium">Avg Duration</span>
-            <span className="text-3xl">⏱️</span>
-          </div>
-          <div className="text-3xl font-bold text-white mb-1">{analytics.avgSessionDuration}</div>
-          <div className="text-amber-300 text-xs">minutes per session</div>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Energy Over Time */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-          <Line data={energyChartData} options={energyChartOptions} />
-        </div>
-
-        {/* Sessions by Station */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-          <Bar data={stationsChartData} options={stationsChartOptions} />
-        </div>
-      </div>
-
-      {/* Status Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 lg:col-span-1">
-          <Doughnut data={statusChartData} options={statusChartOptions} />
-        </div>
-
-        {/* Insights */}
-        <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl p-6 border border-indigo-600 lg:col-span-2">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-2xl">💡</span>
-            Key Insights
-          </h3>
-          <div className="space-y-3 text-sm text-gray-300">
-            <div className="flex items-start gap-3">
-              <span className="text-green-400 text-lg">✓</span>
-              <div>
-                <p className="font-bold text-white">Network Performance</p>
-                <p>{analytics.totalSessions} charging sessions completed with {analytics.totalEnergy} kWh delivered</p>
+          {/* Insights */}
+          <Card variant="gradient" className="bg-gradient-to-br from-indigo-900/50 to-purple-900/50 border-indigo-600 lg:col-span-2">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <FaLightbulb className="text-yellow-400 text-2xl" />
+              Key Insights
+            </h3>
+            <div className="space-y-3 text-sm text-gray-300">
+              <div className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 text-lg flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">Network Performance</p>
+                  <p>{analytics.totalSessions} charging sessions completed with {analytics.totalEnergy} kWh delivered</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <FaCheckCircle className="text-blue-400 text-lg flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">Revenue Generation</p>
+                  <p>Generated {analytics.totalRevenue} PLN in revenue from EV charging services</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <FaCheckCircle className="text-purple-400 text-lg flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">Session Efficiency</p>
+                  <p>Average session duration of {analytics.avgSessionDuration} minutes shows optimal charging patterns</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <FaCheckCircle className="text-amber-400 text-lg flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">Blockchain Integration</p>
+                  <p>All transactions recorded on Solana for transparency and verifiability</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="text-blue-400 text-lg">✓</span>
-              <div>
-                <p className="font-bold text-white">Revenue Generation</p>
-                <p>Generated {analytics.totalRevenue} PLN in revenue from EV charging services</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-purple-400 text-lg">✓</span>
-              <div>
-                <p className="font-bold text-white">Session Efficiency</p>
-                <p>Average session duration of {analytics.avgSessionDuration} minutes shows optimal charging patterns</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-amber-400 text-lg">✓</span>
-              <div>
-                <p className="font-bold text-white">Blockchain Integration</p>
-                <p>All transactions recorded on Solana for transparency and verifiability</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+          </Card>
+        </motion.div>
 
-      {/* DeCharge Integration Notice */}
-      <div className="mt-8 bg-gradient-to-r from-purple-900 to-blue-900 border-2 border-purple-600 rounded-xl p-5">
-        <p className="text-purple-100 text-sm text-center">
-          <strong>⛓️ Powered by Solana:</strong> This analytics dashboard demonstrates real-time insights
-          into the DeCharge network. All metrics are derived from on-chain verified charging sessions.
-        </p>
+        {/* DeCharge Integration Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8"
+        >
+          <Card variant="gradient" className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-600">
+            <p className="text-purple-100 text-sm text-center flex items-center justify-center gap-2">
+              <FaLink className="text-purple-400" />
+              <strong>Powered by Solana:</strong> This analytics dashboard demonstrates real-time insights
+              into the DeCharge network. All metrics are derived from on-chain verified charging sessions.
+            </p>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
