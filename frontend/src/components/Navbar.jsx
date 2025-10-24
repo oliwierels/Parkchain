@@ -14,7 +14,8 @@ import {
   FaCalendarAlt,
   FaChargingStation,
   FaUser,
-  FaRocket
+  FaRocket,
+  FaTrophy
 } from 'react-icons/fa';
 
 function Navbar() {
@@ -128,6 +129,17 @@ function Navbar() {
                 >
                   <FaMedal />
                   <span>Badges</span>
+                </NavLink>
+                <NavLink
+                  to="/achievements"
+                  className={getFeaturedLinkClasses({
+                    active: 'bg-purple-600',
+                    gradient: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                  })}
+                  title="Achievements & Rewards"
+                >
+                  <FaTrophy />
+                  <span>Achievements</span>
                 </NavLink>
               </div>
 
@@ -357,6 +369,18 @@ function Navbar() {
                 >
                   <FaMedal />
                   <span>Badges</span>
+                </NavLink>
+                <NavLink
+                  to="/achievements"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-purple-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
+                  }
+                >
+                  <FaTrophy />
+                  <span>Achievements</span>
                 </NavLink>
               </div>
 

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaCheckCircle, FaExclamationCircle, FaInfoCircle,
-  FaTimes, FaCrown, FaRocket, FaCoins, FaLayerGroup
+  FaTimes, FaCrown, FaRocket, FaCoins, FaLayerGroup, FaTrophy
 } from 'react-icons/fa';
 
 const NOTIFICATION_DURATION = 5000; // 5 seconds
@@ -71,6 +71,13 @@ const LiveNotifications = () => {
           bg: 'bg-yellow-900/90',
           border: 'border-yellow-600',
           icon: FaCoins,
+          iconColor: 'text-yellow-400'
+        };
+      case 'achievement':
+        return {
+          bg: 'bg-gradient-to-br from-purple-900/90 to-pink-900/90',
+          border: 'border-purple-500',
+          icon: FaTrophy,
           iconColor: 'text-yellow-400'
         };
       default:
@@ -168,6 +175,11 @@ export const notify = {
   info: (title, message, details) => {
     if (window.addGatewayNotification) {
       window.addGatewayNotification({ type: 'info', title, message, details });
+    }
+  },
+  achievement: (title, message, details) => {
+    if (window.addGatewayNotification) {
+      window.addGatewayNotification({ type: 'achievement', title, message, details });
     }
   }
 };

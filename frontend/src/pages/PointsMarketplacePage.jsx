@@ -11,6 +11,7 @@ import { premiumTierService } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
 import { notify } from '../components/LiveNotifications';
 import BatchTransactionModal from '../components/BatchTransactionModal';
+import { checkAndNotifyAchievements } from '../utils/achievementNotifier';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
@@ -193,6 +194,9 @@ function PointsMarketplacePage() {
           ]
         );
       }
+
+      // Check for newly unlocked achievements
+      checkAndNotifyAchievements();
 
       // Show success notification
       notify.success(
