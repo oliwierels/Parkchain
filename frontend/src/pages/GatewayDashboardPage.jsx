@@ -14,6 +14,7 @@ import {
   Filler
 } from 'chart.js';
 import { transactionStorage } from '../services/transactionStorage';
+import { demoDataGenerator } from '../utils/demoDataGenerator';
 import {
   FaCheckCircle,
   FaTimesCircle,
@@ -68,7 +69,13 @@ function GatewayDashboardPage() {
   };
 
   const handleGenerateDemoData = () => {
-    transactionStorage.generateDemoData(20);
+    // Generate realistic demo data for 30 days
+    const result = demoDataGenerator.generateComparisonReport(30);
+    console.log('📊 Generated demo data:', result.summary);
+    alert(`✅ Generated ${result.transactions.length} demo transactions!\n\n` +
+          `Success Rate: ${result.summary.successRate}\n` +
+          `Gateway Savings: ${result.summary.savings.totalSavings} SOL ($${result.summary.savings.savingsUSD})\n\n` +
+          `Check console for detailed report.`);
     refreshData();
   };
 
