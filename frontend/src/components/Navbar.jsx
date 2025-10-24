@@ -210,15 +210,15 @@ function Navbar() {
                   <span>Analytics</span>
                 </NavLink>
                 <NavLink
-                  to="/gateway-dashboard"
+                  to="/advanced-gateway"
                   className={getFeaturedLinkClasses({
                     active: 'bg-blue-600',
                     gradient: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                   })}
-                  title="Gateway Dashboard - Sanctum integration"
+                  title="Advanced Gateway - Premium Features & Analytics"
                 >
                   <FaRocket />
-                  <span>Gateway</span>
+                  <span>Gateway Pro</span>
                 </NavLink>
               </div>
             </div>
@@ -426,7 +426,7 @@ function Navbar() {
                   <span>Analytics</span>
                 </NavLink>
                 <NavLink
-                  to="/gateway-dashboard"
+                  to="/advanced-gateway"
                   onClick={closeMobileMenu}
                   className={({ isActive }) =>
                     isActive
