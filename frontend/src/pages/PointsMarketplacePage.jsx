@@ -4,12 +4,15 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { QRCodeSVG } from 'qrcode.react';
 import BigNumber from 'bignumber.js';
+import gatewayService from '../services/gatewayService';
+import { getGatewayStatus } from '../config/gateway';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
 
 function PointsMarketplacePage() {
-  const { publicKey, connected, sendTransaction } = useWallet();
+  const wallet = useWallet();
+  const { publicKey, connected, sendTransaction } = wallet;
   const { connection } = useConnection();
   const [pointsStats, setPointsStats] = useState({
     totalPointsAvailable: 0,
@@ -20,6 +23,9 @@ function PointsMarketplacePage() {
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [txSignature, setTxSignature] = useState(null);
+  const [gatewayProgress, setGatewayProgress] = useState(null);
+  const [gatewayMetrics, setGatewayMetrics] = useState(null);
+  const [useGateway, setUseGateway] = useState(true); // Toggle Gateway on/off
 
   useEffect(() => {
     fetchPointsData();
@@ -64,6 +70,8 @@ function PointsMarketplacePage() {
 
     setLoading(true);
     setTxSignature(null);
+    setGatewayProgress(null);
+    setGatewayMetrics(null);
 
     try {
       // Oblicz cenę w SOL (zakładamy 1 DCP = 0.5 PLN, 1 SOL = ~$150, 1 PLN = ~$0.25)
@@ -83,32 +91,60 @@ function PointsMarketplacePage() {
         })
       );
 
-      // Pobierz recent blockhash
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = publicKey;
+      let signature;
 
-      console.log('📤 Sending transaction...');
+      // Use Gateway if enabled
+      if (useGateway) {
+        console.log('🚀 Using Sanctum Gateway for optimized delivery...');
 
-      // Wyślij transakcję
-      const signature = await sendTransaction(transaction, connection);
-      console.log('✅ Transaction sent:', signature);
-      setTxSignature(signature);
+        // Execute transaction through Gateway
+        const result = await gatewayService.executeTransaction({
+          transaction,
+          connection,
+          wallet,
+          onProgress: (progress) => {
+            console.log(`[Gateway] ${progress.stage}: ${progress.message}`);
+            setGatewayProgress(progress);
+          }
+        });
 
-      // Czekaj na potwierdzenie
-      alert(`⏳ Transaction sent!\nSignature: ${signature.slice(0, 16)}...\n\nWaiting for confirmation...`);
+        signature = result.signature;
+        setGatewayMetrics(result.metrics);
 
-      const confirmation = await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight
-      });
+        console.log('✅ Transaction completed via Gateway:', {
+          signature,
+          metadata: result.metadata,
+          metrics: result.metrics
+        });
 
-      if (confirmation.value.err) {
-        throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+      } else {
+        // Standard Solana RPC (without Gateway)
+        console.log('📤 Sending via standard Solana RPC...');
+
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
+        signature = await sendTransaction(transaction, connection);
+        console.log('✅ Transaction sent:', signature);
+
+        setGatewayProgress({ stage: 'confirm', message: 'Waiting for confirmation...' });
+
+        const confirmation = await connection.confirmTransaction({
+          signature,
+          blockhash,
+          lastValidBlockHeight
+        });
+
+        if (confirmation.value.err) {
+          throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+        }
+
+        console.log('✅ Transaction confirmed!');
       }
 
-      console.log('✅ Transaction confirmed!');
+      setTxSignature(signature);
+      setGatewayProgress({ stage: 'complete', message: 'Transaction successful!', signature });
 
       // Zapisz zakup w bazie danych
       const response = await fetch('http://localhost:3000/api/points/purchase', {
@@ -121,7 +157,8 @@ function PointsMarketplacePage() {
           amount: amount,
           priceSOL: priceInSOL.toFixed(6),
           txSignature: signature,
-          walletAddress: publicKey.toString()
+          walletAddress: publicKey.toString(),
+          gatewayUsed: useGateway
         })
       });
 
@@ -129,7 +166,9 @@ function PointsMarketplacePage() {
         console.warn('Failed to record purchase in database, but blockchain transaction succeeded');
       }
 
-      alert(`🎉 Purchase Successful!\n\n✓ Bought: ${amount} DCP tokens\n✓ Paid: ${priceInSOL.toFixed(4)} SOL (50% discount)\n✓ Transaction: ${signature.slice(0, 16)}...\n\n🔗 View on Solana Explorer:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+      // Show success with Gateway info
+      const gatewayInfo = useGateway ? '\n⚡ Delivered via Sanctum Gateway' : '';
+      alert(`🎉 Purchase Successful!\n\n✓ Bought: ${amount} DCP tokens\n✓ Paid: ${priceInSOL.toFixed(4)} SOL (50% discount)\n✓ Transaction: ${signature.slice(0, 16)}...${gatewayInfo}\n\n🔗 View on Solana Explorer:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
       // Refresh stats
       fetchPointsData();
@@ -137,6 +176,7 @@ function PointsMarketplacePage() {
 
     } catch (err) {
       console.error('Transaction error:', err);
+      setGatewayProgress({ stage: 'error', message: err.message });
       alert(`❌ Transaction Failed\n\n${err.message}\n\nPlease ensure you have enough SOL for the transaction and fees.`);
     } finally {
       setLoading(false);
@@ -217,6 +257,56 @@ function PointsMarketplacePage() {
             </div>
           ) : (
             <>
+              {/* Gateway Status Banner */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⚡</span>
+                    <span className="text-sm font-bold text-white">Sanctum Gateway</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      getGatewayStatus().enabled
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                    }`}>
+                      {getGatewayStatus().enabled ? 'Active' : 'Fallback Mode'}
+                    </span>
+                  </div>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useGateway}
+                      onChange={(e) => setUseGateway(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  {useGateway
+                    ? '🚀 Optimized delivery via RPC + Jito bundles • Auto-refund tips • 0.0001 SOL/tx'
+                    : '📡 Standard Solana RPC (Gateway disabled for comparison)'}
+                </p>
+              </div>
+
+              {/* Gateway Progress Indicator */}
+              {gatewayProgress && loading && (
+                <div className="mb-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-400">
+                        {gatewayProgress.stage === 'optimize' && '⚡ Optimizing transaction...'}
+                        {gatewayProgress.stage === 'prepare' && '🔧 Preparing transaction...'}
+                        {gatewayProgress.stage === 'sign' && '✍️ Please sign in your wallet...'}
+                        {gatewayProgress.stage === 'send' && '📤 Sending via Gateway...'}
+                        {gatewayProgress.stage === 'confirm' && '⏳ Confirming on-chain...'}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">{gatewayProgress.message}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
                   Amount of DCP Tokens
@@ -266,16 +356,40 @@ function PointsMarketplacePage() {
               </button>
 
               {txSignature && (
-                <div className="mt-4 p-4 bg-green-900 bg-opacity-30 border border-green-600 rounded-lg">
+                <div className="mt-4 p-4 bg-green-900 bg-opacity-30 border border-green-600 rounded-lg space-y-3">
                   <p className="text-green-400 font-bold mb-2">✅ Transaction Successful!</p>
                   <p className="text-xs text-gray-300 mb-2 break-all">
                     Signature: {txSignature}
                   </p>
+
+                  {/* Gateway Metrics */}
+                  {gatewayMetrics && useGateway && (
+                    <div className="mt-3 pt-3 border-t border-green-600/30">
+                      <p className="text-xs font-bold text-green-400 mb-2">⚡ Gateway Performance:</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-gray-800/50 rounded p-2">
+                          <p className="text-gray-400">Success Rate</p>
+                          <p className="text-green-400 font-bold">{gatewayMetrics.successRate}</p>
+                        </div>
+                        <div className="bg-gray-800/50 rounded p-2">
+                          <p className="text-gray-400">Transactions</p>
+                          <p className="text-blue-400 font-bold">{gatewayMetrics.successfulTransactions}/{gatewayMetrics.totalTransactions}</p>
+                        </div>
+                        {gatewayMetrics.totalJitoTipsRefunded > 0 && (
+                          <div className="bg-gray-800/50 rounded p-2 col-span-2">
+                            <p className="text-gray-400">💰 Jito Tips Refunded</p>
+                            <p className="text-amber-400 font-bold">{gatewayMetrics.totalJitoTipsRefunded} SOL saved</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <a
                     href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 underline text-sm"
+                    className="text-blue-400 hover:text-blue-300 underline text-sm block"
                   >
                     🔗 View on Solana Explorer
                   </a>
@@ -370,11 +484,25 @@ function PointsMarketplacePage() {
       </div>
 
       {/* Blockchain Notice */}
-      <div className="mt-8 bg-gradient-to-r from-purple-900 to-blue-900 border-2 border-purple-600 rounded-xl p-5 text-center">
+      <div className="mt-8 bg-gradient-to-r from-purple-900 to-blue-900 border-2 border-purple-600 rounded-xl p-5 text-center space-y-3">
         <p className="text-purple-100 text-sm">
           <strong>⛓️ Real Blockchain Transactions:</strong> All purchases are executed as actual SOL transfers on Solana Devnet.
           Each transaction is recorded on-chain and can be verified on Solana Explorer. This demonstrates real Web3 integration for the DeCharge economy.
         </p>
+        <div className="pt-3 border-t border-purple-600/30">
+          <p className="text-blue-200 text-sm">
+            <strong>⚡ Powered by Sanctum Gateway:</strong> Transactions are optimized and delivered through multiple channels (RPC + Jito bundles) for maximum reliability.
+            Gateway automatically refunds Jito tips if transactions land via RPC, saving costs while ensuring the highest success rate.
+            <a
+              href="https://gateway.sanctum.so"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 text-blue-400 hover:text-blue-300 underline"
+            >
+              Learn more →
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
