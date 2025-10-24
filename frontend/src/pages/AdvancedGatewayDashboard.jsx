@@ -8,7 +8,7 @@ import {
   FaCrown, FaRocket, FaLayerGroup, FaRoute, FaChartLine,
   FaStar, FaBolt, FaShieldAlt, FaTrophy, FaFire,
   FaArrowUp, FaClock, FaCoins, FaNetworkWired, FaPlay,
-  FaTrash, FaDownload, FaInfoCircle
+  FaTrash, FaDownload, FaInfoCircle, FaTools
 } from 'react-icons/fa';
 import { premiumTierService, USER_TIERS } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
@@ -17,6 +17,11 @@ import { transactionStorage } from '../services/transactionStorage';
 import NetworkMonitor from '../components/NetworkMonitor';
 import TransactionTimeline from '../components/TransactionTimeline';
 import LiveNotifications from '../components/LiveNotifications';
+import GatewayCharts from '../components/GatewayCharts';
+import LiveActivityFeed from '../components/LiveActivityFeed';
+import CostComparison from '../components/CostComparison';
+import TransactionSimulator from '../components/TransactionSimulator';
+import PerformanceRecommendations from '../components/PerformanceRecommendations';
 
 const AdvancedGatewayDashboard = () => {
   const [currentTier, setCurrentTier] = useState(null);
@@ -25,7 +30,7 @@ const AdvancedGatewayDashboard = () => {
   const [batchStats, setBatchStats] = useState(null);
   const [routingStats, setRoutingStats] = useState(null);
   const [networkConditions, setNetworkConditions] = useState('normal');
-  const [activeTab, setActiveTab] = useState('overview'); // overview, tiers, batching, routing
+  const [activeTab, setActiveTab] = useState('overview'); // overview, tiers, batching, routing, tools
   const [showDemoInfo, setShowDemoInfo] = useState(false);
   const [transactions, setTransactions] = useState([]);
 
@@ -288,7 +293,8 @@ const AdvancedGatewayDashboard = () => {
                   { id: 'overview', label: 'Overview', icon: FaChartLine },
                   { id: 'tiers', label: 'Premium Tiers', icon: FaCrown },
                   { id: 'batching', label: 'Batch Transactions', icon: FaLayerGroup },
-                  { id: 'routing', label: 'Smart Routing', icon: FaRoute }
+                  { id: 'routing', label: 'Smart Routing', icon: FaRoute },
+                  { id: 'tools', label: 'Tools & Analytics', icon: FaTools }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -679,6 +685,34 @@ const AdvancedGatewayDashboard = () => {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Tools & Analytics Tab */}
+        {activeTab === 'tools' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Interactive Charts */}
+            <GatewayCharts
+              transactionStorage={transactionStorage}
+              batchStats={batchStats}
+              routingStats={routingStats}
+            />
+
+            {/* Live Activity Feed & Performance Recommendations */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LiveActivityFeed transactions={transactions} limit={10} />
+              <PerformanceRecommendations />
+            </div>
+
+            {/* Cost Comparison */}
+            <CostComparison />
+
+            {/* Transaction Simulator */}
+            <TransactionSimulator />
           </motion.div>
         )}
       </div>
