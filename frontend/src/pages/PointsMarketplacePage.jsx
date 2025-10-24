@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import BigNumber from 'bignumber.js';
 import gatewayService from '../services/gatewayService';
 import { getGatewayStatus } from '../config/gateway';
+import { transactionStorage } from '../services/transactionStorage';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
@@ -146,6 +147,23 @@ function PointsMarketplacePage() {
       setTxSignature(signature);
       setGatewayProgress({ stage: 'complete', message: 'Transaction successful!', signature });
 
+      // Save transaction to Gateway storage for dashboard
+      const transactionStartTime = Date.now() - (gatewayMetrics?.averageConfirmationTime || 3000);
+      transactionStorage.addTransaction({
+        signature,
+        amount,
+        status: 'success',
+        deliveryMethod: useGateway ? 'gateway' : 'rpc',
+        gatewayUsed: useGateway,
+        confirmationTime: Date.now() - transactionStartTime,
+        jitoTipRefunded: gatewayMetrics?.totalJitoTipsRefunded || 0,
+        gatewayFee: useGateway ? 0.0001 : 0,
+        metadata: {
+          priceSOL: priceInSOL.toFixed(6),
+          walletAddress: publicKey.toString()
+        }
+      });
+
       // Zapisz zakup w bazie danych
       const response = await fetch('http://localhost:3000/api/points/purchase', {
         method: 'POST',
@@ -177,6 +195,23 @@ function PointsMarketplacePage() {
     } catch (err) {
       console.error('Transaction error:', err);
       setGatewayProgress({ stage: 'error', message: err.message });
+
+      // Save failed transaction to Gateway storage
+      transactionStorage.addTransaction({
+        signature: 'failed_' + Date.now(),
+        amount,
+        status: 'failed',
+        deliveryMethod: useGateway ? 'gateway' : 'rpc',
+        gatewayUsed: useGateway,
+        confirmationTime: 0,
+        jitoTipRefunded: 0,
+        gatewayFee: 0,
+        metadata: {
+          error: err.message,
+          walletAddress: publicKey?.toString() || 'unknown'
+        }
+      });
+
       alert(`❌ Transaction Failed\n\n${err.message}\n\nPlease ensure you have enough SOL for the transaction and fees.`);
     } finally {
       setLoading(false);
@@ -500,6 +535,15 @@ function PointsMarketplacePage() {
               className="ml-2 text-blue-400 hover:text-blue-300 underline"
             >
               Learn more →
+            </a>
+          </p>
+          <p className="text-indigo-200 text-sm mt-3">
+            <strong>📊 Track Performance:</strong> View detailed analytics, success rates, and cost savings in the{' '}
+            <a
+              href="/gateway-dashboard"
+              className="text-indigo-400 hover:text-indigo-300 underline font-bold"
+            >
+              Gateway Dashboard →
             </a>
           </p>
         </div>

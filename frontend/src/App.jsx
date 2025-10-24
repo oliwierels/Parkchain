@@ -15,6 +15,7 @@ import LiveFeedPage from './pages/LiveFeedPage';
 import PointsMarketplacePage from './pages/PointsMarketplacePage';
 import BadgesPage from './pages/BadgesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import GatewayDashboardPage from './pages/GatewayDashboardPage';
 
 function AppContent() {
   const location = useLocation();
@@ -47,6 +48,9 @@ function AppContent() {
               <Route path="/marketplace" element={<PointsMarketplacePage />} />
               <Route path="/badges" element={<BadgesPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+
+              {/* Sanctum Gateway */}
+              <Route path="/gateway-dashboard" element={<GatewayDashboardPage />} />
             </Routes>
           </div>
   );
