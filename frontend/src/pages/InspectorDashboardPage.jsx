@@ -1,15 +1,35 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { inspectionAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import {
+  Card,
+  Button,
+  Badge,
+  SkeletonCard,
+  EmptyState,
+  useToast,
+  ToastContainer,
+  ConfirmModal
+} from '../components/ui';
+import {
+  FaClipboardCheck,
+  FaParking,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaUser,
+  FaClock
+} from 'react-icons/fa';
 
 function InspectorDashboardPage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { toasts, addToast, removeToast } = useToast();
   const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, inspection: null, status: null });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -18,7 +38,7 @@ function InspectorDashboardPage() {
     }
 
     if (user?.role !== 'inspector') {
-      alert('Brak uprawnień. Wymagana rola inspektora.');
+      addToast({ message: 'Brak uprawnień. Wymagana rola inspektora.', type: 'error' });
       navigate('/');
       return;
     }
@@ -31,29 +51,33 @@ function InspectorDashboardPage() {
       setLoading(true);
       const data = await inspectionAPI.getQueuedInspections();
       setInspections(data);
-      setError(null);
     } catch (err) {
       console.error('Błąd pobierania zgłoszeń:', err);
-      setError('Nie udało się pobrać zgłoszeń');
+      addToast({ message: 'Nie udało się pobrać zgłoszeń', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerify = async (inspectionId, status) => {
-    if (!window.confirm(`Czy na pewno chcesz ${status === 'confirmed' ? 'ZATWIERDZIĆ' : 'ODRZUCIĆ'} to zgłoszenie?`)) {
-      return;
-    }
+  const handleVerifyClick = (inspection, status) => {
+    setConfirmModal({ isOpen: true, inspection, status });
+  };
+
+  const handleVerifyConfirm = async () => {
+    const { inspection, status } = confirmModal;
+    setConfirmModal({ isOpen: false, inspection: null, status: null });
 
     try {
-      setProcessingId(inspectionId);
-      await inspectionAPI.verifyInspection(inspectionId, status);
-      alert(status === 'confirmed' ? 'Zgłoszenie zatwierdzone!' : 'Zgłoszenie odrzucone');
-      // Odśwież listę
+      setProcessingId(inspection.id);
+      await inspectionAPI.verifyInspection(inspection.id, status);
+      addToast({
+        message: status === 'confirmed' ? 'Zgłoszenie zatwierdzone!' : 'Zgłoszenie odrzucone',
+        type: 'success'
+      });
       fetchInspections();
     } catch (err) {
       console.error('Błąd weryfikacji:', err);
-      alert('Nie udało się zweryfikować zgłoszenia');
+      addToast({ message: 'Nie udało się zweryfikować zgłoszenia', type: 'error' });
     } finally {
       setProcessingId(null);
     }
@@ -61,104 +85,142 @@ function InspectorDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-indigo-600">Ładowanie zgłoszeń...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <div className="max-w-4xl mx-auto">
+          <div className="h-10 w-64 bg-slate-800 rounded-lg mb-8 animate-pulse" />
+          <div className="grid gap-4">
+            {[1, 2, 3].map(i => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Panel Inspektora CrowdScan
-        </h1>
-        <p className="text-gray-600">
-          Weryfikuj zgłoszenia zajętości parkingów od użytkowników
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+            <FaClipboardCheck className="text-parkchain-500" />
+            Panel Inspektora CrowdScan
+          </h1>
+          <p className="text-gray-400 text-sm">
+            Weryfikuj zgłoszenia zajętości parkingów od użytkowników
+          </p>
+        </motion.div>
+
+        {inspections.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <EmptyState
+              icon={<FaCheckCircle className="text-6xl text-green-500" />}
+              title="Brak zgłoszeń do weryfikacji"
+              description="Wszystkie zgłoszenia zostały sprawdzone. Świetna robota!"
+            />
+          </motion.div>
+        ) : (
+          <div className="grid gap-4">
+            {inspections.map((inspection, index) => (
+              <motion.div
+                key={inspection.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              >
+                <Card variant="glass" hoverable>
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FaParking className="text-parkchain-500" />
+                        <h3 className="text-xl font-bold text-white">
+                          {inspection.parking_name || `Parking #${inspection.lot_id}`}
+                        </h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <p className="text-gray-400">
+                          <strong>Parking ID:</strong> {inspection.lot_id}
+                        </p>
+                        <p className="text-gray-400">
+                          <strong>Zgłoszona zajętość:</strong>{' '}
+                          <span className="font-bold text-parkchain-500">
+                            {inspection.reported_occupancy} miejsc zajętych
+                          </span>
+                        </p>
+                        <p className="text-gray-400 flex items-center gap-2">
+                          <FaUser className="text-gray-500" />
+                          <strong>Zgłoszone przez:</strong> Użytkownik #{inspection.reporter_id}
+                        </p>
+                        <p className="text-gray-400 flex items-center gap-2">
+                          <FaClock className="text-gray-500" />
+                          <strong>Data zgłoszenia:</strong>{' '}
+                          {new Date(inspection.created_at).toLocaleString('pl-PL')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Badge variant="warning" size="md">
+                      Oczekuje
+                    </Badge>
+                  </div>
+
+                  <div className="border-t border-slate-700 pt-4 mt-4">
+                    <Card variant="glass" className="bg-blue-900/20 border-blue-700 mb-4">
+                      <p className="text-sm text-blue-200">
+                        <strong>Instrukcja:</strong> Zweryfikuj fizycznie zajętość parkingu i zatwierdź lub odrzuć zgłoszenie.
+                      </p>
+                    </Card>
+
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => handleVerifyClick(inspection, 'confirmed')}
+                        disabled={processingId === inspection.id}
+                        loading={processingId === inspection.id}
+                        variant="secondary"
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        leftIcon={<FaCheckCircle />}
+                      >
+                        Zatwierdź
+                      </Button>
+                      <Button
+                        onClick={() => handleVerifyClick(inspection, 'rejected')}
+                        disabled={processingId === inspection.id}
+                        loading={processingId === inspection.id}
+                        variant="danger"
+                        className="flex-1"
+                        leftIcon={<FaTimesCircle />}
+                      >
+                        Odrzuć
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      {inspections.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            Brak zgłoszeń do weryfikacji
-          </h2>
-          <p className="text-gray-600">
-            Wszystkie zgłoszenia zostały sprawdzone. Świetna robota!
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {inspections.map((inspection) => (
-            <div
-              key={inspection.id}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {inspection.parking_name || `Parking #${inspection.lot_id}`}
-                  </h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p>
-                      <strong>Parking ID:</strong> {inspection.lot_id}
-                    </p>
-                    <p>
-                      <strong>Zgłoszona zajętość:</strong>{' '}
-                      <span className="font-bold text-indigo-600">
-                        {inspection.reported_occupancy} miejsc zajętych
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Zgłoszone przez:</strong> Użytkownik #{inspection.reporter_id}
-                    </p>
-                    <p>
-                      <strong>Data zgłoszenia:</strong>{' '}
-                      {new Date(inspection.created_at).toLocaleString('pl-PL')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ml-4">
-                  <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                    Oczekuje
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t pt-4 mt-4">
-                <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-blue-800">
-                  <strong>Instrukcja:</strong> Zweryfikuj fizycznie zajętość parkingu i zatwierdź lub odrzuć zgłoszenie.
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleVerify(inspection.id, 'confirmed')}
-                    disabled={processingId === inspection.id}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    {processingId === inspection.id ? 'Przetwarzanie...' : '✓ Zatwierdź'}
-                  </button>
-                  <button
-                    onClick={() => handleVerify(inspection.id, 'rejected')}
-                    disabled={processingId === inspection.id}
-                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    {processingId === inspection.id ? 'Przetwarzanie...' : '✗ Odrzuć'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, inspection: null, status: null })}
+        onConfirm={handleVerifyConfirm}
+        title={confirmModal.status === 'confirmed' ? 'Potwierdź zatwierdzenie' : 'Potwierdź odrzucenie'}
+        message={`Czy na pewno chcesz ${confirmModal.status === 'confirmed' ? 'ZATWIERDZIĆ' : 'ODRZUCIĆ'} to zgłoszenie?`}
+        confirmText={confirmModal.status === 'confirmed' ? 'Zatwierdź' : 'Odrzuć'}
+        confirmVariant={confirmModal.status === 'confirmed' ? 'primary' : 'danger'}
+      />
     </div>
   );
 }
