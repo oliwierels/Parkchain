@@ -10,7 +10,7 @@ function HomePage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(8);
+  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(15);
   const [autoRedirectCancelled, setAutoRedirectCancelled] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -21,7 +21,7 @@ function HomePage() {
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
   const navbarOpacity = useTransform(scrollY, [0, 100], [0, 1]);
 
-  // Auto-redirect timer (zwiększono do 8s żeby dać czas na eksplorację)
+  // Auto-redirect timer (zwiększono do 15s żeby dać czas na eksplorację)
   useEffect(() => {
     if (autoRedirectCancelled || isTransitioning) return;
 
@@ -42,6 +42,23 @@ function HomePage() {
 
     return () => clearInterval(interval);
   }, [autoRedirectCancelled, isTransitioning, navigate]);
+
+  // Cancel auto-redirect on any interaction (click, hover, touch)
+  useEffect(() => {
+    const handleInteraction = () => {
+      if (!autoRedirectCancelled) {
+        setAutoRedirectCancelled(true);
+      }
+    };
+
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+  }, [autoRedirectCancelled]);
 
   // Cancel auto-redirect on scroll
   useEffect(() => {

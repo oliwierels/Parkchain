@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FaParking, FaCheckCircle, FaClipboardList, FaMoneyBillWave, FaPlus } from 'react-icons/fa';
+import {
+  Card,
+  Button,
+  Badge,
+  SkeletonCard,
+  EmptyStateNoParkingSpots,
+  EmptyState,
+  useToast,
+  ToastContainer
+} from '../components/ui';
 
 function OwnerDashboardPage() {
   const navigate = useNavigate();
@@ -13,6 +25,7 @@ function OwnerDashboardPage() {
     totalEarnings: 0,
     activeParkings: 0
   });
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     fetchOwnerData();
@@ -22,7 +35,6 @@ function OwnerDashboardPage() {
     try {
       setLoading(true);
 
-      // Pobierz moje parkingi
       const parkingsResponse = await fetch('http://localhost:3000/api/parking-lots/my', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -36,7 +48,6 @@ function OwnerDashboardPage() {
       const parkingsData = await parkingsResponse.json();
       setMyParkings(parkingsData || []);
 
-      // Pobierz wszystkie rezerwacje (filtrujemy po stronie klienta)
       const reservationsResponse = await fetch('http://localhost:3000/api/reservations', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -46,7 +57,6 @@ function OwnerDashboardPage() {
       if (reservationsResponse.ok) {
         const reservationsData = await reservationsResponse.json();
 
-        // Filtruj rezerwacje tylko dla moich parkingów
         const myParkingIds = parkingsData.map(p => p.id);
         const myReservations = (reservationsData || []).filter(r =>
           myParkingIds.includes(r.lot_id)
@@ -54,7 +64,6 @@ function OwnerDashboardPage() {
 
         setAllReservations(myReservations);
 
-        // Oblicz statystyki
         const totalEarnings = myReservations
           .filter(r => r.status !== 'cancelled')
           .reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
@@ -73,6 +82,10 @@ function OwnerDashboardPage() {
     } catch (err) {
       console.error('Błąd pobierania danych właściciela:', err);
       setError('Nie udało się załadować danych');
+      addToast({
+        message: 'Nie udało się załadować danych',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -89,19 +102,13 @@ function OwnerDashboardPage() {
     });
   };
 
-  // Funkcje pomocnicze do statusów (dla dark mode)
-  const getStatusClasses = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
-      case 'pending':
-        return 'bg-blue-900 text-blue-200';
-      case 'active':
-        return 'bg-green-900 text-green-200';
-      case 'completed':
-        return 'bg-gray-700 text-gray-200';
-      case 'cancelled':
-        return 'bg-red-900 text-red-200';
-      default:
-        return 'bg-gray-700 text-gray-200';
+      case 'pending': return 'info';
+      case 'active': return 'success';
+      case 'completed': return 'default';
+      case 'cancelled': return 'error';
+      default: return 'default';
     }
   };
 
@@ -117,182 +124,249 @@ function OwnerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-lg text-indigo-400">
-        Ładowanie danych...
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <div className="max-w-7xl mx-auto">
+          <div className="h-10 w-64 bg-slate-800 rounded-lg mb-8 animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {[1, 2, 3, 4].map(i => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
+  const statCards = [
+    {
+      icon: FaParking,
+      label: 'Moje parkingi',
+      value: stats.totalParkings,
+      gradient: 'from-blue-500 to-cyan-500',
+      bg: 'bg-blue-500/10',
+      color: 'text-blue-400'
+    },
+    {
+      icon: FaCheckCircle,
+      label: 'Aktywne parkingi',
+      value: stats.activeParkings,
+      gradient: 'from-green-500 to-emerald-500',
+      bg: 'bg-green-500/10',
+      color: 'text-green-400'
+    },
+    {
+      icon: FaClipboardList,
+      label: 'Rezerwacje',
+      value: stats.totalReservations,
+      gradient: 'from-purple-500 to-pink-500',
+      bg: 'bg-purple-500/10',
+      color: 'text-purple-400'
+    },
+    {
+      icon: FaMoneyBillWave,
+      label: 'Zarobki',
+      value: `${stats.totalEarnings} zł`,
+      gradient: 'from-yellow-500 to-orange-500',
+      bg: 'bg-yellow-500/10',
+      color: 'text-yellow-400'
+    }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-white">
-          Panel właściciela
-        </h1>
-        <button
-          onClick={() => navigate('/add-parking')}
-          className="bg-indigo-600 text-white py-3 px-6 rounded-lg font-bold text-base cursor-pointer hover:bg-indigo-700 transition-colors"
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
         >
-          + Dodaj parking
-        </button>
-      </div>
+          <h1 className="text-4xl font-bold text-white">
+            Panel właściciela
+          </h1>
+          <Button
+            onClick={() => navigate('/add-parking')}
+            variant="primary"
+            size="lg"
+            leftIcon={<FaPlus />}
+          >
+            Dodaj parking
+          </Button>
+        </motion.div>
 
-      {error && (
-        <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      {/* Statystyki */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Moje parkingi</p>
-          <p className="text-4xl font-bold text-white">{stats.totalParkings}</p>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Aktywne parkingi</p>
-          <p className="text-4xl font-bold text-green-500">{stats.activeParkings}</p>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Rezerwacje</p>
-          <p className="text-4xl font-bold text-indigo-400">{stats.totalReservations}</p>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Zarobki</p>
-          <p className="text-4xl font-bold text-green-500">{stats.totalEarnings} zł</p>
-        </div>
-      </div>
-
-      {/* Lista parkingów */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold mb-5 text-white">
-          Moje parkingi
-        </h2>
-
-        {myParkings.length === 0 ? (
-          <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
-            <p className="text-lg mb-4">
-              Nie masz jeszcze żadnych parkingów
-            </p>
-            <button
-              onClick={() => navigate('/add-parking')}
-              className="bg-indigo-600 text-white py-2 px-5 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
+        {/* Stats Cards */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+        >
+          {statCards.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
             >
-              Dodaj pierwszy parking
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {myParkings.map(parking => {
-              const activeReservations = allReservations.filter(
-                r => r.lot_id === parking.id && (r.status === 'pending' || r.status === 'active')
-              );
-
-              return (
-                <div
-                  key={parking.id}
-                  className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col sm:flex-row justify-between items-start gap-4"
-                >
-                  {/* Info */}
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      {parking.name}
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-2">
-                      {parking.address}
-                    </p>
-                    <p className="text-lg font-bold text-indigo-400">
-                      {parking.price_per_hour} zł/godz
-                    </p>
+              <Card variant="gradient" hoverable className={stat.bg}>
+                <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${stat.gradient} opacity-10 blur-2xl`} />
+                <div className="relative">
+                  <stat.icon className={`text-3xl ${stat.color} mb-3`} />
+                  <div className={`text-3xl font-black ${stat.color} mb-2`}>
+                    {stat.value}
                   </div>
-                  {/* Status */}
-                  <div className="text-left sm:text-right w-full sm:w-auto">
-                    <span
-                      className={`py-1.5 px-3 rounded-md text-sm font-bold whitespace-nowrap ${
-                        parking.available_spots > 0
-                          ? 'bg-green-900 text-green-200'
-                          : 'bg-red-900 text-red-200'
-                      }`}
-                    >
-                      {parking.available_spots}/{parking.total_spots} miejsc
-                    </span>
-                    <p className="text-sm text-gray-400 mt-2">
-                      {activeReservations.length} aktywnych rezerwacji
-                    </p>
+                  <div className="text-gray-400 text-sm font-medium">
+                    {stat.label}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
 
-      {/* Rezerwacje */}
-      <div>
-        <h2 className="text-2xl font-bold mb-5 text-white">
-          Rezerwacje na moich parkingach
-        </h2>
+        {/* Lista parkingów */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-10"
+        >
+          <h2 className="text-2xl font-bold mb-5 text-white">
+            Moje parkingi
+          </h2>
 
-        {allReservations.length === 0 ? (
-          <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
-            <p className="text-lg">
-              Brak rezerwacji
-            </p>
-          </div>
-        ) : (
-          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Parking</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Użytkownik</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Start</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koniec</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cena</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
-                  {allReservations.map((reservation) => {
-                    const parking = myParkings.find(p => p.id === reservation.lot_id);
-                    const statusClasses = getStatusClasses(reservation.status);
+          {myParkings.length === 0 ? (
+            <EmptyStateNoParkingSpots onAddNew={() => navigate('/add-parking')} />
+          ) : (
+            <div className="grid gap-4">
+              {myParkings.map((parking, index) => {
+                const activeReservations = allReservations.filter(
+                  r => r.lot_id === parking.id && (r.status === 'pending' || r.status === 'active')
+                );
 
-                    return (
-                      <tr key={reservation.id} className="hover:bg-gray-700 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                          {parking?.name || 'Nieznany'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {reservation.users?.full_name || reservation.users?.email || 'Nieznany'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                          {formatDate(reservation.start_time)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                          {formatDate(reservation.end_time)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">
-                          {parseFloat(reservation.price).toFixed(2)} zł
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`py-1.5 px-3 rounded-full text-xs font-bold ${statusClasses}`}>
-                            {getStatusText(reservation.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                return (
+                  <motion.div
+                    key={parking.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card variant="glass" hoverable>
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        {/* Icon */}
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="w-16 h-16 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                            <FaParking className="text-3xl text-blue-400" />
+                          </div>
+
+                          {/* Info */}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xl font-bold text-white mb-2 truncate">
+                              {parking.name}
+                            </h3>
+                            <p className="text-sm text-gray-400 mb-2 truncate">
+                              {parking.address}
+                            </p>
+                            <p className="text-lg font-bold text-parkchain-400">
+                              {parking.price_per_hour} zł/godz
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Status */}
+                        <div className="flex flex-col items-start sm:items-end gap-2">
+                          <Badge
+                            variant={parking.available_spots > 0 ? 'success' : 'error'}
+                            size="md"
+                          >
+                            {parking.available_spots}/{parking.total_spots} miejsc
+                          </Badge>
+                          <p className="text-sm text-gray-400">
+                            {activeReservations.length} aktywnych rezerwacji
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </div>
-          </div>
-        )}
+          )}
+        </motion.div>
+
+        {/* Rezerwacje */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h2 className="text-2xl font-bold mb-5 text-white">
+            Rezerwacje na moich parkingach
+          </h2>
+
+          {allReservations.length === 0 ? (
+            <EmptyState
+              icon={<FaClipboardList className="text-6xl" />}
+              title="Brak rezerwacji"
+              description="Nie ma jeszcze żadnych rezerwacji na Twoich parkingach"
+            />
+          ) : (
+            <Card variant="glass" padding="none">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-700">
+                  <thead className="bg-slate-800/50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Parking</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Użytkownik</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Start</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koniec</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cena</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700">
+                    {allReservations.map((reservation) => {
+                      const parking = myParkings.find(p => p.id === reservation.lot_id);
+
+                      return (
+                        <motion.tr
+                          key={reservation.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="hover:bg-slate-800/50 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                            {parking?.name || 'Nieznany'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            {reservation.users?.full_name || reservation.users?.email || 'Nieznany'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {formatDate(reservation.start_time)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {formatDate(reservation.end_time)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-400">
+                            {parseFloat(reservation.price).toFixed(2)} zł
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge variant={getStatusVariant(reservation.status)} size="sm">
+                              {getStatusText(reservation.status)}
+                            </Badge>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </motion.div>
       </div>
     </div>
   );
