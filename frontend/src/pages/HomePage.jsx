@@ -18,7 +18,7 @@ function HomePage() {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 300], [0, 100]);
   const y2 = useTransform(scrollY, [0, 300], [0, -50]);
-  const opacity = useTransform(scrollY, [0, 200], [1, 0]);
+  const opacity = useTransform(scrollY, [0, 400], [1, 0]);
   const navbarOpacity = useTransform(scrollY, [0, 100], [0, 1]);
 
   // Auto-redirect timer (zwiększono do 15s żeby dać czas na eksplorację)
