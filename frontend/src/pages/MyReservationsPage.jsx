@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { reservationAPI } from '../services/api'; // Używamy tylko tego
+import { motion } from 'framer-motion';
+import { reservationAPI } from '../services/api';
 import EndChargingSessionModal from '../components/EndChargingSessionModal';
+import {
+  Card,
+  Button,
+  Badge,
+  EmptyStateNoReservations,
+  EmptyStateError,
+  SkeletonCard,
+  useToast,
+  ToastContainer
+} from '../components/ui';
 
 function MyReservationsPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
-  // Ten stan będzie teraz przechowywał ustandaryzowane dane
   const [reservations, setReservations] = useState([]);
   const [stats, setStats] = useState({
     totalReservations: 0,
@@ -18,6 +28,7 @@ function MyReservationsPage() {
   const [filter, setFilter] = useState('all');
   const [showEndChargingModal, setShowEndChargingModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -29,9 +40,8 @@ function MyReservationsPage() {
     try {
       setLoading(true);
 
-      // === KROK 1: Pobieramy OBA typy rezerwacji równolegle ===
       const parkingPromise = reservationAPI.getMyReservations();
-      
+
       const chargingPromise = fetch('http://localhost:3000/api/charging-sessions/my', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -41,32 +51,25 @@ function MyReservationsPage() {
         throw new Error('Nie udało się pobrać sesji ładowania');
       });
 
-      // Czekamy na oba
       const [parkingData, chargingData] = await Promise.all([
         parkingPromise,
         chargingPromise
       ]);
 
-      // === KROK 2: Standaryzujemy dane do wspólnego formatu ===
-
-      // Mapowanie rezerwacji parkingowych
       const mappedParking = parkingData.map(r => ({
         id: r.id,
-        type: 'parking', // Dodajemy typ, aby wiedzieć, co anulować
+        type: 'parking',
         name: r.parking_lots.name,
         address: `${r.parking_lots.address}, ${r.parking_lots.city}`,
         startTime: r.start_time,
         endTime: r.end_time,
         price: r.price,
         status: r.status,
-        details: `🚗 ${r.license_plate}`, // Dodatkowe info
+        details: `🚗 ${r.license_plate}`,
         originalData: r
       }));
 
-      // Mapowanie sesji ładowania
       const mappedCharging = (chargingData.sessions || []).map(s => {
-        // Obliczamy cenę: jeśli total_cost istnieje (sesja zakończona), użyj go
-        // W przeciwnym razie oblicz bieżący koszt: energia * cena_za_kWh
         let calculatedPrice = s.total_cost;
         if (!calculatedPrice && s.energy_delivered_kwh && s.charging_stations?.price_per_kwh) {
           calculatedPrice = (parseFloat(s.energy_delivered_kwh) * parseFloat(s.charging_stations.price_per_kwh)).toFixed(2);
@@ -74,28 +77,24 @@ function MyReservationsPage() {
 
         return {
           id: s.id,
-          type: 'charging', // Dodajemy typ
+          type: 'charging',
           name: s.charging_stations?.name || 'Nieznana stacja',
           address: s.charging_stations?.address || 'Brak adresu',
           startTime: s.start_time,
           endTime: s.end_time,
-          price: calculatedPrice, // Używamy obliczonej ceny
+          price: calculatedPrice,
           status: s.status,
-          details: `⚡ ${s.energy_delivered_kwh || 0} kWh`, // Dodatkowe info
-          isEstimated: !s.total_cost && s.status === 'active', // Flaga czy to szacunek
+          details: `⚡ ${s.energy_delivered_kwh || 0} kWh`,
+          isEstimated: !s.total_cost && s.status === 'active',
           originalData: s
         };
       });
 
-      // === KROK 3: Łączymy i sortujemy obie listy ===
       const combinedReservations = [...mappedParking, ...mappedCharging];
-      
-      // Sortujemy po dacie rozpoczęcia (najnowsze na górze)
       combinedReservations.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
       setReservations(combinedReservations);
 
-      // === KROK 4: Obliczamy statystyki na podstawie połączonych danych ===
       const total = combinedReservations.length;
       const active = combinedReservations.filter(r => r.status === 'active').length;
       const pending = combinedReservations.filter(r => r.status === 'pending').length;
@@ -110,28 +109,20 @@ function MyReservationsPage() {
     } catch (err) {
       console.error('Błąd pobierania danych:', err);
       setError('Nie udało się załadować rezerwacji');
+      addToast({
+        message: 'Nie udało się załadować rezerwacji',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // === KROK 5: Aktualizujemy logikę anulowania ===
   const handleCancelReservation = async (id, type) => {
-    const confirmationText = type === 'parking'
-      ? 'Czy na pewno chcesz anulować tę rezerwację?'
-      : 'Czy na pewno chcesz anulować tę sesję ładowania?';
-
-    if (!window.confirm(confirmationText)) {
-      return;
-    }
-
     try {
       if (type === 'parking') {
-        // Anulowanie rezerwacji parkingu
         await reservationAPI.cancelReservation(id);
       } else if (type === 'charging') {
-        // Anulowanie sesji ładowania (musimy użyć fetch, jak zakładaliśmy)
-        // Zakładam, że endpoint to /cancel, tak jak w Twoim API
         const response = await fetch(`http://localhost:3000/api/charging-sessions/${id}/cancel`, {
           method: 'POST',
           headers: {
@@ -143,36 +134,43 @@ function MyReservationsPage() {
         }
       }
 
-      fetchData(); // Odświeżamy całą listę
-      alert('Anulowano pomyślnie');
+      fetchData();
+      addToast({
+        message: 'Rezerwacja została anulowana',
+        type: 'success'
+      });
     } catch (err) {
       console.error(err);
-      alert('Nie udało się anulować');
+      addToast({
+        message: 'Nie udało się anulować rezerwacji',
+        type: 'error'
+      });
     }
   };
 
-  // Funkcja do otwierania modala zakończenia sesji ładowania
   const handleEndChargingSession = (reservation) => {
     setSelectedSession(reservation);
     setShowEndChargingModal(true);
   };
 
-  // Funkcja wywoływana po zakończeniu sesji
   const handleChargingSessionEnded = () => {
     setShowEndChargingModal(false);
     setSelectedSession(null);
-    fetchData(); // Odśwież listę rezerwacji
+    fetchData();
+    addToast({
+      message: 'Sesja ładowania została zakończona',
+      type: 'success'
+    });
   };
 
-  // Reszta funkcji pomocniczych (bez zmian)
-  const getStatusClasses = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-900 text-yellow-200';
-      case 'active': return 'bg-green-900 text-green-200';
-      case 'completed': return 'bg-gray-700 text-gray-200';
-      case 'cancelled': return 'bg-red-900 text-red-200';
-      case 'pending_verification': return 'bg-orange-900 text-orange-200';
-      default: return 'bg-gray-700 text-gray-200';
+      case 'pending': return 'warning';
+      case 'active': return 'success';
+      case 'completed': return 'default';
+      case 'cancelled': return 'error';
+      case 'pending_verification': return 'info';
+      default: return 'default';
     }
   };
 
@@ -182,12 +180,11 @@ function MyReservationsPage() {
       case 'active': return 'Aktywna';
       case 'completed': return 'Zakończona';
       case 'cancelled': return 'Anulowana';
-      case 'pending_verification': return 'Weryfikacja właściciela';
+      case 'pending_verification': return 'Weryfikacja';
       default: return status;
     }
   };
 
-  // Logika filtrowania (bez zmian, działa na ustandaryzowanym 'status')
   const filteredReservations = reservations.filter(r => {
     switch (filter) {
       case 'active': return r.status === 'active';
@@ -198,8 +195,19 @@ function MyReservationsPage() {
     }
   });
 
-  if (authLoading || loading) {
-    return <div className="p-10 text-center text-lg text-indigo-400">Ładowanie...</div>;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="h-10 w-64 bg-slate-800 rounded-lg mb-8 animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {[1, 2, 3].map(i => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -207,127 +215,229 @@ function MyReservationsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-8 bg-gray-900 text-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-white mb-8">
-        Moje Rezerwacje
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Statystyki (bez zmian) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Wszystkie rezerwacje</p>
-          <p className="text-4xl font-bold text-white">{stats.totalReservations}</p>
-        </div>
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Aktywne rezerwacje</p>
-          <p className="text-4xl font-bold text-green-500">{stats.activeReservations}</p>
-        </div>
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-          <p className="text-sm text-gray-400 mb-1">Oczekujące rezerwacje</p>
-          <p className="text-4xl font-bold text-yellow-500">{stats.pendingReservations}</p>
-        </div>
-      </div>
+      <div className="max-w-7xl mx-auto">
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-bold text-white mb-8"
+        >
+          Moje Rezerwacje
+        </motion.h1>
 
-      {/* Filtry (bez zmian) */}
-      <div className="flex gap-3 mb-6 flex-wrap">
-        {['all', 'active', 'pending', 'past', 'cancelled'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`py-2 px-5 rounded-lg font-bold cursor-pointer transition-colors ${
-              filter === f
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            {f === 'all' ? 'Wszystkie' :
-             f === 'active' ? 'Aktywne' :
-             f === 'pending' ? 'Oczekujące' :
-             f === 'past' ? 'Historia' :
-             'Anulowane'}
-          </button>
-        ))}
-      </div>
-
-      {error && (
-        <div className="bg-red-800 text-red-100 p-4 rounded-lg mb-6">
-          ❌ {error}
-        </div>
-      )}
-
-      {/* === KROK 6: Aktualizujemy renderowanie listy === */}
-      {filteredReservations.length === 0 ? (
-        <div className="bg-gray-800 p-10 rounded-xl text-center text-gray-400 shadow-lg border border-gray-700">
-          <p className="text-lg">Brak rezerwacji w tej kategorii</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {filteredReservations.map(reservation => { // 'reservation' to teraz nasz ustandaryzowany obiekt
-            const statusClasses = getStatusClasses(reservation.status);
-            return (
-              <div
-                key={`${reservation.type}-${reservation.id}`} // Unikalny klucz
-                className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col md:flex-row justify-between items-start gap-6"
-              >
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {reservation.name} {/* Używamy ustandaryzowanego pola */}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-1">
-                    📍 {reservation.address} {/* Używamy ustandaryzowanego pola */}
-                  </p>
-                  <p className="text-gray-400 text-sm mb-1">
-                    {reservation.details} {/* Używamy ustandaryzowanego pola */}
-                  </p>
-                  <p className="text-gray-300 text-sm mt-2">
-                    📅 {new Date(reservation.startTime).toLocaleString('pl-PL')}
-                    {' → '}
-                    {/* Aktywne sesje ładowania mogą nie mieć czasu końca */}
-                    {reservation.endTime ? new Date(reservation.endTime).toLocaleString('pl-PL') : '...'}
-                  </p>
-                </div>
-                <div className="flex flex-col items-start md:items-end w-full md:w-auto">
-                  <div className={`py-1.5 px-3 rounded-full text-xs font-bold mb-3 ${statusClasses}`}>
-                    {getStatusText(reservation.status)}
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-2xl font-bold text-indigo-400">
-                      {reservation.price ? `${reservation.isEstimated ? '~' : ''}${reservation.price} zł` : '-'}
-                    </p>
-                    {reservation.isEstimated && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        (w trakcie)
-                      </p>
-                    )}
-                  </div>
-                  {['pending', 'active'].includes(reservation.status) && (
-                    <div className="flex flex-col gap-2 w-full md:w-auto">
-                      {/* Dla aktywnych sesji ładowania pokaż przycisk "Zakończ ładowanie" */}
-                      {reservation.type === 'charging' && reservation.status === 'active' && (
-                        <button
-                          onClick={() => handleEndChargingSession(reservation)}
-                          className="py-2 px-5 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 transition-colors"
-                        >
-                          ✅ Zakończ ładowanie
-                        </button>
-                      )}
-                      {/* Przycisk anuluj dla wszystkich pending/active */}
-                      <button
-                        onClick={() => handleCancelReservation(reservation.id, reservation.type)}
-                        className="py-2 px-5 rounded-lg font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
-                      >
-                        ❌ Anuluj
-                      </button>
-                    </div>
-                  )}
-                </div>
+        {/* Stats Cards */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+        >
+          <Card variant="gradient" hoverable>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400 mb-1">Wszystkie</p>
+                <p className="text-4xl font-bold text-white">{stats.totalReservations}</p>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className="p-4 bg-parkchain-500/20 rounded-xl">
+                <svg className="w-8 h-8 text-parkchain-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+            </div>
+          </Card>
 
-      {/* Modal zakończenia sesji ładowania */}
+          <Card variant="gradient" hoverable>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400 mb-1">Aktywne</p>
+                <p className="text-4xl font-bold text-green-400">{stats.activeReservations}</p>
+              </div>
+              <div className="p-4 bg-green-500/20 rounded-xl">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </Card>
+
+          <Card variant="gradient" hoverable>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400 mb-1">Oczekujące</p>
+                <p className="text-4xl font-bold text-yellow-400">{stats.pendingReservations}</p>
+              </div>
+              <div className="p-4 bg-yellow-500/20 rounded-xl">
+                <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex gap-3 mb-6 flex-wrap"
+        >
+          {[
+            { value: 'all', label: 'Wszystkie' },
+            { value: 'active', label: 'Aktywne' },
+            { value: 'pending', label: 'Oczekujące' },
+            { value: 'past', label: 'Historia' },
+            { value: 'cancelled', label: 'Anulowane' }
+          ].map(({ value, label }) => (
+            <Button
+              key={value}
+              onClick={() => setFilter(value)}
+              variant={filter === value ? 'primary' : 'secondary'}
+              size="md"
+            >
+              {label}
+            </Button>
+          ))}
+        </motion.div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : error ? (
+          <EmptyStateError onRetry={fetchData} />
+        ) : filteredReservations.length === 0 ? (
+          <EmptyStateNoReservations onCreateNew={() => window.location.href = '/map'} />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-4"
+          >
+            {filteredReservations.map((reservation, index) => (
+              <motion.div
+                key={`${reservation.type}-${reservation.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card variant="glass" hoverable>
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Icon */}
+                    <div className="flex-shrink-0">
+                      <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl ${
+                        reservation.type === 'parking'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {reservation.type === 'parking' ? '🚗' : '⚡'}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <h3 className="text-xl font-bold text-white truncate">
+                          {reservation.name}
+                        </h3>
+                        <Badge variant={getStatusVariant(reservation.status)} size="md">
+                          {getStatusText(reservation.status)}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2 text-sm">
+                        <p className="text-slate-400 flex items-center gap-2">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span className="truncate">{reservation.address}</span>
+                        </p>
+                        <p className="text-slate-400 flex items-center gap-2">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {reservation.details}
+                        </p>
+                        <p className="text-slate-300 flex items-center gap-2">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {new Date(reservation.startTime).toLocaleString('pl-PL', {
+                            dateStyle: 'short',
+                            timeStyle: 'short'
+                          })}
+                          {' → '}
+                          {reservation.endTime
+                            ? new Date(reservation.endTime).toLocaleString('pl-PL', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })
+                            : '...'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-parkchain-400">
+                          {reservation.price ? `${reservation.isEstimated ? '~' : ''}${reservation.price} zł` : '-'}
+                        </p>
+                        {reservation.isEstimated && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            szacunkowy koszt
+                          </p>
+                        )}
+                      </div>
+
+                      {['pending', 'active'].includes(reservation.status) && (
+                        <div className="flex flex-col gap-2 w-full md:w-auto">
+                          {reservation.type === 'charging' && reservation.status === 'active' && (
+                            <Button
+                              onClick={() => handleEndChargingSession(reservation)}
+                              variant="primary"
+                              size="sm"
+                              fullWidth
+                              leftIcon={
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              }
+                            >
+                              Zakończ
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => handleCancelReservation(reservation.id, reservation.type)}
+                            variant="danger"
+                            size="sm"
+                            fullWidth
+                            leftIcon={
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            }
+                          >
+                            Anuluj
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+
       {showEndChargingModal && selectedSession && (
         <EndChargingSessionModal
           session={selectedSession}
