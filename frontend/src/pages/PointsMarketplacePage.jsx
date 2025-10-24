@@ -9,6 +9,7 @@ import { getGatewayStatus } from '../config/gateway';
 import { transactionStorage } from '../services/transactionStorage';
 import { premiumTierService } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
+import { notify } from '../components/LiveNotifications';
 
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
@@ -170,10 +171,30 @@ function PointsMarketplacePage() {
       const tierUpgrade = premiumTierService.updateTier();
       if (tierUpgrade.upgraded) {
         console.log('🎉 Tier upgraded!', tierUpgrade);
-        setTimeout(() => {
-          alert(`🎉 ${tierUpgrade.message}\n\nNew benefits unlocked:\n✓ ${tierUpgrade.newTier.benefits.confirmationSpeedBoost}x faster confirmations\n✓ ${(tierUpgrade.newTier.benefits.feeDiscount * 100).toFixed(0)}% fee discount\n✓ Batch up to ${tierUpgrade.newTier.benefits.maxBatchSize} transactions`);
-        }, 1000);
+
+        // Show notification
+        notify.tierUpgrade(
+          `Upgraded to ${tierUpgrade.newTier.name} Tier!`,
+          tierUpgrade.message,
+          [
+            `${tierUpgrade.newTier.benefits.confirmationSpeedBoost}x faster confirmations`,
+            `${(tierUpgrade.newTier.benefits.feeDiscount * 100).toFixed(0)}% fee discount`,
+            `Batch up to ${tierUpgrade.newTier.benefits.maxBatchSize} transactions`,
+            `${tierUpgrade.newTier.benefits.support} support level`
+          ]
+        );
       }
+
+      // Show success notification
+      notify.success(
+        'Transaction Successful!',
+        `Bought ${amount} DCP tokens for ${priceInSOL.toFixed(4)} SOL`,
+        [
+          useGateway ? '⚡ Delivered via Sanctum Gateway' : '📤 Standard RPC delivery',
+          `Confirmation: ${((Date.now() - transactionStartTime) / 1000).toFixed(1)}s`,
+          tierUpgrade.upgraded ? `🎉 Tier upgraded to ${tierUpgrade.newTier.name}!` : `Current tier: ${premiumTierService.getCurrentTier().name}`
+        ]
+      );
 
       // Zapisz zakup w bazie danych
       const response = await fetch('http://localhost:3000/api/points/purchase', {

@@ -14,6 +14,9 @@ import { premiumTierService, USER_TIERS } from '../services/premiumTierService';
 import { batchTransactionService } from '../services/batchTransactionService';
 import { smartRoutingService, ROUTING_CHANNELS } from '../services/smartRoutingService';
 import { transactionStorage } from '../services/transactionStorage';
+import NetworkMonitor from '../components/NetworkMonitor';
+import TransactionTimeline from '../components/TransactionTimeline';
+import LiveNotifications from '../components/LiveNotifications';
 
 const AdvancedGatewayDashboard = () => {
   const [currentTier, setCurrentTier] = useState(null);
@@ -24,6 +27,7 @@ const AdvancedGatewayDashboard = () => {
   const [networkConditions, setNetworkConditions] = useState('normal');
   const [activeTab, setActiveTab] = useState('overview'); // overview, tiers, batching, routing
   const [showDemoInfo, setShowDemoInfo] = useState(false);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -52,6 +56,10 @@ const AdvancedGatewayDashboard = () => {
     const rStats = smartRoutingService.getRoutingStats();
     setRoutingStats(rStats);
     setNetworkConditions(smartRoutingService.getNetworkConditions());
+
+    // Load transactions
+    const txs = transactionStorage.getTransactions();
+    setTransactions(txs);
   };
 
   const handleUpgradeTier = () => {
@@ -186,6 +194,9 @@ const AdvancedGatewayDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+      {/* Live Notifications */}
+      <LiveNotifications />
+
       {/* Header */}
       <div className="bg-gray-800/50 border-b border-gray-700 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -405,6 +416,18 @@ const AdvancedGatewayDashboard = () => {
                 </div>
               </div>
             )}
+
+            {/* Network Monitor & Transaction Timeline */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <NetworkMonitor
+                conditions={networkConditions}
+                routingStats={routingStats}
+              />
+              <TransactionTimeline
+                transactions={transactions}
+                limit={5}
+              />
+            </div>
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
