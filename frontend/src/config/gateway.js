@@ -7,7 +7,7 @@
 // - Real-time observability
 
 export const GATEWAY_CONFIG = {
-  // Gateway API endpoint
+  // Gateway API endpoint - RPC endpoint for optimizeTransaction and sendTransaction methods
   endpoint: import.meta.env.VITE_GATEWAY_ENDPOINT || 'https://gateway.sanctum.so/api',
 
   // API Key - Get from gateway.sanctum.so

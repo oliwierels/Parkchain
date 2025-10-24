@@ -18,6 +18,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import GatewayDashboardPage from './pages/GatewayDashboardPage';
 import AdvancedGatewayDashboard from './pages/AdvancedGatewayDashboard';
 import AchievementsPage from './pages/AchievementsPage';
+import GatewayShowcase from './components/GatewayShowcase';
 
 function AppContent() {
   const location = useLocation();
@@ -54,6 +55,7 @@ function AppContent() {
               {/* Sanctum Gateway */}
               <Route path="/gateway-dashboard" element={<GatewayDashboardPage />} />
               <Route path="/advanced-gateway" element={<AdvancedGatewayDashboard />} />
+              <Route path="/gateway-showcase" element={<GatewayShowcase />} />
               <Route path="/achievements" element={<AchievementsPage />} />
             </Routes>
           </div>
