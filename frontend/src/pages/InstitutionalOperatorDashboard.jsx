@@ -177,17 +177,17 @@ const InstitutionalOperatorDashboard = () => {
                     )}
                   </div>
                   <p className="text-gray-300 mb-2">
-                    {operatorProfile.organization_type.replace('_', ' ').toUpperCase()}
+                    {operatorProfile.organization_type ? operatorProfile.organization_type.replace('_', ' ').toUpperCase() : 'Parking Operator'}
                   </p>
                   <p className="text-gray-400 text-sm">
-                    {operatorProfile.headquarters_city}, {operatorProfile.headquarters_country}
+                    {operatorProfile.headquarters_city || 'N/A'}, {operatorProfile.headquarters_country || 'N/A'}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-400 text-sm">Operator Rating</p>
                 <p className="text-yellow-400 text-2xl font-bold">
-                  {operatorProfile.operator_rating} ⭐
+                  {operatorProfile.operator_rating || '0.0'} ⭐
                 </p>
               </div>
             </div>
