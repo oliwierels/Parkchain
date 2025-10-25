@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { FiMapPin, FiDollarSign, FiTrendingUp, FiShield, FiFilter, FiSearch } from 'react-icons/fi';
 import { BsBuilding, BsGlobe, BsCheck2Circle } from 'react-icons/bs';
 import api from '../services/api';
-import gatewayService from '../services/gatewayService';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 
 const ParkingMarketplacePage = () => {
   const { user } = useAuth();
   const wallet = useWallet();
-  const { connection } = useConnection();
 
   // State
   const [listings, setListings] = useState([]);
@@ -134,44 +131,38 @@ const ParkingMarketplacePage = () => {
       // Calculate total cost
       const totalCost = selectedListing.price_per_token_usdc * purchaseAmount;
 
-      // Build transaction (simplified - actual implementation would interact with Solana program)
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: new PublicKey(selectedListing.asset_token_address),
-          lamports: totalCost * 1000000, // Convert to lamports (assuming USDC representation)
-        })
-      );
+      // DEMO MODE: Simulate purchase without real Solana transaction
+      // In production, this would build and execute a real transaction
+      console.log('🎭 DEMO MODE: Simulating purchase...', {
+        listing: selectedListing.parking_lot_name,
+        tokens: purchaseAmount,
+        cost: totalCost,
+        wallet: wallet.publicKey.toBase58(),
+      });
 
-      // Use Gateway for optimized transaction delivery
-      const result = await gatewayService.executeTransaction(
-        transaction,
-        wallet,
-        connection,
-        {
-          context: 'parking_asset_purchase',
-          assetId: selectedListing.asset_id,
-          tokenAmount: purchaseAmount,
-        }
-      );
+      // Simulate processing delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      if (result.success) {
-        // Record transaction in backend
-        await api.post('/parking-marketplace/purchase', {
-          listing_id: selectedListing.listing_id,
-          token_amount: purchaseAmount,
-          total_amount_usdc: totalCost,
-          solana_tx_signature: result.signature,
-          payment_method: 'USDC',
-          gateway_used: true,
-          gateway_delivery_method: result.deliveryMethod,
-        });
+      // Generate mock transaction signature
+      const mockSignature = `DEMO_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-        alert('✅ Purchase successful! You now own ' + purchaseAmount + ' parking asset tokens.');
+      // Record transaction in backend
+      const response = await api.post('/parking-marketplace/purchase', {
+        listing_id: selectedListing.listing_id,
+        token_amount: purchaseAmount,
+        total_amount_usdc: totalCost,
+        solana_tx_signature: mockSignature,
+        payment_method: 'USDC',
+        gateway_used: true,
+        gateway_delivery_method: 'demo',
+      });
+
+      if (response.data.success) {
+        alert(`✅ Purchase successful! You now own ${purchaseAmount} parking asset tokens.\n\n🎭 DEMO MODE: No real blockchain transaction was executed.\nIn production, this would transfer USDC and mint parking tokens on Solana.`);
         setSelectedListing(null);
         fetchMarketplaceListings();
       } else {
-        alert('❌ Purchase failed: ' + result.error);
+        alert('❌ Purchase failed: ' + response.data.error);
       }
     } catch (error) {
       console.error('Purchase error:', error);

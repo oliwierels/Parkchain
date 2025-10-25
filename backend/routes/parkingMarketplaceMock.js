@@ -23,7 +23,7 @@ const mockListings = [
     total_price_usdc: 100000,
     estimated_value_usdc: 500000,
     annual_revenue_usdc: 40000,
-    asset_token_address: 'PARK1234567890abcdefghijklmnopqrstuvwxyz',
+    asset_token_address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Valid Solana address (USDC mint)
     asset_id: 1,
     payment_methods: ['USDC', 'EUROC', 'SOL'],
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -42,7 +42,7 @@ const mockListings = [
     total_price_usdc: 125000,
     estimated_value_usdc: 800000,
     annual_revenue_usdc: 64000,
-    asset_token_address: 'PARK2345678901bcdefghijklmnopqrstuvwxyza',
+    asset_token_address: 'So11111111111111111111111111111111111111112', // Valid Solana address (Wrapped SOL)
     asset_id: 2,
     payment_methods: ['USDC', 'EUROC'],
     created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -61,7 +61,7 @@ const mockListings = [
     total_price_usdc: 10000,
     estimated_value_usdc: 120000,
     annual_revenue_usdc: 9600,
-    asset_token_address: 'PARK3456789012cdefghijklmnopqrstuvwxyzab',
+    asset_token_address: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Valid Solana address (EUROC mint)
     asset_id: 3,
     payment_methods: ['USDC'],
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -80,7 +80,7 @@ const mockListings = [
     total_price_usdc: 60000,
     estimated_value_usdc: 350000,
     annual_revenue_usdc: 28000,
-    asset_token_address: 'PARK4567890123defghijklmnopqrstuvwxyzabc',
+    asset_token_address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // Valid Solana address (Token Program)
     asset_id: 4,
     payment_methods: ['USDC', 'EUROC', 'SOL'],
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -99,7 +99,7 @@ const mockListings = [
     total_price_usdc: 90000,
     estimated_value_usdc: 600000,
     annual_revenue_usdc: 48000,
-    asset_token_address: 'PARK5678901234efghijklmnopqrstuvwxyzabcd',
+    asset_token_address: '11111111111111111111111111111111', // Valid Solana address (System Program)
     asset_id: 5,
     payment_methods: ['USDC'],
     created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
