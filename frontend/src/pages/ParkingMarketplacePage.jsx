@@ -49,7 +49,7 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketplaceListings = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/listings');
+      const response = await api.get('/parking-marketplace/listings');
       setListings(response.data.listings || []);
       setLoading(false);
     } catch (error) {
@@ -60,7 +60,7 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketStats = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/stats');
+      const response = await api.get('/parking-marketplace/stats');
       setMarketStats(response.data);
     } catch (error) {
       console.error('Error fetching market stats:', error);
@@ -157,7 +157,7 @@ const ParkingMarketplacePage = () => {
 
       if (result.success) {
         // Record transaction in backend
-        await api.post('/api/parking-marketplace/purchase', {
+        await api.post('/parking-marketplace/purchase', {
           listing_id: selectedListing.listing_id,
           token_amount: purchaseAmount,
           total_amount_usdc: totalCost,

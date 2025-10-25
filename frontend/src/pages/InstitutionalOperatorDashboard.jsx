@@ -46,10 +46,10 @@ const InstitutionalOperatorDashboard = () => {
   const fetchOperatorData = async () => {
     try {
       const [profileRes, assetsRes, listingsRes, revenueRes] = await Promise.all([
-        api.get('/api/institutional-operators/profile'),
-        api.get('/api/institutional-operators/assets'),
-        api.get('/api/institutional-operators/listings'),
-        api.get('/api/institutional-operators/revenue-distributions'),
+        api.get('/institutional-operators/profile'),
+        api.get('/institutional-operators/assets'),
+        api.get('/institutional-operators/listings'),
+        api.get('/institutional-operators/revenue-distributions'),
       ]);
 
       setOperatorProfile(profileRes.data);
@@ -71,7 +71,7 @@ const InstitutionalOperatorDashboard = () => {
 
     try {
       // Call backend API to tokenize asset
-      const response = await api.post('/api/institutional-operators/tokenize', {
+      const response = await api.post('/institutional-operators/tokenize', {
         ...tokenizeForm,
         operator_wallet: wallet.publicKey.toBase58(),
       });
