@@ -1,19 +1,31 @@
-// Parking Marketplace API Routes - MOCK DATA VERSION
+// Parking Marketplace API Routes - DYNAMIC DEMO VERSION
 // Mastercard DeFi Hackathon - Institutional Parking Asset Tokenization
-// This version returns mock data for demo purposes
+// This version stores operator-created assets in memory for demo purposes
 
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Mock data
-const mockListings = [
+// ========================================
+// DYNAMIC STORAGE (in-memory)
+// ========================================
+let nextListingId = 100;
+let nextAssetId = 100;
+
+// Dynamic listings created by operators
+const dynamicListings = [];
+
+// Dynamic assets created by operators
+const dynamicAssets = [];
+
+// Seed data - a few example listings to start with (optional)
+const seedListings = [
   {
     listing_id: 1,
-    parking_lot_name: 'Warszawski Parking Centralny',
+    parking_lot_name: 'Demo Parking Centralny',
     city: 'Warszawa',
-    address: 'ul. Marszałkowska 142',
+    address: 'ul. Przykładowa 1',
     asset_type: 'revenue_share',
     organization_name: 'Miasto Warszawa',
     organization_type: 'municipality',
@@ -23,89 +35,14 @@ const mockListings = [
     total_price_usdc: 100000,
     estimated_value_usdc: 500000,
     annual_revenue_usdc: 40000,
-    asset_token_address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Valid Solana address (USDC mint)
+    asset_token_address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     asset_id: 1,
     payment_methods: ['USDC', 'EUROC', 'SOL'],
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
-  {
-    listing_id: 2,
-    parking_lot_name: 'Kraków Airport Parking',
-    city: 'Kraków',
-    address: 'ul. Kapitana Medweckiego 1',
-    asset_type: 'parking_lot_bundle',
-    organization_name: 'Kraków Airport Authority',
-    organization_type: 'airport',
-    operator_rating: 4.9,
-    price_per_token_usdc: 250,
-    token_amount: 500,
-    total_price_usdc: 125000,
-    estimated_value_usdc: 800000,
-    annual_revenue_usdc: 64000,
-    asset_token_address: 'So11111111111111111111111111111111111111112', // Valid Solana address (Wrapped SOL)
-    asset_id: 2,
-    payment_methods: ['USDC', 'EUROC'],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    listing_id: 3,
-    parking_lot_name: 'Wrocław Tech Park',
-    city: 'Wrocław',
-    address: 'ul. Legnicka 57',
-    asset_type: 'single_spot',
-    organization_name: 'Wrocław Technology Park',
-    organization_type: 'private_company',
-    operator_rating: 4.6,
-    price_per_token_usdc: 50,
-    token_amount: 200,
-    total_price_usdc: 10000,
-    estimated_value_usdc: 120000,
-    annual_revenue_usdc: 9600,
-    asset_token_address: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Valid Solana address (EUROC mint)
-    asset_id: 3,
-    payment_methods: ['USDC'],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    listing_id: 4,
-    parking_lot_name: 'Poznań University Campus',
-    city: 'Poznań',
-    address: 'ul. Wieniawskiego 1',
-    asset_type: 'revenue_share',
-    organization_name: 'Adam Mickiewicz University',
-    organization_type: 'university',
-    operator_rating: 4.7,
-    price_per_token_usdc: 75,
-    token_amount: 800,
-    total_price_usdc: 60000,
-    estimated_value_usdc: 350000,
-    annual_revenue_usdc: 28000,
-    asset_token_address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // Valid Solana address (Token Program)
-    asset_id: 4,
-    payment_methods: ['USDC', 'EUROC', 'SOL'],
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    listing_id: 5,
-    parking_lot_name: 'Gdańsk Shopping Center',
-    city: 'Gdańsk',
-    address: 'al. Grunwaldzka 141',
-    asset_type: 'parking_lot_bundle',
-    organization_name: 'Baltic Shopping Group',
-    organization_type: 'private_company',
-    operator_rating: 4.5,
-    price_per_token_usdc: 150,
-    token_amount: 600,
-    total_price_usdc: 90000,
-    estimated_value_usdc: 600000,
-    annual_revenue_usdc: 48000,
-    asset_token_address: '11111111111111111111111111111111', // Valid Solana address (System Program)
-    asset_id: 5,
-    payment_methods: ['USDC'],
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
 ];
 
+// Mock operator profile
 const mockOperatorProfile = {
   id: 1,
   user_id: 1,
@@ -115,67 +52,17 @@ const mockOperatorProfile = {
   tax_id: '5252123456',
   headquarters_city: 'Warszawa',
   headquarters_country: 'PL',
-  total_parking_spots: 15000,
-  total_parking_lots: 45,
-  total_tokenized_value_usdc: 5000000,
-  total_revenue_distributed_usdc: 250000,
+  total_parking_spots: 0, // Will be calculated dynamically
+  total_parking_lots: 0, // Will be calculated dynamically
+  total_tokenized_value_usdc: 0, // Will be calculated dynamically
+  total_revenue_distributed_usdc: 0,
   kyb_verified: true,
   operator_rating: 4.8,
   is_verified: true,
   is_active: true,
 };
 
-const mockAssets = [
-  {
-    id: 1,
-    spot_number: 'A-42',
-    asset_type: 'single_spot',
-    total_supply: 1,
-    estimated_value_usdc: 5000,
-    annual_revenue_usdc: 400,
-    revenue_share_percentage: 50,
-    compliance_status: 'compliant',
-  },
-  {
-    id: 2,
-    spot_number: 'Bundle-Downtown',
-    asset_type: 'parking_lot_bundle',
-    total_supply: 100,
-    estimated_value_usdc: 500000,
-    annual_revenue_usdc: 40000,
-    revenue_share_percentage: 60,
-    compliance_status: 'compliant',
-  },
-  {
-    id: 3,
-    spot_number: 'Revenue-Share-1',
-    asset_type: 'revenue_share',
-    total_supply: 1000,
-    estimated_value_usdc: 1000000,
-    annual_revenue_usdc: 80000,
-    revenue_share_percentage: 70,
-    compliance_status: 'pending',
-  },
-];
-
-const mockRevenueDistributions = [
-  {
-    period_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    period_end: new Date().toISOString(),
-    total_revenue_usdc: 5000,
-    total_distributed_usdc: 2500,
-    payment_status: 'completed',
-    asset_spot_number: 'A-42',
-  },
-  {
-    period_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    period_end: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    total_revenue_usdc: 4800,
-    total_distributed_usdc: 2400,
-    payment_status: 'completed',
-    asset_spot_number: 'Bundle-Downtown',
-  },
-];
+const mockRevenueDistributions = [];
 
 // ========================================
 // MARKETPLACE LISTINGS
@@ -183,10 +70,15 @@ const mockRevenueDistributions = [
 
 router.get('/listings', async (req, res) => {
   try {
+    // Combine seed data with dynamically created listings
+    const allListings = [...seedListings, ...dynamicListings];
+
+    console.log(`📋 Fetching ${allListings.length} listings (${seedListings.length} seed + ${dynamicListings.length} dynamic)`);
+
     res.json({
       success: true,
-      listings: mockListings,
-      count: mockListings.length,
+      listings: allListings,
+      count: allListings.length,
     });
   } catch (error) {
     console.error('Error fetching marketplace listings:', error);
@@ -199,11 +91,27 @@ router.get('/listings', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
+    const allListings = [...seedListings, ...dynamicListings];
+
+    // Calculate stats dynamically
+    const totalVolume = allListings.reduce((sum, l) => sum + l.total_price_usdc, 0);
+    const totalAssets = allListings.length;
+    const avgYield = allListings.length > 0
+      ? allListings.reduce((sum, l) => {
+          const yield_ = l.estimated_value_usdc > 0
+            ? (l.annual_revenue_usdc / l.estimated_value_usdc) * 100
+            : 0;
+          return sum + yield_;
+        }, 0) / allListings.length
+      : 0;
+
+    console.log(`📊 Market stats: ${totalAssets} assets, $${totalVolume} volume, ${avgYield.toFixed(1)}% avg yield`);
+
     res.json({
-      totalVolume: 385000,
-      totalAssets: 5,
-      avgYield: 8.0,
-      activeListings: 5,
+      totalVolume: Math.round(totalVolume),
+      totalAssets,
+      avgYield: parseFloat(avgYield.toFixed(1)),
+      activeListings: totalAssets,
     });
   } catch (error) {
     console.error('Error fetching market stats:', error);
@@ -248,7 +156,21 @@ router.post('/purchase', async (req, res) => {
 router.get('/profile', async (req, res) => {
   // No authentication required for demo
   try {
-    res.json(mockOperatorProfile);
+    // Calculate dynamic stats
+    const totalSpots = dynamicAssets.reduce((sum, asset) => sum + asset.total_supply, 0);
+    const totalValue = dynamicAssets.reduce((sum, asset) => sum + asset.estimated_value_usdc, 0);
+    const totalLots = dynamicAssets.length;
+
+    const profile = {
+      ...mockOperatorProfile,
+      total_parking_spots: totalSpots,
+      total_parking_lots: totalLots,
+      total_tokenized_value_usdc: totalValue,
+    };
+
+    console.log(`👤 Operator profile: ${totalLots} lots, ${totalSpots} spots, $${totalValue} tokenized`);
+
+    res.json(profile);
   } catch (error) {
     console.error('Error fetching operator profile:', error);
     res.status(500).json({
@@ -261,9 +183,11 @@ router.get('/profile', async (req, res) => {
 router.get('/assets', async (req, res) => {
   // No authentication required for demo
   try {
+    console.log(`📦 Fetching ${dynamicAssets.length} dynamically created assets`);
+
     res.json({
       success: true,
-      assets: mockAssets,
+      assets: dynamicAssets,
     });
   } catch (error) {
     console.error('Error fetching assets:', error);
@@ -310,30 +234,86 @@ router.post('/tokenize', async (req, res) => {
   // No authentication required for demo
   try {
     const {
-      parking_lot_id,
+      parking_lot_name,
+      city,
+      address,
       spot_number,
       asset_type,
       total_supply,
       estimated_value_usdc,
       annual_revenue_usdc,
       revenue_share_percentage,
+      price_per_token_usdc,
     } = req.body;
 
-    console.log('✅ Mock asset tokenized:', {
-      parking_lot_id,
+    // Generate new asset ID and listing ID
+    const assetId = nextAssetId++;
+    const listingId = nextListingId++;
+
+    // Generate a valid Solana token address (using various known addresses for demo)
+    const tokenAddresses = [
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      'So11111111111111111111111111111111111111112',
+      '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+      '11111111111111111111111111111111',
+    ];
+    const randomTokenAddress = tokenAddresses[Math.floor(Math.random() * tokenAddresses.length)];
+
+    // Create new asset
+    const newAsset = {
+      id: assetId,
       spot_number,
+      asset_type,
+      total_supply: parseInt(total_supply),
+      estimated_value_usdc: parseFloat(estimated_value_usdc),
+      annual_revenue_usdc: parseFloat(annual_revenue_usdc),
+      revenue_share_percentage: parseInt(revenue_share_percentage),
+      compliance_status: 'compliant',
+    };
+
+    // Create new marketplace listing
+    const newListing = {
+      listing_id: listingId,
+      parking_lot_name: parking_lot_name || `Parking ${spot_number}`,
+      city: city || 'Warszawa',
+      address: address || 'ul. Nowa 1',
+      asset_type,
+      organization_name: mockOperatorProfile.organization_name,
+      organization_type: mockOperatorProfile.organization_type,
+      operator_rating: mockOperatorProfile.operator_rating,
+      price_per_token_usdc: parseFloat(price_per_token_usdc) || 100,
+      token_amount: parseInt(total_supply),
+      total_price_usdc: (parseFloat(price_per_token_usdc) || 100) * parseInt(total_supply),
+      estimated_value_usdc: parseFloat(estimated_value_usdc),
+      annual_revenue_usdc: parseFloat(annual_revenue_usdc),
+      asset_token_address: randomTokenAddress,
+      asset_id: assetId,
+      payment_methods: ['USDC', 'EUROC', 'SOL'],
+      created_at: new Date().toISOString(),
+    };
+
+    // Add to dynamic storage
+    dynamicAssets.push(newAsset);
+    dynamicListings.push(newListing);
+
+    console.log('✅ Asset tokenized and listed:', {
+      assetId,
+      listingId,
+      parking_lot_name: newListing.parking_lot_name,
+      city: newListing.city,
       asset_type,
       total_supply,
       estimated_value_usdc,
-      annual_revenue_usdc,
-      revenue_share_percentage,
-      operator: req.user?.id || 'demo_user',
     });
 
     res.json({
       success: true,
-      asset_id: Math.floor(Math.random() * 10000),
-      message: 'Asset tokenized successfully (DEMO MODE)',
+      asset_id: assetId,
+      listing_id: listingId,
+      message: 'Asset tokenized and listed successfully (DEMO MODE)',
+      asset: newAsset,
+      listing: newListing,
     });
   } catch (error) {
     console.error('Error tokenizing asset:', error);
