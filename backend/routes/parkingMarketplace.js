@@ -1,10 +1,11 @@
 // Parking Marketplace API Routes
 // Mastercard DeFi Hackathon - Institutional Parking Asset Tokenization
 
-const express = require('express');
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import { authenticateToken } from '../middleware/auth.js';
+
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-const { authenticateToken } = require('../middleware/authMiddleware');
 
 // ========================================
 // MARKETPLACE LISTINGS
@@ -526,4 +527,4 @@ router.post(
   }
 );
 
-module.exports = router;
+export default router;
