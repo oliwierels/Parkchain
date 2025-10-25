@@ -12,7 +12,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
-import parkingMarketplaceRoutes from './routes/parkingMarketplace.js';
+// import parkingMarketplaceRoutes from './routes/parkingMarketplace.js';
+import parkingMarketplaceRoutes from './routes/parkingMarketplaceMock.js'; // Using mock data for demo
 
 // Załaduj zmienne środowiskowe
 dotenv.config();
