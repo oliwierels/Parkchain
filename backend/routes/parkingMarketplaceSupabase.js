@@ -358,6 +358,41 @@ router.get('/assets', authenticateToken, async (req, res) => {
 });
 
 // ========================================
+// GET OPERATOR LISTINGS (MY LISTINGS)
+// ========================================
+
+router.get('/listings', authenticateToken, async (req, res) => {
+  const supabase = req.app.get('supabase');
+  const userId = req.user.userId;
+
+  try {
+    const { data, error } = await supabase
+      .from('parking_marketplace_listings')
+      .select(`
+        *,
+        asset:parking_assets(*)
+      `)
+      .eq('seller_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching operator listings:', error);
+      return res.status(500).json({ success: false, error: 'Failed to fetch listings' });
+    }
+
+    res.json({
+      success: true,
+      listings: data || [],
+      count: data?.length || 0,
+    });
+
+  } catch (error) {
+    console.error('Error fetching operator listings:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch listings' });
+  }
+});
+
+// ========================================
 // GET REVENUE DISTRIBUTIONS
 // ========================================
 
