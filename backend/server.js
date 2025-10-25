@@ -8,12 +8,11 @@ import morgan from 'morgan';
 import compression from 'compression';
 import { body, validationResult } from 'express-validator';
 import { createClient } from '@supabase/supabase-js';
-import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
-import parkingMarketplaceRoutes from './routes/parkingMarketplace.js';
+import parkingMarketplaceRoutes from './routes/parkingMarketplaceSupabase.js';
 
 // Załaduj zmienne środowiskowe
 dotenv.config();
@@ -41,29 +40,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 console.log('✅ Supabase client initialized');
 
-// Inicjalizacja PostgreSQL pool (dla parking marketplace)
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || `postgresql://postgres:${process.env.SUPABASE_DB_PASSWORD || 'postgres'}@db.${supabaseUrl.split('//')[1].split('.')[0]}.supabase.co:5432/postgres`,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
-// Test database connection
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ PostgreSQL connection error:', err.message);
-    console.log('💡 Tip: Set DATABASE_URL in .env for direct PostgreSQL connection');
-  } else {
-    console.log('✅ PostgreSQL pool initialized');
-  }
-});
+// Note: PostgreSQL direct connection is optional
+// Backend works with Supabase client only!
+console.log('ℹ️  Using Supabase client for database operations');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Make supabase and database pool available to routes
+// Make supabase available to routes
 app.set('supabase', supabase);
-app.set('db', pool);
 
 // Middleware
 app.use(cors({
