@@ -27,7 +27,7 @@ router.post('/tokenize', authenticateToken, [
   }
 
   const supabase = req.app.get('supabase');
-  const userId = req.user.userId;
+  const userId = req.user.id; // FIXED: was req.user.userId
 
   try {
     const {
@@ -300,7 +300,7 @@ router.post('/purchase', authenticateToken, [
 
 router.get('/profile', authenticateToken, async (req, res) => {
   const supabase = req.app.get('supabase');
-  const userId = req.user.userId;
+  const userId = req.user.id; // FIXED: was req.user.userId
 
   try {
     const { data, error } = await supabase
@@ -331,7 +331,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
 router.get('/assets', authenticateToken, async (req, res) => {
   const supabase = req.app.get('supabase');
-  const userId = req.user.userId;
+  const userId = req.user.id; // FIXED: was req.user.userId
 
   try {
     const { data, error } = await supabase
@@ -363,7 +363,7 @@ router.get('/assets', authenticateToken, async (req, res) => {
 
 router.get('/listings', authenticateToken, async (req, res) => {
   const supabase = req.app.get('supabase');
-  const userId = req.user.userId;
+  const userId = req.user.id; // FIXED: was req.user.userId
 
   try {
     const { data, error } = await supabase
