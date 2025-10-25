@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolanaWallet } from '../context/SolanaWalletContext';
+import { useSolana } from '../context/SolanaWalletContext';
 import {
   FiDollarSign,
   FiTrendingUp,
@@ -16,7 +16,7 @@ import api from '../services/api';
 
 const InstitutionalOperatorDashboard = () => {
   const { user } = useAuth();
-  const { wallet } = useSolanaWallet();
+  const { wallet } = useSolana();
 
   const [operatorProfile, setOperatorProfile] = useState(null);
   const [tokenizedAssets, setTokenizedAssets] = useState([]);

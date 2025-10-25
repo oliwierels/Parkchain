@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolanaWallet } from '../context/SolanaWalletContext';
+import { useSolana } from '../context/SolanaWalletContext';
 import { FiMapPin, FiDollarSign, FiTrendingUp, FiShield, FiFilter, FiSearch } from 'react-icons/fi';
 import { BsBuilding, BsGlobe, BsCheck2Circle } from 'react-icons/bs';
 import api from '../services/api';
@@ -10,7 +10,7 @@ import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.
 
 const ParkingMarketplacePage = () => {
   const { user } = useAuth();
-  const { wallet, connection } = useSolanaWallet();
+  const { wallet, connection } = useSolana();
 
   // State
   const [listings, setListings] = useState([]);
