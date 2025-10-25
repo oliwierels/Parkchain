@@ -286,7 +286,7 @@ router.post('/purchase', authenticateToken, [
 // GET OPERATOR PROFILE
 // ========================================
 
-router.get('/operator/profile', authenticateToken, async (req, res) => {
+router.get('/profile', authenticateToken, async (req, res) => {
   const supabase = req.app.get('supabase');
   const userId = req.user.userId;
 
@@ -310,6 +310,59 @@ router.get('/operator/profile', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching operator:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch operator profile' });
+  }
+});
+
+// ========================================
+// GET OPERATOR ASSETS
+// ========================================
+
+router.get('/assets', authenticateToken, async (req, res) => {
+  const supabase = req.app.get('supabase');
+  const userId = req.user.userId;
+
+  try {
+    const { data, error } = await supabase
+      .from('parking_assets')
+      .select('*')
+      .eq('institutional_operator_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching assets:', error);
+      return res.status(500).json({ success: false, error: 'Failed to fetch assets' });
+    }
+
+    res.json({
+      success: true,
+      assets: data || [],
+      count: data?.length || 0,
+    });
+
+  } catch (error) {
+    console.error('Error fetching assets:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch assets' });
+  }
+});
+
+// ========================================
+// GET REVENUE DISTRIBUTIONS
+// ========================================
+
+router.get('/revenue-distributions', authenticateToken, async (req, res) => {
+  const supabase = req.app.get('supabase');
+
+  try {
+    // For now, return empty array since we don't have revenue distribution data yet
+    res.json({
+      success: true,
+      distributions: [],
+      count: 0,
+    });
+
+  } catch (error) {
+    console.error('Error fetching revenue distributions:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch revenue distributions' });
   }
 });
 

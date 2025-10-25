@@ -58,9 +58,21 @@ const ParkingMarketplacePage = () => {
   const fetchMarketStats = async () => {
     try {
       const response = await api.get('/parking-marketplace/stats');
-      setMarketStats(response.data);
+      const stats = response.data.stats || {};
+      setMarketStats({
+        totalVolume: stats.total_volume_usdc || 0,
+        totalAssets: stats.total_assets || 0,
+        avgYield: stats.average_yield || 0,
+        activeListings: stats.total_listings || 0
+      });
     } catch (error) {
       console.error('Error fetching market stats:', error);
+      setMarketStats({
+        totalVolume: 0,
+        totalAssets: 0,
+        avgYield: 0,
+        activeListings: 0
+      });
     }
   };
 
