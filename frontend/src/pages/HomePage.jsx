@@ -275,7 +275,7 @@ function HomePage() {
       {/* Hero Section */}
       <motion.div
         className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-20"
-        style={{ opacity }}
+        
       >
         <div className="max-w-7xl mx-auto text-center">
           {/* Logo */}

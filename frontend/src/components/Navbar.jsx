@@ -25,8 +25,9 @@ function Navbar() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMyMenuOpen, setIsMyMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const myDropdownRef = useRef(null);
+  const userDropdownRef = useRef(null);
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -38,16 +39,22 @@ function Navbar() {
   };
 
   // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Zamknij menu "Moje"
+      if (myDropdownRef.current && !myDropdownRef.current.contains(event.target)) {
         setIsMyMenuOpen(false);
+      }
+      // Zamknij menu Użytkownika
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, []); // Usuń refy z tablicy zależności, aby useEffect uruchamiał się tylko raz
 
   const getLinkClasses = ({ isActive }) => {
     return isActive
@@ -172,74 +179,10 @@ function Navbar() {
 
               {/* Management Links Group */}
               <div className="flex items-center gap-1 mr-2">
-                <NavLink to="/add-parking" className={getLinkClasses} title="Dodaj nowy parking">
-                  <FaParking />
-                  <span>Dodaj parking</span>
-                </NavLink>
+                
 
                 {/* "Moje" Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setIsMyMenuOpen(!isMyMenuOpen)}
-                    className="text-gray-300 hover:text-indigo-400 hover:bg-gray-800/30 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 group"
-                    title="Moje zasoby"
-                  >
-                    <FaUser />
-                    <span>Moje</span>
-                    <FaChevronDown className={`text-xs transition-transform ${isMyMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isMyMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-full mt-2 right-0 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50"
-                      >
-                        <div className="py-2">
-                          <NavLink
-                            to="/my-reservations"
-                            onClick={() => setIsMyMenuOpen(false)}
-                            className={({ isActive }) =>
-                              isActive
-                                ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                                : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                            }
-                          >
-                            <FaCalendarAlt className="text-base" />
-                            <span>Moje Rezerwacje</span>
-                          </NavLink>
-                          <NavLink
-                            to="/my-parkings"
-                            onClick={() => setIsMyMenuOpen(false)}
-                            className={({ isActive }) =>
-                              isActive
-                                ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                                : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                            }
-                          >
-                            <FaParking className="text-base" />
-                            <span>Moje Parkingi</span>
-                          </NavLink>
-                          <NavLink
-                            to="/my-chargers"
-                            onClick={() => setIsMyMenuOpen(false)}
-                            className={({ isActive }) =>
-                              isActive
-                                ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                                : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
-                            }
-                          >
-                            <FaChargingStation className="text-base" />
-                            <span>Moje ładowarki</span>
-                          </NavLink>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                
 
                 <NavLink to="/analytics" className={getLinkClasses} title="Analytics i statystyki">
                   <FaChartLine />
@@ -260,32 +203,104 @@ function Navbar() {
             </div>
           </div>
 
-          {/* User Section */}
-          <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
-            {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <FaUser className="text-indigo-400 text-sm" />
-                  <span className="text-gray-300 text-sm font-medium">
-                    {user.full_name || user.email}
-                  </span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105"
-                >
-                  Wyloguj
-                </button>
-              </>
-            ) : (
-              <NavLink
-                to="/login"
-                className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105"
+          {isAuthenticated && user ? (
+            // Nowy kontener dla dropdownu użytkownika
+            <div className="relative" ref={userDropdownRef}>
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-indigo-500 transition-colors"
               >
-                Zaloguj
-              </NavLink>
-            )}
-          </div>
+                <FaUser className="text-indigo-400 text-sm" />
+                <span className="text-gray-300 text-sm font-medium">
+                  {user.full_name || user.email}
+                </span>
+                <FaChevronDown className={`text-xs text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown użytkownika (skopiowany z menu "Moje") */}
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full mt-2 right-0 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50"
+                  >
+                    <div className="py-2">
+                      <NavLink
+                          to="/profile" // Ścieżka do strony profilu
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className={({ isActive }) =>
+                            isActive
+                              ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                              : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                          }
+                        >
+                          <FaUser className="text-base" /> {/* Możesz użyć innej ikony, np. FaIdCard */}
+                          <span>Mój Profil</span>
+                        </NavLink>
+                      {/* Linki skopiowane z menu "Moje" */}
+                      <NavLink
+                        to="/my-reservations"
+                        onClick={() => setIsUserMenuOpen(false)} // Zamykaj menu użytkownika
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaCalendarAlt className="text-base" />
+                        <span>Moje Rezerwacje</span>
+                      </NavLink>
+                      <NavLink
+                        to="/my-parkings" // Zmień ścieżkę na poprawną dla parkingów
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaParking className="text-base" />
+                        <span>Moje Parkingi</span>
+                      </NavLink>
+                      <NavLink
+                        to="/my-chargers" // Zmień ścieżkę na poprawną dla ładowarek
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaChargingStation className="text-base" />
+                        <span>Moje ładowarki</span>
+                      </NavLink>
+                      
+                      {/* Separator i przycisk wylogowania */}
+                      <div className="border-t border-gray-700 my-2"></div> 
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left text-red-400 hover:bg-red-900/50 hover:text-red-300 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Wyloguj</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            // Przycisk "Zaloguj" (pozostaje bez zmian)
+            <NavLink
+              to="/login"
+              className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105"
+            >
+              Zaloguj
+            </NavLink>
+          )}
 
           {/* Mobile Menu Button */}
           <div className="flex lg:hidden">
