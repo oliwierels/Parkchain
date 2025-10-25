@@ -53,6 +53,9 @@ router.post('/tokenize', authenticateToken, [
       .insert([{
         asset_token_address,
         asset_type,
+        parking_lot_name,
+        city,
+        address,
         spot_number: spot_number || `SPOT-${Date.now()}`,
         total_supply: parseInt(total_supply),
         circulating_supply: parseInt(total_supply),
@@ -133,10 +136,19 @@ router.get('/listings', async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to fetch listings' });
     }
 
+    // Format listings with asset data
+    const formattedListings = (data || []).map(listing => ({
+      ...listing,
+      parking_lot_name: listing.asset?.parking_lot_name || listing.listing_metadata?.parking_lot_name,
+      city: listing.asset?.city || listing.listing_metadata?.city,
+      address: listing.asset?.address || listing.listing_metadata?.address,
+      organization_name: listing.seller?.full_name || 'Unknown Operator',
+    }));
+
     res.json({
       success: true,
-      listings: data || [],
-      count: data?.length || 0,
+      listings: formattedListings,
+      count: formattedListings.length,
     });
 
   } catch (error) {
