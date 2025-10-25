@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolanaWallet } from '../context/SolanaWalletContext';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { FiMapPin, FiDollarSign, FiTrendingUp, FiShield, FiFilter, FiSearch } from 'react-icons/fi';
 import { BsBuilding, BsGlobe, BsCheck2Circle } from 'react-icons/bs';
 import api from '../services/api';
@@ -10,7 +10,8 @@ import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.
 
 const ParkingMarketplacePage = () => {
   const { user } = useAuth();
-  const { wallet, connection } = useSolanaWallet();
+  const wallet = useWallet();
+  const { connection } = useConnection();
 
   // State
   const [listings, setListings] = useState([]);
@@ -125,7 +126,7 @@ const ParkingMarketplacePage = () => {
   };
 
   const executePurchase = async () => {
-    if (!wallet || !selectedListing) return;
+    if (!wallet.connected || !selectedListing) return;
 
     setPurchasing(selectedListing.listing_id);
 
@@ -435,7 +436,7 @@ const ParkingMarketplacePage = () => {
                 {/* CTA Button */}
                 <button
                   onClick={() => handlePurchase(listing)}
-                  disabled={purchasing === listing.listing_id || !wallet}
+                  disabled={purchasing === listing.listing_id || !wallet.connected}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   {purchasing === listing.listing_id ? (
@@ -443,7 +444,7 @@ const ParkingMarketplacePage = () => {
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Processing...
                     </span>
-                  ) : !wallet ? (
+                  ) : !wallet.connected ? (
                     'Connect Wallet to Buy'
                   ) : (
                     'Buy Asset Tokens'
