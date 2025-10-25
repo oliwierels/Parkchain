@@ -9,6 +9,7 @@
     "dev": "node server.js",
     "migrate": "node migrations/run.js",
     "seed": "node migrations/seed.js",
+    "setup:env": "node scripts/setup-env.js",
     "setup:marketplace": "node scripts/setup-marketplace-db.js",
     "test": "jest --coverage",
     "lint": "eslint .",
