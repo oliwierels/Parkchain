@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolana } from '../context/SolanaWalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
   FiDollarSign,
   FiTrendingUp,
@@ -16,7 +16,7 @@ import api from '../services/api';
 
 const InstitutionalOperatorDashboard = () => {
   const { user } = useAuth();
-  const { wallet } = useSolana();
+  const wallet = useWallet();
 
   const [operatorProfile, setOperatorProfile] = useState(null);
   const [tokenizedAssets, setTokenizedAssets] = useState([]);
@@ -30,10 +30,13 @@ const InstitutionalOperatorDashboard = () => {
 
   // Form state for tokenization
   const [tokenizeForm, setTokenizeForm] = useState({
-    parking_lot_id: '',
+    parking_lot_name: '',
+    city: '',
+    address: '',
     spot_number: '',
     asset_type: 'single_spot',
     total_supply: 1,
+    price_per_token_usdc: 100,
     estimated_value_usdc: 0,
     annual_revenue_usdc: 0,
     revenue_share_percentage: 50,
@@ -46,10 +49,10 @@ const InstitutionalOperatorDashboard = () => {
   const fetchOperatorData = async () => {
     try {
       const [profileRes, assetsRes, listingsRes, revenueRes] = await Promise.all([
-        api.get('/api/institutional-operators/profile'),
-        api.get('/api/institutional-operators/assets'),
-        api.get('/api/institutional-operators/listings'),
-        api.get('/api/institutional-operators/revenue-distributions'),
+        api.get('/institutional-operators/profile'),
+        api.get('/institutional-operators/assets'),
+        api.get('/institutional-operators/listings'),
+        api.get('/institutional-operators/revenue-distributions'),
       ]);
 
       setOperatorProfile(profileRes.data);
@@ -64,20 +67,41 @@ const InstitutionalOperatorDashboard = () => {
   };
 
   const handleTokenizeAsset = async () => {
-    if (!wallet) {
+    if (!wallet.connected) {
       alert('Please connect your Solana wallet first');
+      return;
+    }
+
+    // Validate required fields
+    if (!tokenizeForm.parking_lot_name || !tokenizeForm.city) {
+      alert('⚠️ Please fill in Parking Lot Name and City (required fields)');
       return;
     }
 
     try {
       // Call backend API to tokenize asset
-      const response = await api.post('/api/institutional-operators/tokenize', {
+      const response = await api.post('/institutional-operators/tokenize', {
         ...tokenizeForm,
         operator_wallet: wallet.publicKey.toBase58(),
       });
 
       if (response.data.success) {
-        alert('✅ Asset tokenized successfully!');
+        alert(`✅ Asset tokenized successfully!\n\n🎯 Your parking is now available in the marketplace!\n\nAsset ID: ${response.data.asset_id}\nListing ID: ${response.data.listing_id}\n\n📍 Go to ParkFi Marketplace to see your listing.`);
+
+        // Reset form
+        setTokenizeForm({
+          parking_lot_name: '',
+          city: '',
+          address: '',
+          spot_number: '',
+          asset_type: 'single_spot',
+          total_supply: 1,
+          price_per_token_usdc: 100,
+          estimated_value_usdc: 0,
+          annual_revenue_usdc: 0,
+          revenue_share_percentage: 50,
+        });
+
         setShowTokenizeModal(false);
         fetchOperatorData();
       }
@@ -153,17 +177,17 @@ const InstitutionalOperatorDashboard = () => {
                     )}
                   </div>
                   <p className="text-gray-300 mb-2">
-                    {operatorProfile.organization_type.replace('_', ' ').toUpperCase()}
+                    {operatorProfile.organization_type ? operatorProfile.organization_type.replace('_', ' ').toUpperCase() : 'Parking Operator'}
                   </p>
                   <p className="text-gray-400 text-sm">
-                    {operatorProfile.headquarters_city}, {operatorProfile.headquarters_country}
+                    {operatorProfile.headquarters_city || 'N/A'}, {operatorProfile.headquarters_country || 'N/A'}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-400 text-sm">Operator Rating</p>
                 <p className="text-yellow-400 text-2xl font-bold">
-                  {operatorProfile.operator_rating} ⭐
+                  {operatorProfile.operator_rating || '0.0'} ⭐
                 </p>
               </div>
             </div>
@@ -376,6 +400,53 @@ const InstitutionalOperatorDashboard = () => {
 
               <div className="space-y-4">
                 <div>
+                  <label className="block text-gray-300 mb-2">Parking Lot Name *</label>
+                  <input
+                    type="text"
+                    value={tokenizeForm.parking_lot_name}
+                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, parking_lot_name: e.target.value })}
+                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                    placeholder="e.g., Centralna Parking Warsaw"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">City *</label>
+                    <input
+                      type="text"
+                      value={tokenizeForm.city}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, city: e.target.value })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="Warszawa"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Spot/ID</label>
+                    <input
+                      type="text"
+                      value={tokenizeForm.spot_number}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, spot_number: e.target.value })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="A-42"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2">Address</label>
+                  <input
+                    type="text"
+                    value={tokenizeForm.address}
+                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, address: e.target.value })}
+                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                    placeholder="ul. Marszałkowska 142"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-gray-300 mb-2">Asset Type</label>
                   <select
                     value={tokenizeForm.asset_type}
@@ -388,59 +459,50 @@ const InstitutionalOperatorDashboard = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 mb-2">Parking Lot ID</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.parking_lot_id}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, parking_lot_id: e.target.value })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="Enter parking lot ID"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">Total Supply (Tokens)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.total_supply}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, total_supply: parseInt(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="1000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Price per Token (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.price_per_token_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, price_per_token_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="100"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 mb-2">Spot Number (e.g., A-42)</label>
-                  <input
-                    type="text"
-                    value={tokenizeForm.spot_number}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, spot_number: e.target.value })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="A-42"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Total Supply (Number of Tokens)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.total_supply}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, total_supply: parseInt(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Estimated Value (USDC)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.estimated_value_usdc}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, estimated_value_usdc: parseFloat(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="10000"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Annual Revenue (USDC)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.annual_revenue_usdc}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, annual_revenue_usdc: parseFloat(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="800"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">Estimated Value (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.estimated_value_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, estimated_value_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="100000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Annual Revenue (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.annual_revenue_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, annual_revenue_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="8000"
+                    />
+                  </div>
                 </div>
 
                 <div>

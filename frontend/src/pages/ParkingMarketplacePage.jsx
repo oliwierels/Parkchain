@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolana } from '../context/SolanaWalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { FiMapPin, FiDollarSign, FiTrendingUp, FiShield, FiFilter, FiSearch } from 'react-icons/fi';
 import { BsBuilding, BsGlobe, BsCheck2Circle } from 'react-icons/bs';
 import api from '../services/api';
-import gatewayService from '../services/gatewayService';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 
 const ParkingMarketplacePage = () => {
   const { user } = useAuth();
-  const { wallet, connection } = useSolana();
+  const wallet = useWallet();
 
   // State
   const [listings, setListings] = useState([]);
@@ -48,7 +46,7 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketplaceListings = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/listings');
+      const response = await api.get('/parking-marketplace/listings');
       setListings(response.data.listings || []);
       setLoading(false);
     } catch (error) {
@@ -59,10 +57,22 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketStats = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/stats');
-      setMarketStats(response.data);
+      const response = await api.get('/parking-marketplace/stats');
+      const stats = response.data.stats || {};
+      setMarketStats({
+        totalVolume: stats.total_volume_usdc || 0,
+        totalAssets: stats.total_assets || 0,
+        avgYield: stats.average_yield || 0,
+        activeListings: stats.total_listings || 0
+      });
     } catch (error) {
       console.error('Error fetching market stats:', error);
+      setMarketStats({
+        totalVolume: 0,
+        totalAssets: 0,
+        avgYield: 0,
+        activeListings: 0
+      });
     }
   };
 
@@ -125,7 +135,7 @@ const ParkingMarketplacePage = () => {
   };
 
   const executePurchase = async () => {
-    if (!wallet || !selectedListing) return;
+    if (!wallet.connected || !selectedListing) return;
 
     setPurchasing(selectedListing.listing_id);
 
@@ -133,44 +143,38 @@ const ParkingMarketplacePage = () => {
       // Calculate total cost
       const totalCost = selectedListing.price_per_token_usdc * purchaseAmount;
 
-      // Build transaction (simplified - actual implementation would interact with Solana program)
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: new PublicKey(selectedListing.asset_token_address),
-          lamports: totalCost * 1000000, // Convert to lamports (assuming USDC representation)
-        })
-      );
+      // DEMO MODE: Simulate purchase without real Solana transaction
+      // In production, this would build and execute a real transaction
+      console.log('🎭 DEMO MODE: Simulating purchase...', {
+        listing: selectedListing.parking_lot_name,
+        tokens: purchaseAmount,
+        cost: totalCost,
+        wallet: wallet.publicKey.toBase58(),
+      });
 
-      // Use Gateway for optimized transaction delivery
-      const result = await gatewayService.executeTransaction(
-        transaction,
-        wallet,
-        connection,
-        {
-          context: 'parking_asset_purchase',
-          assetId: selectedListing.asset_id,
-          tokenAmount: purchaseAmount,
-        }
-      );
+      // Simulate processing delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      if (result.success) {
-        // Record transaction in backend
-        await api.post('/api/parking-marketplace/purchase', {
-          listing_id: selectedListing.listing_id,
-          token_amount: purchaseAmount,
-          total_amount_usdc: totalCost,
-          solana_tx_signature: result.signature,
-          payment_method: 'USDC',
-          gateway_used: true,
-          gateway_delivery_method: result.deliveryMethod,
-        });
+      // Generate mock transaction signature
+      const mockSignature = `DEMO_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-        alert('✅ Purchase successful! You now own ' + purchaseAmount + ' parking asset tokens.');
+      // Record transaction in backend
+      const response = await api.post('/parking-marketplace/purchase', {
+        listing_id: selectedListing.listing_id,
+        token_amount: purchaseAmount,
+        total_amount_usdc: totalCost,
+        solana_tx_signature: mockSignature,
+        payment_method: 'USDC',
+        gateway_used: true,
+        gateway_delivery_method: 'demo',
+      });
+
+      if (response.data.success) {
+        alert(`✅ Purchase successful! You now own ${purchaseAmount} parking asset tokens.\n\n🎭 DEMO MODE: No real blockchain transaction was executed.\nIn production, this would transfer USDC and mint parking tokens on Solana.`);
         setSelectedListing(null);
         fetchMarketplaceListings();
       } else {
-        alert('❌ Purchase failed: ' + result.error);
+        alert('❌ Purchase failed: ' + response.data.error);
       }
     } catch (error) {
       console.error('Purchase error:', error);
@@ -435,7 +439,7 @@ const ParkingMarketplacePage = () => {
                 {/* CTA Button */}
                 <button
                   onClick={() => handlePurchase(listing)}
-                  disabled={purchasing === listing.listing_id || !wallet}
+                  disabled={purchasing === listing.listing_id || !wallet.connected}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   {purchasing === listing.listing_id ? (
@@ -443,7 +447,7 @@ const ParkingMarketplacePage = () => {
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Processing...
                     </span>
-                  ) : !wallet ? (
+                  ) : !wallet.connected ? (
                     'Connect Wallet to Buy'
                   ) : (
                     'Buy Asset Tokens'

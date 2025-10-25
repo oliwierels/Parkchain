@@ -12,6 +12,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
+import parkingMarketplaceRoutes from './routes/parkingMarketplaceSupabase.js';
 
 // Załaduj zmienne środowiskowe
 dotenv.config();
@@ -39,8 +40,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 console.log('✅ Supabase client initialized');
 
+// Note: PostgreSQL direct connection is optional
+// Backend works with Supabase client only!
+console.log('ℹ️  Using Supabase client for database operations');
+
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Make supabase available to routes
+app.set('supabase', supabase);
 
 // Middleware
 app.use(cors({
@@ -2020,6 +2028,15 @@ app.get('/api/leaderboard', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ========================================
+// PARKING MARKETPLACE (Mastercard DeFi Hackathon)
+// ========================================
+
+app.use('/api/parking-marketplace', parkingMarketplaceRoutes);
+app.use('/api/institutional-operators', parkingMarketplaceRoutes);
+
+console.log('✅ Parking Marketplace routes registered');
 
 // Start serwera
 app.listen(port, () => {

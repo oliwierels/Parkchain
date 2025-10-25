@@ -1469,6 +1469,145 @@ function MapPage() {
 ))}
       </MapContainer>
 
+      {/* Floating Action Buttons - Prawy dolny róg */}
+      <div style={{
+        position: 'fixed',
+        bottom: '30px',
+        right: '30px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        pointerEvents: 'none'
+      }}>
+        {/* Add Parking Button */}
+        <motion.button
+          onClick={handleToggleAddParkingMode}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            border: 'none',
+            background: addParkingMode
+              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+              : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+            color: 'white',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+            position: 'relative'
+          }}
+          whileHover={{
+            scale: 1.1,
+            boxShadow: '0 12px 40px rgba(99, 102, 241, 0.5)'
+          }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          title={addParkingMode ? "Anuluj dodawanie parkingu" : "Dodaj parking"}
+        >
+          <FaParking />
+          {addParkingMode && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              ×
+            </div>
+          )}
+        </motion.button>
+
+        {/* Add Charging Station Button */}
+        <motion.button
+          onClick={handleToggleAddChargingMode}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            border: 'none',
+            background: addChargingMode
+              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+              : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+            color: 'white',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(245, 158, 11, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+            position: 'relative'
+          }}
+          whileHover={{
+            scale: 1.1,
+            boxShadow: '0 12px 40px rgba(245, 158, 11, 0.5)'
+          }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          title={addChargingMode ? "Anuluj dodawanie ładowarki" : "Dodaj ładowarkę EV"}
+        >
+          <FaChargingStation />
+          {addChargingMode && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              ×
+            </div>
+          )}
+        </motion.button>
+
+        {/* Helper text */}
+        {(addParkingMode || addChargingMode) && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            style={{
+              position: 'absolute',
+              right: '75px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              padding: '12px 16px',
+              background: 'rgba(0, 0, 0, 0.85)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+              pointerEvents: 'none'
+            }}
+          >
+            {addParkingMode ? '📍 Kliknij na mapie aby dodać parking' : '⚡ Kliknij na mapie aby dodać ładowarkę'}
+          </motion.div>
+        )}
+      </div>
+
       {showReservationModal && selectedParking && (
         <ReservationModal
           parking={selectedParking}

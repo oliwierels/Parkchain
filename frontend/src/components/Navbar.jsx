@@ -15,7 +15,9 @@ import {
   FaChargingStation,
   FaUser,
   FaRocket,
-  FaTrophy
+  FaTrophy,
+  FaLandmark,
+  FaWarehouse
 } from 'react-icons/fa';
 
 function Navbar() {
@@ -124,7 +126,29 @@ function Navbar() {
                   title="Marketplace DCP tokenów"
                 >
                   <FaGem />
-                  <span>Marketplace</span>
+                  <span>DCP Tokens</span>
+                </NavLink>
+                <NavLink
+                  to="/parking-marketplace"
+                  className={getFeaturedLinkClasses({
+                    active: 'bg-cyan-600',
+                    gradient: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700'
+                  })}
+                  title="🏆 ParkFi - Institutional Parking Marketplace (Mastercard Hackathon)"
+                >
+                  <FaWarehouse />
+                  <span>🅿️ ParkFi</span>
+                </NavLink>
+                <NavLink
+                  to="/institutional-operator"
+                  className={getFeaturedLinkClasses({
+                    active: 'bg-orange-600',
+                    gradient: 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+                  })}
+                  title="🏢 Institutional Operator Dashboard"
+                >
+                  <FaLandmark />
+                  <span>Operator</span>
                 </NavLink>
                 <NavLink
                   to="/badges"
@@ -371,7 +395,31 @@ function Navbar() {
                   }
                 >
                   <FaGem />
-                  <span>Marketplace</span>
+                  <span>DCP Tokens</span>
+                </NavLink>
+                <NavLink
+                  to="/parking-marketplace"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-cyan-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
+                  }
+                >
+                  <FaWarehouse />
+                  <span>🅿️ ParkFi Marketplace</span>
+                </NavLink>
+                <NavLink
+                  to="/institutional-operator"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-orange-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
+                      : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
+                  }
+                >
+                  <FaLandmark />
+                  <span>🏢 Institutional Operator</span>
                 </NavLink>
                 <NavLink
                   to="/badges"
