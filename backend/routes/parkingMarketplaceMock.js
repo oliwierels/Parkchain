@@ -214,7 +214,8 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-router.post('/purchase', authenticateToken, async (req, res) => {
+router.post('/purchase', async (req, res) => {
+  // No authentication required for demo
   try {
     const { listing_id, token_amount, total_amount_usdc, solana_tx_signature } = req.body;
 
@@ -223,7 +224,7 @@ router.post('/purchase', authenticateToken, async (req, res) => {
       token_amount,
       total_amount_usdc,
       solana_tx_signature,
-      buyer: req.user?.id,
+      buyer: req.user?.id || 'demo_user',
     });
 
     res.json({
@@ -244,7 +245,8 @@ router.post('/purchase', authenticateToken, async (req, res) => {
 // INSTITUTIONAL OPERATORS
 // ========================================
 
-router.get('/profile', authenticateToken, async (req, res) => {
+router.get('/profile', async (req, res) => {
+  // No authentication required for demo
   try {
     res.json(mockOperatorProfile);
   } catch (error) {
@@ -256,7 +258,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/assets', authenticateToken, async (req, res) => {
+router.get('/assets', async (req, res) => {
+  // No authentication required for demo
   try {
     res.json({
       success: true,
@@ -271,7 +274,8 @@ router.get('/assets', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/listings', authenticateToken, async (req, res) => {
+router.get('/listings', async (req, res) => {
+  // No authentication required for demo
   try {
     res.json({
       success: true,
@@ -286,7 +290,8 @@ router.get('/listings', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/revenue-distributions', authenticateToken, async (req, res) => {
+router.get('/revenue-distributions', async (req, res) => {
+  // No authentication required for demo
   try {
     res.json({
       success: true,
@@ -301,7 +306,8 @@ router.get('/revenue-distributions', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/tokenize', authenticateToken, async (req, res) => {
+router.post('/tokenize', async (req, res) => {
+  // No authentication required for demo
   try {
     const {
       parking_lot_id,
@@ -321,7 +327,7 @@ router.post('/tokenize', authenticateToken, async (req, res) => {
       estimated_value_usdc,
       annual_revenue_usdc,
       revenue_share_percentage,
-      operator: req.user?.id,
+      operator: req.user?.id || 'demo_user',
     });
 
     res.json({
@@ -338,7 +344,8 @@ router.post('/tokenize', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/create-listing', authenticateToken, async (req, res) => {
+router.post('/create-listing', async (req, res) => {
+  // No authentication required for demo
   try {
     const {
       asset_id,
@@ -352,7 +359,7 @@ router.post('/create-listing', authenticateToken, async (req, res) => {
       listing_type,
       token_amount,
       price_per_token_usdc,
-      seller: req.user?.id,
+      seller: req.user?.id || 'demo_user',
     });
 
     res.json({
