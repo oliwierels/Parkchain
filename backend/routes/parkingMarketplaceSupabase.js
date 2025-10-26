@@ -413,4 +413,117 @@ router.get('/revenue-distributions', authenticateToken, async (req, res) => {
   }
 });
 
+// ========================================
+// GET MY TRANSACTIONS (Purchase History)
+// ========================================
+
+router.get('/my-transactions', authenticateToken, async (req, res) => {
+  const supabase = req.app.get('supabase');
+  const userId = req.user.id;
+
+  try {
+    const { data, error } = await supabase
+      .from('parking_asset_transactions')
+      .select(`
+        *,
+        asset:parking_assets(*),
+        seller:users(id, full_name, email)
+      `)
+      .eq('buyer_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user transactions:', error);
+      return res.status(500).json({ success: false, error: 'Failed to fetch transactions' });
+    }
+
+    // Format transactions with asset details
+    const formattedTransactions = (data || []).map(tx => ({
+      ...tx,
+      parking_lot_name: tx.asset?.parking_lot_name,
+      city: tx.asset?.city,
+      asset_type: tx.asset?.asset_type,
+      seller_name: tx.seller?.full_name || 'Unknown',
+    }));
+
+    res.json({
+      success: true,
+      transactions: formattedTransactions,
+      count: formattedTransactions.length,
+    });
+
+  } catch (error) {
+    console.error('Error fetching user transactions:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch transactions' });
+  }
+});
+
+// ========================================
+// GET MY HOLDINGS (Aggregated Token Balance)
+// ========================================
+
+router.get('/my-holdings', authenticateToken, async (req, res) => {
+  const supabase = req.app.get('supabase');
+  const userId = req.user.id;
+
+  try {
+    // Get all purchases by this user
+    const { data: purchases, error: purchasesError } = await supabase
+      .from('parking_asset_transactions')
+      .select('asset_id, token_amount, asset:parking_assets(*)')
+      .eq('buyer_id', userId)
+      .eq('payment_status', 'completed');
+
+    if (purchasesError) {
+      console.error('Error fetching purchases:', purchasesError);
+      return res.status(500).json({ success: false, error: 'Failed to fetch holdings' });
+    }
+
+    // Aggregate holdings by asset_id
+    const holdingsMap = {};
+    (purchases || []).forEach(purchase => {
+      const assetId = purchase.asset_id;
+      if (!holdingsMap[assetId]) {
+        holdingsMap[assetId] = {
+          asset_id: assetId,
+          asset: purchase.asset,
+          total_tokens: 0,
+        };
+      }
+      holdingsMap[assetId].total_tokens += purchase.token_amount;
+    });
+
+    // Convert to array and add details
+    const holdings = Object.values(holdingsMap).map(holding => ({
+      asset_id: holding.asset_id,
+      asset_token_address: holding.asset?.asset_token_address,
+      asset_type: holding.asset?.asset_type,
+      parking_lot_name: holding.asset?.parking_lot_name,
+      city: holding.asset?.city,
+      total_tokens: holding.total_tokens,
+      total_supply: holding.asset?.total_supply || 1,
+      estimated_value_usdc: holding.asset?.estimated_value_usdc,
+      annual_revenue_usdc: holding.asset?.annual_revenue_usdc,
+      revenue_share_percentage: holding.asset?.revenue_share_percentage,
+    }));
+
+    // Calculate total portfolio value
+    const totalValue = holdings.reduce((sum, h) => {
+      const tokenValue = (h.estimated_value_usdc || 0) / (h.total_supply || 1);
+      return sum + (tokenValue * h.total_tokens);
+    }, 0);
+
+    res.json({
+      success: true,
+      holdings,
+      count: holdings.length,
+      total_value_usdc: totalValue,
+    });
+
+  } catch (error) {
+    console.error('Error fetching user holdings:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch holdings' });
+  }
+});
+
 export default router;
