@@ -140,9 +140,10 @@ const ParkingMarketplacePage = () => {
     setHoldingsLoading(true);
     try {
       const response = await api.get('/parking-marketplace/my-holdings');
+      console.log('💼 Holdings response:', response.data);
       setMyHoldings(response.data.holdings || []);
     } catch (error) {
-      console.error('Error fetching holdings:', error);
+      console.error('❌ Error fetching holdings:', error);
       setMyHoldings([]);
     } finally {
       setHoldingsLoading(false);
@@ -153,9 +154,10 @@ const ParkingMarketplacePage = () => {
     setTransactionsLoading(true);
     try {
       const response = await api.get('/parking-marketplace/my-transactions');
+      console.log('📊 Transactions response:', response.data);
       setMyTransactions(response.data.transactions || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('❌ Error fetching transactions:', error);
       setMyTransactions([]);
     } finally {
       setTransactionsLoading(false);
