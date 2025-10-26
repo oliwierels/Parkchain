@@ -257,7 +257,6 @@ router.post('/purchase', authenticateToken, [
         price_per_token_usdc: listing.price_per_token_usdc,
         total_amount_usdc: totalAmount,
         payment_method,
-        payment_status: 'completed',
         solana_tx_signature: solana_tx_signature || `DEMO_${Date.now()}`,
         settlement_status: 'settled',
         compliance_checked: true,
@@ -474,7 +473,7 @@ router.get('/my-holdings', authenticateToken, async (req, res) => {
       .from('parking_asset_transactions')
       .select('asset_id, token_amount, asset:parking_assets(*)')
       .eq('buyer_id', userId)
-      .eq('payment_status', 'completed');
+      .eq('settlement_status', 'settled');
 
     if (purchasesError) {
       console.error('Error fetching purchases:', purchasesError);
