@@ -219,7 +219,7 @@ router.post('/purchase', authenticateToken, [
   }
 
   const supabase = req.app.get('supabase');
-  const buyerId = req.user.userId;
+  const buyerId = req.user.id; // FIXED: was req.user.userId
 
   try {
     const { listing_id, token_amount, payment_method, solana_tx_signature } = req.body;
