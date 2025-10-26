@@ -11,10 +11,17 @@ const ParkingMarketplacePage = () => {
   const wallet = useWallet();
 
   // State
+  const [activeTab, setActiveTab] = useState('marketplace'); // 'marketplace', 'holdings', 'transactions'
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(null);
+
+  // My Holdings & Transactions
+  const [myHoldings, setMyHoldings] = useState([]);
+  const [myTransactions, setMyTransactions] = useState([]);
+  const [holdingsLoading, setHoldingsLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,6 +136,41 @@ const ParkingMarketplacePage = () => {
     return ((listing.annual_revenue_usdc / listing.estimated_value_usdc) * 100).toFixed(2);
   };
 
+  const fetchMyHoldings = async () => {
+    setHoldingsLoading(true);
+    try {
+      const response = await api.get('/parking-marketplace/my-holdings');
+      setMyHoldings(response.data.holdings || []);
+    } catch (error) {
+      console.error('Error fetching holdings:', error);
+      setMyHoldings([]);
+    } finally {
+      setHoldingsLoading(false);
+    }
+  };
+
+  const fetchMyTransactions = async () => {
+    setTransactionsLoading(true);
+    try {
+      const response = await api.get('/parking-marketplace/my-transactions');
+      setMyTransactions(response.data.transactions || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setMyTransactions([]);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'holdings' && myHoldings.length === 0) {
+      fetchMyHoldings();
+    } else if (tab === 'transactions' && myTransactions.length === 0) {
+      fetchMyTransactions();
+    }
+  };
+
   const handlePurchase = (listing) => {
     setSelectedListing(listing);
     setPurchaseAmount(1);
@@ -173,6 +215,9 @@ const ParkingMarketplacePage = () => {
         alert(`✅ Purchase successful! You now own ${purchaseAmount} parking asset tokens.\n\n🎭 DEMO MODE: No real blockchain transaction was executed.\nIn production, this would transfer USDC and mint parking tokens on Solana.`);
         setSelectedListing(null);
         fetchMarketplaceListings();
+        // Refresh holdings and transactions
+        fetchMyHoldings();
+        fetchMyTransactions();
       } else {
         alert('❌ Purchase failed: ' + response.data.error);
       }
@@ -232,12 +277,53 @@ const ParkingMarketplacePage = () => {
           </p>
         </motion.div>
 
-        {/* Market Stats */}
+        {/* Tabs */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center gap-4 mb-8"
         >
+          <button
+            onClick={() => handleTabChange('marketplace')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'marketplace'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Browse Marketplace
+          </button>
+          <button
+            onClick={() => handleTabChange('holdings')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'holdings'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            My Holdings
+          </button>
+          <button
+            onClick={() => handleTabChange('transactions')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'transactions'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            My Transactions
+          </button>
+        </motion.div>
+
+        {/* Marketplace View */}
+        {activeTab === 'marketplace' && (
+          <>
+            {/* Market Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+            >
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
             <div className="flex items-center justify-between">
               <div>
@@ -467,6 +553,139 @@ const ParkingMarketplacePage = () => {
           >
             <p className="text-gray-400 text-lg">No listings found matching your filters.</p>
           </motion.div>
+        )}
+          </>
+        )}
+
+        {/* My Holdings View */}
+        {activeTab === 'holdings' && (
+          <div className="mt-8">
+            <h2 className="text-white text-3xl font-bold mb-6">My Parking Asset Holdings</h2>
+
+            {holdingsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : myHoldings.length === 0 ? (
+              <div className="text-center py-12 bg-white/10 rounded-xl">
+                <p className="text-gray-300 text-lg mb-4">You don't own any parking tokens yet.</p>
+                <button
+                  onClick={() => handleTabChange('marketplace')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Browse Marketplace
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myHoldings.map((holding) => (
+                  <motion.div
+                    key={holding.asset_id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-white text-xl font-bold mb-1">{holding.parking_lot_name || 'N/A'}</h3>
+                      <p className="text-gray-300 text-sm">{holding.city || 'N/A'}</p>
+                      <p className="text-blue-300 text-sm mt-1">{getAssetTypeLabel(holding.asset_type)}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tokens Owned:</span>
+                        <span className="text-white font-bold">{holding.total_tokens}</span>
+                      </div>
+                      {holding.estimated_value_usdc > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Est. Value:</span>
+                          <span className="text-green-400">${holding.estimated_value_usdc.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {holding.revenue_share_percentage > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Revenue Share:</span>
+                          <span className="text-yellow-400">{holding.revenue_share_percentage}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* My Transactions View */}
+        {activeTab === 'transactions' && (
+          <div className="mt-8">
+            <h2 className="text-white text-3xl font-bold mb-6">My Transaction History</h2>
+
+            {transactionsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : myTransactions.length === 0 ? (
+              <div className="text-center py-12 bg-white/10 rounded-xl">
+                <p className="text-gray-300 text-lg mb-4">No transactions yet.</p>
+                <button
+                  onClick={() => handleTabChange('marketplace')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Browse Marketplace
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {myTransactions.map((tx) => (
+                  <motion.div
+                    key={tx.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-white text-xl font-bold">{tx.parking_lot_name || 'N/A'}</h3>
+                        <p className="text-gray-300 text-sm">{tx.city || 'N/A'}</p>
+                        <p className="text-blue-300 text-sm mt-1">{getAssetTypeLabel(tx.asset_type)}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-400 font-bold text-lg">${tx.total_amount_usdc.toLocaleString()}</div>
+                        <div className="text-gray-400 text-sm">{tx.payment_method}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-400">Tokens:</span>
+                        <span className="text-white ml-2 font-semibold">{tx.token_amount}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Price/Token:</span>
+                        <span className="text-white ml-2 font-semibold">${tx.price_per_token_usdc}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Date:</span>
+                        <span className="text-white ml-2">{new Date(tx.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Status:</span>
+                        <span className="text-green-400 ml-2 font-semibold">{tx.settlement_status}</span>
+                      </div>
+                    </div>
+
+                    {tx.solana_tx_signature && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <span className="text-gray-400 text-xs">Tx: </span>
+                        <span className="text-blue-300 text-xs font-mono">{tx.solana_tx_signature.substring(0, 40)}...</span>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Purchase Modal */}
