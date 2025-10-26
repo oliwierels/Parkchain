@@ -137,7 +137,7 @@ const ParkingMarketplacePage = () => {
   const executePurchase = async () => {
     if (!wallet.connected || !selectedListing) return;
 
-    setPurchasing(selectedListing.listing_id);
+    setPurchasing(selectedListing.id);
 
     try {
       // Calculate total cost
@@ -160,7 +160,7 @@ const ParkingMarketplacePage = () => {
 
       // Record transaction in backend
       const response = await api.post('/parking-marketplace/purchase', {
-        listing_id: selectedListing.listing_id,
+        listing_id: selectedListing.id,
         token_amount: purchaseAmount,
         total_amount_usdc: totalCost,
         solana_tx_signature: mockSignature,
