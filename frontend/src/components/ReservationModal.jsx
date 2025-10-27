@@ -224,6 +224,21 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     const priceSOL = priceCalculation.price / 600;
     const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
 
+    // Check user balance
+    const balance = await connection.getBalance(wallet.publicKey);
+    const minRent = 5000; // 0.000005 SOL minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const requiredBalance = lamports + minRent + estimatedFee;
+
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+
+    if (balance < requiredBalance) {
+      throw new Error(
+        `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+        `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+      );
+    }
+
     // Create transaction
     const transaction = new Transaction().add(
       SystemProgram.transfer({
@@ -260,6 +275,21 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
     const priceSOL = priceCalculation.price / 600;
     const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
+
+    // Check user balance
+    const balance = await connection.getBalance(wallet.publicKey);
+    const minRent = 5000; // 0.000005 SOL minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const requiredBalance = lamports + minRent + estimatedFee;
+
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+
+    if (balance < requiredBalance) {
+      throw new Error(
+        `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+        `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+      );
+    }
 
     const transaction = new Transaction().add(
       SystemProgram.transfer({

@@ -1802,8 +1802,9 @@ function MapPage() {
       {showAdvancedFilters && (
         <AdvancedFilters
           parkings={parkings}
+          isOpen={showAdvancedFilters}
           onClose={() => setShowAdvancedFilters(false)}
-          onFilteredResults={setFilteredParkings}
+          onFilterChange={setFilteredParkings}
         />
       )}
     </div>
