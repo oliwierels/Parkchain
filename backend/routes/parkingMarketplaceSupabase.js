@@ -436,6 +436,7 @@ router.get('/my-transactions', authenticateToken, async (req, res) => {
       .select(`
         *,
         asset:parking_assets(*),
+        listing:parking_marketplace_listings(listing_metadata),
         seller:users(id, full_name, email)
       `)
       .eq('buyer_id', userId)
@@ -446,12 +447,13 @@ router.get('/my-transactions', authenticateToken, async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to fetch transactions' });
     }
 
-    // Format transactions with asset details
+    // Format transactions with asset details from listing_metadata
     const formattedTransactions = (data || []).map(tx => ({
       ...tx,
-      parking_lot_name: tx.asset?.parking_lot_name,
-      city: tx.asset?.city,
-      asset_type: tx.asset?.asset_type,
+      parking_lot_name: tx.listing?.listing_metadata?.parking_lot_name || 'Unknown Parking',
+      city: tx.listing?.listing_metadata?.city || 'Unknown City',
+      address: tx.listing?.listing_metadata?.address || '',
+      asset_type: tx.asset?.asset_type || 'single_spot',
       seller_name: tx.seller?.full_name || 'Unknown',
     }));
 
@@ -476,7 +478,7 @@ router.get('/my-holdings', authenticateToken, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Get all purchases by this user
+    // Get all purchases by this user (removed payment_status filter as column doesn't exist)
     const { data: purchases, error: purchasesError } = await supabase
       .from('parking_asset_transactions')
       .select('asset_id, token_amount, asset:parking_assets(*)')
@@ -496,6 +498,7 @@ router.get('/my-holdings', authenticateToken, async (req, res) => {
         holdingsMap[assetId] = {
           asset_id: assetId,
           asset: purchase.asset,
+          listing_metadata: purchase.listing?.listing_metadata,
           total_tokens: 0,
         };
       }
@@ -507,8 +510,8 @@ router.get('/my-holdings', authenticateToken, async (req, res) => {
       asset_id: holding.asset_id,
       asset_token_address: holding.asset?.asset_token_address,
       asset_type: holding.asset?.asset_type,
-      parking_lot_name: holding.asset?.parking_lot_name,
-      city: holding.asset?.city,
+      parking_lot_name: holding.listing_metadata?.parking_lot_name || 'Unknown Parking',
+      city: holding.listing_metadata?.city || 'Unknown City',
       total_tokens: holding.total_tokens,
       total_supply: holding.asset?.total_supply || 1,
       estimated_value_usdc: holding.asset?.estimated_value_usdc,

@@ -41,6 +41,11 @@ const ParkingMarketplacePage = () => {
   // Selected listing for purchase modal
   const [selectedListing, setSelectedListing] = useState(null);
   const [purchaseAmount, setPurchaseAmount] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState('USDC');
+
+  // Success modal
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState(null);
 
   useEffect(() => {
     fetchMarketplaceListings();
@@ -176,6 +181,7 @@ const ParkingMarketplacePage = () => {
   const handlePurchase = (listing) => {
     setSelectedListing(listing);
     setPurchaseAmount(1);
+    setPaymentMethod('USDC'); // Reset to default
   };
 
   const executePurchase = async () => {
@@ -186,15 +192,6 @@ const ParkingMarketplacePage = () => {
     try {
       // Calculate total cost
       const totalCost = selectedListing.price_per_token_usdc * purchaseAmount;
-
-      // DEMO MODE: Simulate purchase without real Solana transaction
-      // In production, this would build and execute a real transaction
-      console.log('🎭 DEMO MODE: Simulating purchase...', {
-        listing: selectedListing.parking_lot_name,
-        tokens: purchaseAmount,
-        cost: totalCost,
-        wallet: wallet.publicKey.toBase58(),
-      });
 
       // Simulate processing delay for realism
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -208,13 +205,21 @@ const ParkingMarketplacePage = () => {
         token_amount: purchaseAmount,
         total_amount_usdc: totalCost,
         solana_tx_signature: mockSignature,
-        payment_method: 'USDC',
+        payment_method: paymentMethod,
         gateway_used: true,
         gateway_delivery_method: 'demo',
       });
 
       if (response.data.success) {
-        alert(`✅ Purchase successful! You now own ${purchaseAmount} parking asset tokens.\n\n🎭 DEMO MODE: No real blockchain transaction was executed.\nIn production, this would transfer USDC and mint parking tokens on Solana.`);
+        // Show success modal instead of alert
+        setSuccessData({
+          parking: selectedListing.parking_lot_name,
+          tokens: purchaseAmount,
+          cost: totalCost,
+          method: paymentMethod,
+          txSignature: mockSignature
+        });
+        setShowSuccessModal(true);
         setSelectedListing(null);
         fetchMarketplaceListings();
         // Refresh holdings and transactions
@@ -706,6 +711,19 @@ const ParkingMarketplacePage = () => {
               </div>
 
               <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                >
+                  <option value="USDC">USDC - USD Coin</option>
+                  <option value="SOL">SOL - Solana</option>
+                  <option value="EUROC">EUROC - Euro Coin</option>
+                </select>
+              </div>
+
+              <div className="mb-6">
                 <label className="block text-gray-300 mb-2">Number of Tokens</label>
                 <input
                   type="number"
@@ -747,6 +765,74 @@ const ParkingMarketplacePage = () => {
                   className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   {purchasing ? 'Processing...' : 'Confirm Purchase'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && successData && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-green-900 via-green-800 to-green-900 rounded-xl p-8 max-w-md w-full border-2 border-green-500 shadow-2xl"
+            >
+              {/* Success Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-green-500 rounded-full p-4">
+                  <BsCheck2Circle className="text-white text-6xl" />
+                </div>
+              </div>
+
+              {/* Success Title */}
+              <h2 className="text-white text-3xl font-bold text-center mb-4">
+                Purchase Successful! 🎉
+              </h2>
+
+              {/* Success Details */}
+              <div className="bg-white/10 rounded-lg p-4 mb-6 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Parking:</span>
+                  <span className="text-white font-semibold">{successData.parking}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Tokens Purchased:</span>
+                  <span className="text-green-400 font-bold">{successData.tokens}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Total Cost:</span>
+                  <span className="text-white font-bold">${successData.cost.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Payment Method:</span>
+                  <span className="text-blue-400 font-semibold">{successData.method}</span>
+                </div>
+              </div>
+
+              {/* Transaction Info */}
+              <div className="bg-white/5 rounded-lg p-3 mb-6">
+                <p className="text-gray-400 text-xs mb-1">Transaction Signature:</p>
+                <p className="text-gray-300 text-xs font-mono break-all">{successData.txSignature}</p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    handleTabChange('holdings');
+                  }}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  View Holdings
+                </button>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Done
                 </button>
               </div>
             </motion.div>
