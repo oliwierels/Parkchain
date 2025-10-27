@@ -1,6 +1,7 @@
 // frontend/src/components/AddParkingModal.jsx
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { parkingAPI } from '../services/api';
 
 function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
@@ -19,6 +20,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [stage, setStage] = useState('form'); // 'form', 'submitting', 'success'
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,6 +34,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setStage('submitting');
 
     try {
       // Walidacja
@@ -71,40 +74,60 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
         throw new Error(errorData.error || 'Nie udało się dodać parkingu');
       }
 
-      alert('Parking dodany pomyślnie!');
-      onSuccess();
+      // Success!
+      setStage('success');
+
+      // Wait for animation then callback
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
     } catch (err) {
       console.error('❌ Błąd przy dodawaniu parkingu:', err);
       setError(err.response?.data?.error || err.message || 'Nie udało się dodać parkingu');
+      setStage('form');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 2000,
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        maxWidth: '500px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
-      }}>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 2000,
+          padding: '20px'
+        }}
+        onClick={stage !== 'submitting' ? onClose : undefined}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
