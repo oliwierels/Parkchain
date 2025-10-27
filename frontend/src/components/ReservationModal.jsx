@@ -421,6 +421,47 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 10px 0' }}>
             {parking.address}
           </p>
+          {/* Parking Type Badge */}
+          {parking.type && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '600',
+              marginBottom: '10px',
+              background: parking.type === 'covered'
+                ? '#EFF6FF'
+                : parking.type === 'ev_charging'
+                ? '#FFFBEB'
+                : '#ECFDF5',
+              border: `2px solid ${
+                parking.type === 'covered'
+                  ? '#3B82F6'
+                  : parking.type === 'ev_charging'
+                  ? '#F59E0B'
+                  : '#10B981'
+              }`,
+              color: parking.type === 'covered'
+                ? '#1E40AF'
+                : parking.type === 'ev_charging'
+                ? '#92400E'
+                : '#065F46'
+            }}>
+              <span>
+                {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
+              </span>
+              <span>
+                {parking.type === 'covered'
+                  ? 'Zadaszony'
+                  : parking.type === 'ev_charging'
+                  ? 'Z ładowarką EV'
+                  : 'Odkryty'}
+              </span>
+            </div>
+          )}
           <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
             {parking.price_per_hour || parking.hourly_rate} zł/godz
           </p>
