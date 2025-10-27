@@ -15,8 +15,10 @@ import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import AdvancedFilters from '../components/AdvancedFilters';
+import ParkingSuccessAnimation from '../components/ParkingSuccessAnimation';
 import { useAuth } from '../context/AuthContext';
 import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaHome,
   FaCog,
@@ -223,6 +225,7 @@ function MapPage() {
   const [addParkingMode, setAddParkingMode] = useState(false);
   const [newParkingLocation, setNewParkingLocation] = useState(null);
   const [showAddParkingModal, setShowAddParkingModal] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   // Nowe state dla dodawania ładowarki
   const [addChargingMode, setAddChargingMode] = useState(false);
@@ -454,6 +457,10 @@ function MapPage() {
   const handleAddParkingSuccess = () => {
     setShowAddParkingModal(false);
     setNewParkingLocation(null);
+
+    // Show success animation! 🎉
+    setShowSuccessAnimation(true);
+
     // Odśwież parkingi
     parkingAPI.getAllParkings().then(data => setParkings(data));
   };
@@ -997,6 +1004,102 @@ function MapPage() {
                   fontFamily: 'monospace'
                 }}>
                   {destination.lat.toFixed(5)}, {destination.lng.toFixed(5)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Animated Marker for New Parking Location 🎯✨ */}
+        {newParkingLocation && (
+          <Marker
+            position={[newParkingLocation.lat, newParkingLocation.lng]}
+            icon={L.divIcon({
+              html: `
+                <div style="position: relative; width: 40px; height: 40px;">
+                  <div class="pulse-ring"></div>
+                  <div class="pulse-ring" style="animation-delay: 0.4s;"></div>
+                  <div class="pulse-ring" style="animation-delay: 0.8s;"></div>
+                  <div class="pulse-dot"></div>
+                </div>
+                <style>
+                  @keyframes pulse {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 0.6; }
+                    50% { opacity: 0.3; }
+                    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+                  }
+                  @keyframes glow {
+                    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); transform: translate(-50%, -50%) scale(1); }
+                    50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); transform: translate(-50%, -50%) scale(1.2); }
+                  }
+                  .pulse-ring {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    border: 3px solid #6366F1;
+                    animation: pulse 2s infinite ease-out;
+                    pointer-events: none;
+                  }
+                  .pulse-dot {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 20px;
+                    height: 20px;
+                    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    animation: glow 1.5s infinite ease-in-out;
+                    z-index: 1;
+                    cursor: pointer;
+                  }
+                </style>
+              `,
+              className: '',
+              iconSize: [40, 40],
+              iconAnchor: [20, 20],
+              popupAnchor: [0, -20]
+            })}
+          >
+            <Popup>
+              <div style={{
+                minWidth: '220px',
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                color: 'white'
+              }}>
+                <div style={{
+                  fontSize: '32px',
+                  marginBottom: '8px'
+                }}>
+                  🅿️✨
+                </div>
+                <h3 style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  Nowa lokalizacja parkingu!
+                </h3>
+                <p style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  opacity: 0.9,
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontFamily: 'monospace'
+                }}>
+                  {newParkingLocation.lat.toFixed(5)}, {newParkingLocation.lng.toFixed(5)}
                 </p>
               </div>
             </Popup>
@@ -1849,6 +1952,12 @@ function MapPage() {
           onFilterChange={setFilteredParkings}
         />
       )}
+
+      {/* Success Animation - The WOW Effect! ✨🎉 */}
+      <ParkingSuccessAnimation
+        show={showSuccessAnimation}
+        onComplete={() => setShowSuccessAnimation(false)}
+      />
     </div>
   );
 }

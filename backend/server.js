@@ -1366,56 +1366,97 @@ app.post('/api/reservations', authenticateToken, [
   }
 
   try {
-    const { lot_id, start_time, end_time, license_plate } = req.body;
+    const {
+      lot_id,
+      start_time,
+      end_time,
+      license_plate,
+      pricing_type,
+      payment_method,
+      payment_signature,
+      payment_status
+    } = req.body;
     const user_id = req.user.id;
-    
+
+    console.log('📝 Dane rezerwacji:', { lot_id, start_time, end_time, license_plate, pricing_type, payment_method, payment_status });
+
     // Sprawdź dostępność i pobierz cenę
     const { data: parking, error: parkingError } = await supabase
       .from('parking_lots')
-      .select('available_spots, price_per_hour')
+      .select('available_spots, price_per_hour, price_per_day, price_per_week, price_per_month')
       .eq('id', lot_id)
       .single();
-    
+
     if (parkingError || !parking) {
       return res.status(404).json({ error: 'Parking lot not found' });
     }
-    
+
     if (parking.available_spots <= 0) {
       return res.status(400).json({ error: 'No available spots' });
     }
-    
-    // WAŻNE: Oblicz cenę
+
+    // WAŻNE: Oblicz cenę bazując na pricing_type
     const hours = (new Date(end_time) - new Date(start_time)) / (1000 * 60 * 60);
-    const price = hours * parking.price_per_hour;
-    
-    console.log('💰 Obliczona cena:', price, 'zł za', hours, 'godzin');
-    
-    // Stwórz rezerwację z ceną
+    const days = hours / 24;
+    const weeks = days / 7;
+    const months = days / 30;
+
+    let price = 0;
+
+    switch (pricing_type) {
+      case 'hourly':
+        price = hours * (parking.price_per_hour || 0);
+        break;
+      case 'daily':
+        price = Math.ceil(days) * (parking.price_per_day || parking.price_per_hour * 24);
+        break;
+      case 'weekly':
+        price = Math.ceil(weeks) * (parking.price_per_week || parking.price_per_hour * 24 * 7);
+        break;
+      case 'monthly':
+        price = Math.ceil(months) * (parking.price_per_month || parking.price_per_hour * 24 * 30);
+        break;
+      default:
+        price = hours * (parking.price_per_hour || 0);
+    }
+
+    console.log('💰 Obliczona cena:', price, 'zł (', pricing_type, ')');
+
+    // Przygotuj dane rezerwacji
+    const reservationData = {
+      user_id,
+      lot_id,
+      start_time,
+      end_time,
+      license_plate: license_plate || null,
+      price: price,
+      status: payment_status === 'paid' ? 'active' : 'pending'
+    };
+
+    // Dodaj opcjonalne pola jeśli istnieją
+    if (pricing_type) reservationData.pricing_type = pricing_type;
+    if (payment_method) reservationData.payment_method = payment_method;
+    if (payment_signature) reservationData.payment_tx = payment_signature;
+
+    // Stwórz rezerwację
     const { data, error } = await supabase
       .from('reservations')
-      .insert([{
-        user_id,
-        lot_id,
-        start_time,
-        end_time,
-        license_plate: license_plate || null,
-        price: price, // DODAJ TO
-        status: 'pending'
-      }])
+      .insert([reservationData])
       .select()
       .single();
-    
+
     if (error) {
       console.error('❌ Błąd tworzenia rezerwacji:', error);
       throw error;
     }
-    
+
     // Zmniejsz dostępne miejsca
     await supabase
       .from('parking_lots')
       .update({ available_spots: parking.available_spots - 1 })
       .eq('id', lot_id);
-    
+
+    console.log('✅ Rezerwacja utworzona:', data);
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating reservation:', error);
