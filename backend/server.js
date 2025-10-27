@@ -2040,6 +2040,892 @@ app.use('/api/institutional-operators', parkingMarketplaceRoutes);
 
 console.log('✅ Parking Marketplace routes registered');
 
+// ========================================
+// REVIEWS AND RATINGS SYSTEM
+// ========================================
+
+// POST /api/reviews - Create a new review
+app.post('/api/reviews', authenticateToken, [
+  body('target_type').isIn(['parking_lot', 'ev_charger']),
+  body('target_id').isUUID(),
+  body('rating').isInt({ min: 1, max: 5 }),
+  body('title').optional().isLength({ max: 200 }),
+  body('comment').optional()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { target_type, target_id, rating, title, comment } = req.body;
+    const userId = req.user.id;
+
+    // Check if user has already reviewed this target
+    const { data: existingReview } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('target_type', target_type)
+      .eq('target_id', target_id)
+      .maybeSingle();
+
+    if (existingReview) {
+      return res.status(400).json({ error: 'You have already reviewed this item' });
+    }
+
+    // Verify target exists
+    const targetTable = target_type === 'parking_lot' ? 'parking_lots' : 'ev_chargers';
+    const { data: targetExists } = await supabase
+      .from(targetTable)
+      .select('id')
+      .eq('id', target_id)
+      .maybeSingle();
+
+    if (!targetExists) {
+      return res.status(404).json({ error: 'Target not found' });
+    }
+
+    // Create review
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert([{
+        user_id: userId,
+        target_type,
+        target_id,
+        rating,
+        title,
+        comment
+      }])
+      .select('*, users(full_name, email)')
+      .single();
+
+    if (error) throw error;
+
+    console.log(`✅ Review created for ${target_type}:${target_id} by user ${userId}`);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error creating review:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/reviews - Get reviews for a target
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const { target_type, target_id, limit = 50, offset = 0, sort = 'recent' } = req.query;
+
+    if (!target_type || !target_id) {
+      return res.status(400).json({ error: 'target_type and target_id are required' });
+    }
+
+    let query = supabase
+      .from('reviews')
+      .select(`
+        *,
+        users(full_name),
+        review_responses(*, users(full_name)),
+        review_photos(photo_url)
+      `)
+      .eq('target_type', target_type)
+      .eq('target_id', target_id);
+
+    // Apply sorting
+    if (sort === 'recent') {
+      query = query.order('created_at', { ascending: false });
+    } else if (sort === 'highest') {
+      query = query.order('rating', { ascending: false });
+    } else if (sort === 'lowest') {
+      query = query.order('rating', { ascending: true });
+    } else if (sort === 'helpful') {
+      query = query.order('helpful_count', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json(data || []);
+
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/reviews/:id - Get single review
+app.get('/api/reviews/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        users(full_name),
+        review_responses(*, users(full_name)),
+        review_photos(photo_url)
+      `)
+      .eq('id', req.params.id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Review not found' });
+
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error fetching review:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/reviews/:id - Update review
+app.put('/api/reviews/:id', authenticateToken, [
+  body('rating').optional().isInt({ min: 1, max: 5 }),
+  body('title').optional().isLength({ max: 200 }),
+  body('comment').optional()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { rating, title, comment } = req.body;
+    const userId = req.user.id;
+    const reviewId = req.params.id;
+
+    // Check if review belongs to user
+    const { data: review } = await supabase
+      .from('reviews')
+      .select('user_id')
+      .eq('id', reviewId)
+      .single();
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (review.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this review' });
+    }
+
+    // Update review
+    const updateData = {};
+    if (rating !== undefined) updateData.rating = rating;
+    if (title !== undefined) updateData.title = title;
+    if (comment !== undefined) updateData.comment = comment;
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .update(updateData)
+      .eq('id', reviewId)
+      .select('*, users(full_name)')
+      .single();
+
+    if (error) throw error;
+
+    console.log(`✅ Review ${reviewId} updated by user ${userId}`);
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/reviews/:id - Delete review
+app.delete('/api/reviews/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reviewId = req.params.id;
+
+    // Check if review belongs to user
+    const { data: review } = await supabase
+      .from('reviews')
+      .select('user_id')
+      .eq('id', reviewId)
+      .single();
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    if (review.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this review' });
+    }
+
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', reviewId);
+
+    if (error) throw error;
+
+    console.log(`✅ Review ${reviewId} deleted by user ${userId}`);
+    res.json({ message: 'Review deleted successfully' });
+
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/reviews/:id/helpful - Mark review as helpful
+app.post('/api/reviews/:id/helpful', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reviewId = req.params.id;
+
+    // Check if already marked as helpful
+    const { data: existing } = await supabase
+      .from('review_helpful')
+      .select('id')
+      .eq('review_id', reviewId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      // Remove helpful mark
+      const { error } = await supabase
+        .from('review_helpful')
+        .delete()
+        .eq('review_id', reviewId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      res.json({ message: 'Helpful mark removed', helpful: false });
+    } else {
+      // Add helpful mark
+      const { data, error } = await supabase
+        .from('review_helpful')
+        .insert([{ review_id: reviewId, user_id: userId }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({ message: 'Marked as helpful', helpful: true, data });
+    }
+
+  } catch (error) {
+    console.error('Error marking review as helpful:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/reviews/:id/response - Add operator response
+app.post('/api/reviews/:id/response', authenticateToken, [
+  body('response_text').notEmpty()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { response_text } = req.body;
+    const operatorId = req.user.id;
+    const reviewId = req.params.id;
+
+    // Verify review exists
+    const { data: review } = await supabase
+      .from('reviews')
+      .select('target_type, target_id')
+      .eq('id', reviewId)
+      .single();
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    // Verify operator owns the target (parking lot or charger)
+    const targetTable = review.target_type === 'parking_lot' ? 'parking_lots' : 'ev_chargers';
+    const { data: target } = await supabase
+      .from(targetTable)
+      .select('owner_id')
+      .eq('id', review.target_id)
+      .single();
+
+    if (!target || target.owner_id !== operatorId) {
+      return res.status(403).json({ error: 'Not authorized to respond to this review' });
+    }
+
+    // Check if response already exists
+    const { data: existingResponse } = await supabase
+      .from('review_responses')
+      .select('id')
+      .eq('review_id', reviewId)
+      .maybeSingle();
+
+    if (existingResponse) {
+      return res.status(400).json({ error: 'Response already exists for this review' });
+    }
+
+    // Create response
+    const { data, error } = await supabase
+      .from('review_responses')
+      .insert([{
+        review_id: reviewId,
+        operator_id: operatorId,
+        response_text
+      }])
+      .select('*, users(full_name)')
+      .single();
+
+    if (error) throw error;
+
+    console.log(`✅ Response added to review ${reviewId} by operator ${operatorId}`);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error adding review response:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/reviews/statistics/:target_type/:target_id - Get rating statistics
+app.get('/api/reviews/statistics/:target_type/:target_id', async (req, res) => {
+  try {
+    const { target_type, target_id } = req.params;
+
+    const { data, error } = await supabase
+      .from('review_statistics')
+      .select('*')
+      .eq('target_type', target_type)
+      .eq('target_id', target_id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    res.json(data || {
+      total_reviews: 0,
+      average_rating: 0,
+      five_star_count: 0,
+      four_star_count: 0,
+      three_star_count: 0,
+      two_star_count: 0,
+      one_star_count: 0
+    });
+
+  } catch (error) {
+    console.error('Error fetching review statistics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+console.log('✅ Reviews and Ratings routes registered');
+
+// ========================================
+// FAVORITES / BOOKMARKS SYSTEM
+// ========================================
+
+// POST /api/favorites - Add to favorites
+app.post('/api/favorites', authenticateToken, [
+  body('target_type').isIn(['parking_lot', 'ev_charger']),
+  body('target_id').isUUID(),
+  body('notes').optional()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { target_type, target_id, notes } = req.body;
+    const userId = req.user.id;
+
+    // Check if already favorited
+    const { data: existing } = await supabase
+      .from('favorites')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('target_type', target_type)
+      .eq('target_id', target_id)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(400).json({ error: 'Already in favorites' });
+    }
+
+    // Verify target exists
+    const targetTable = target_type === 'parking_lot' ? 'parking_lots' : 'ev_chargers';
+    const { data: targetExists } = await supabase
+      .from(targetTable)
+      .select('id')
+      .eq('id', target_id)
+      .maybeSingle();
+
+    if (!targetExists) {
+      return res.status(404).json({ error: 'Target not found' });
+    }
+
+    // Add to favorites
+    const { data, error } = await supabase
+      .from('favorites')
+      .insert([{ user_id: userId, target_type, target_id, notes }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log(`✅ Favorite added: ${target_type}:${target_id} by user ${userId}`);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error adding favorite:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/favorites - Get user's favorites
+app.get('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { target_type } = req.query;
+
+    let query = supabase
+      .from('favorites')
+      .select(`
+        *,
+        parking_lots(*),
+        ev_chargers(*)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (target_type) {
+      query = query.eq('target_type', target_type);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Format response to include the target data directly
+    const formattedData = data.map(fav => ({
+      ...fav,
+      target: fav.target_type === 'parking_lot' ? fav.parking_lots : fav.ev_chargers
+    }));
+
+    res.json(formattedData);
+
+  } catch (error) {
+    console.error('Error fetching favorites:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/favorites/:id - Remove from favorites
+app.delete('/api/favorites/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const favoriteId = req.params.id;
+
+    // Check if favorite belongs to user
+    const { data: favorite } = await supabase
+      .from('favorites')
+      .select('user_id')
+      .eq('id', favoriteId)
+      .single();
+
+    if (!favorite) {
+      return res.status(404).json({ error: 'Favorite not found' });
+    }
+
+    if (favorite.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const { error } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('id', favoriteId);
+
+    if (error) throw error;
+
+    console.log(`✅ Favorite ${favoriteId} removed by user ${userId}`);
+    res.json({ message: 'Favorite removed successfully' });
+
+  } catch (error) {
+    console.error('Error removing favorite:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/favorites/target/:target_type/:target_id - Remove by target
+app.delete('/api/favorites/target/:target_type/:target_id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { target_type, target_id } = req.params;
+
+    const { error } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('user_id', userId)
+      .eq('target_type', target_type)
+      .eq('target_id', target_id);
+
+    if (error) throw error;
+
+    console.log(`✅ Favorite removed: ${target_type}:${target_id} by user ${userId}`);
+    res.json({ message: 'Favorite removed successfully' });
+
+  } catch (error) {
+    console.error('Error removing favorite:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/favorites/check/:target_type/:target_id - Check if favorited
+app.get('/api/favorites/check/:target_type/:target_id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { target_type, target_id } = req.params;
+
+    const { data, error } = await supabase
+      .from('favorites')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('target_type', target_type)
+      .eq('target_id', target_id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    res.json({ isFavorite: !!data, favoriteId: data?.id });
+
+  } catch (error) {
+    console.error('Error checking favorite:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/favorites/:id/notes - Update favorite notes
+app.put('/api/favorites/:id/notes', authenticateToken, [
+  body('notes').optional()
+], async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const favoriteId = req.params.id;
+    const { notes } = req.body;
+
+    // Check if favorite belongs to user
+    const { data: favorite } = await supabase
+      .from('favorites')
+      .select('user_id')
+      .eq('id', favoriteId)
+      .single();
+
+    if (!favorite) {
+      return res.status(404).json({ error: 'Favorite not found' });
+    }
+
+    if (favorite.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const { data, error } = await supabase
+      .from('favorites')
+      .update({ notes })
+      .eq('id', favoriteId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error updating favorite notes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+console.log('✅ Favorites routes registered');
+
+// ========================================
+// SUPPORT TICKET SYSTEM
+// ========================================
+
+// POST /api/support/tickets - Create new ticket
+app.post('/api/support/tickets', authenticateToken, [
+  body('subject').notEmpty().isLength({ max: 200 }),
+  body('description').notEmpty(),
+  body('category').isIn(['technical', 'billing', 'parking', 'charging', 'account', 'other']),
+  body('priority').optional().isIn(['low', 'medium', 'high', 'urgent'])
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { subject, description, category, priority } = req.body;
+    const userId = req.user.id;
+
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .insert([{
+        user_id: userId,
+        subject,
+        description,
+        category,
+        priority: priority || 'medium',
+        status: 'open'
+      }])
+      .select('*, users(full_name, email)')
+      .single();
+
+    if (error) throw error;
+
+    console.log(`✅ Support ticket created: ${data.id} by user ${userId}`);
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error creating ticket:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/support/tickets - Get user's tickets
+app.get('/api/support/tickets', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { status } = req.query;
+
+    let query = supabase
+      .from('support_tickets')
+      .select('*, users(full_name, email)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json(data || []);
+
+  } catch (error) {
+    console.error('Error fetching tickets:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/support/tickets/:id - Get single ticket with messages
+app.get('/api/support/tickets/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const ticketId = req.params.id;
+
+    const { data: ticket, error: ticketError } = await supabase
+      .from('support_tickets')
+      .select('*, users(full_name, email)')
+      .eq('id', ticketId)
+      .single();
+
+    if (ticketError) throw ticketError;
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    // Check authorization
+    if (ticket.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Get messages
+    const { data: messages, error: messagesError } = await supabase
+      .from('support_ticket_messages')
+      .select('*, users(full_name)')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true });
+
+    if (messagesError) throw messagesError;
+
+    res.json({ ...ticket, messages: messages || [] });
+
+  } catch (error) {
+    console.error('Error fetching ticket:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/support/tickets/:id/messages - Add message to ticket
+app.post('/api/support/tickets/:id/messages', authenticateToken, [
+  body('message').notEmpty()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const userId = req.user.id;
+    const ticketId = req.params.id;
+    const { message } = req.body;
+
+    // Verify ticket belongs to user
+    const { data: ticket } = await supabase
+      .from('support_tickets')
+      .select('user_id')
+      .eq('id', ticketId)
+      .single();
+
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    if (ticket.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Add message
+    const { data, error } = await supabase
+      .from('support_ticket_messages')
+      .insert([{
+        ticket_id: ticketId,
+        user_id: userId,
+        message,
+        is_staff: false
+      }])
+      .select('*, users(full_name)')
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+
+  } catch (error) {
+    console.error('Error adding message:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/support/tickets/:id/status - Update ticket status
+app.put('/api/support/tickets/:id/status', authenticateToken, [
+  body('status').isIn(['open', 'in_progress', 'waiting', 'resolved', 'closed'])
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const userId = req.user.id;
+    const ticketId = req.params.id;
+    const { status } = req.body;
+
+    // Verify ticket belongs to user
+    const { data: ticket } = await supabase
+      .from('support_tickets')
+      .select('user_id')
+      .eq('id', ticketId)
+      .single();
+
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    if (ticket.user_id !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Update status
+    const updateData = { status };
+    if (status === 'resolved' || status === 'closed') {
+      updateData.resolved_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update(updateData)
+      .eq('id', ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error updating ticket status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+console.log('✅ Support Tickets routes registered');
+
+// ========================================
+// USER ACTIVITY TRACKING
+// ========================================
+
+// GET /api/activity - Get user's recent activity
+app.get('/api/activity', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { limit = 50, offset = 0, activity_type } = req.query;
+
+    let query = supabase
+      .from('user_activity')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + parseInt(limit) - 1);
+
+    if (activity_type) {
+      query = query.eq('activity_type', activity_type);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json(data || []);
+
+  } catch (error) {
+    console.error('Error fetching activity:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/activity/stats - Get activity statistics
+app.get('/api/activity/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get activity counts by type
+    const { data, error } = await supabase
+      .from('user_activity')
+      .select('activity_type')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    // Count activities by type
+    const stats = (data || []).reduce((acc, item) => {
+      acc[item.activity_type] = (acc[item.activity_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    res.json({
+      total: data?.length || 0,
+      byType: stats
+    });
+
+  } catch (error) {
+    console.error('Error fetching activity stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+console.log('✅ User Activity routes registered');
+
 // 404 handler - must be before server start
 app.use((req, res) => {
   res.status(404).json({
