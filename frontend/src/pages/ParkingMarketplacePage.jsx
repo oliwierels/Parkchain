@@ -47,6 +47,12 @@ const ParkingMarketplacePage = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState(null);
 
+  // Sell modal
+  const [selectedHolding, setSelectedHolding] = useState(null);
+  const [sellAmount, setSellAmount] = useState(1);
+  const [sellPrice, setSellPrice] = useState(0);
+  const [selling, setSelling] = useState(false);
+
   useEffect(() => {
     fetchMarketplaceListings();
     fetchMarketStats();
@@ -171,10 +177,10 @@ const ParkingMarketplacePage = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'holdings' && myHoldings.length === 0) {
-      fetchMyHoldings();
-    } else if (tab === 'transactions' && myTransactions.length === 0) {
-      fetchMyTransactions();
+    if (tab === 'holdings') {
+      fetchMyHoldings(); // Always refresh holdings
+    } else if (tab === 'transactions') {
+      fetchMyTransactions(); // Always refresh transactions
     }
   };
 
@@ -233,6 +239,50 @@ const ParkingMarketplacePage = () => {
       alert('❌ Purchase failed: ' + error.message);
     } finally {
       setPurchasing(null);
+    }
+  };
+
+  const handleSell = (holding) => {
+    setSelectedHolding(holding);
+    setSellAmount(1);
+    setSellPrice(0); // User will set their own price
+  };
+
+  const executeSell = async () => {
+    if (!selectedHolding || sellAmount < 1 || sellPrice <= 0) {
+      alert('Please enter valid amount and price');
+      return;
+    }
+
+    setSelling(true);
+
+    try {
+      const response = await api.post('/parking-marketplace/create-user-listing', {
+        asset_id: selectedHolding.asset_id,
+        token_amount: sellAmount,
+        price_per_token_usdc: sellPrice,
+      });
+
+      if (response.data.success) {
+        setSuccessData({
+          parking: selectedHolding.parking_lot_name,
+          tokens: sellAmount,
+          price: sellPrice,
+          totalValue: sellAmount * sellPrice,
+          action: 'listed'
+        });
+        setShowSuccessModal(true);
+        setSelectedHolding(null);
+        fetchMarketplaceListings();
+        fetchMyHoldings();
+      } else {
+        alert('❌ Failed to create listing: ' + response.data.error);
+      }
+    } catch (error) {
+      console.error('Sell error:', error);
+      alert('❌ Failed to create listing: ' + error.message);
+    } finally {
+      setSelling(false);
     }
   };
 
@@ -616,6 +666,14 @@ const ParkingMarketplacePage = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Sell Button */}
+                    <button
+                      onClick={() => handleSell(holding)}
+                      className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 rounded-lg transition-all"
+                    >
+                      Sell Tokens
+                    </button>
                   </motion.div>
                 ))}
               </div>
@@ -771,6 +829,83 @@ const ParkingMarketplacePage = () => {
           </div>
         )}
 
+        {/* Sell Modal */}
+        {selectedHolding && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-gray-900 rounded-xl p-8 max-w-md w-full border border-white/20"
+            >
+              <h2 className="text-white text-2xl font-bold mb-4">Sell Parking Tokens</h2>
+
+              <div className="mb-6">
+                <p className="text-gray-300 mb-2">{selectedHolding.parking_lot_name}</p>
+                <p className="text-gray-400 text-sm">{selectedHolding.city}</p>
+                <p className="text-blue-300 text-sm mt-2">You own: {selectedHolding.total_tokens} tokens</p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Number of Tokens to Sell</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={selectedHolding.total_tokens}
+                  value={sellAmount}
+                  onChange={(e) => setSellAmount(parseInt(e.target.value) || 1)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Price per Token (USDC)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={sellPrice}
+                  onChange={(e) => setSellPrice(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                  placeholder="Enter your selling price"
+                />
+              </div>
+
+              <div className="mb-6 bg-white/10 rounded-lg p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Tokens to Sell</span>
+                  <span className="text-white">{sellAmount}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Price per Token</span>
+                  <span className="text-white">${sellPrice.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-white/20 mt-2 pt-2 flex justify-between">
+                  <span className="text-white font-semibold">Total Listing Value</span>
+                  <span className="text-white font-semibold">
+                    ${(sellPrice * sellAmount).toLocaleString()} USDC
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSelectedHolding(null)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeSell}
+                  disabled={selling || sellPrice <= 0}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  {selling ? 'Creating Listing...' : 'List for Sale'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {/* Success Modal */}
         {showSuccessModal && successData && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -788,7 +923,7 @@ const ParkingMarketplacePage = () => {
 
               {/* Success Title */}
               <h2 className="text-white text-3xl font-bold text-center mb-4">
-                Purchase Successful! 🎉
+                {successData.action === 'listed' ? 'Listing Created! 🎉' : 'Purchase Successful! 🎉'}
               </h2>
 
               {/* Success Details */}
@@ -798,24 +933,41 @@ const ParkingMarketplacePage = () => {
                   <span className="text-white font-semibold">{successData.parking}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Tokens Purchased:</span>
+                  <span className="text-gray-300">{successData.action === 'listed' ? 'Tokens Listed:' : 'Tokens Purchased:'}</span>
                   <span className="text-green-400 font-bold">{successData.tokens}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Total Cost:</span>
-                  <span className="text-white font-bold">${successData.cost.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Payment Method:</span>
-                  <span className="text-blue-400 font-semibold">{successData.method}</span>
-                </div>
+                {successData.action === 'listed' ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Price per Token:</span>
+                      <span className="text-white font-bold">${successData.price.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Total Value:</span>
+                      <span className="text-white font-bold">${successData.totalValue.toLocaleString()}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Total Cost:</span>
+                      <span className="text-white font-bold">${successData.cost.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Payment Method:</span>
+                      <span className="text-blue-400 font-semibold">{successData.method}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Transaction Info */}
-              <div className="bg-white/5 rounded-lg p-3 mb-6">
-                <p className="text-gray-400 text-xs mb-1">Transaction Signature:</p>
-                <p className="text-gray-300 text-xs font-mono break-all">{successData.txSignature}</p>
-              </div>
+              {/* Transaction Info - Only for purchases */}
+              {successData.txSignature && (
+                <div className="bg-white/5 rounded-lg p-3 mb-6">
+                  <p className="text-gray-400 text-xs mb-1">Transaction Signature:</p>
+                  <p className="text-gray-300 text-xs font-mono break-all">{successData.txSignature}</p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-3">
