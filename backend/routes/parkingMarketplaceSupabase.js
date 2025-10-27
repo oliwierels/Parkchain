@@ -214,8 +214,7 @@ router.post('/purchase', authenticateToken, [
   body('total_amount_usdc').isFloat({ min: 0 }),
   body('solana_tx_signature').isString(),
   body('payment_method').isString(),
-  body('gateway_used').optional().isBoolean(),
-  body('gateway_delivery_method').optional().isString(),
+  // Note: gateway_used and gateway_delivery_method are accepted but not stored (DB schema doesn't have these columns yet)
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -232,8 +231,6 @@ router.post('/purchase', authenticateToken, [
       total_amount_usdc,
       payment_method,
       solana_tx_signature,
-      gateway_used,
-      gateway_delivery_method
     } = req.body;
 
     // Get listing
@@ -272,8 +269,6 @@ router.post('/purchase', authenticateToken, [
         solana_tx_signature: solana_tx_signature || `DEMO_${Date.now()}`,
         settlement_status: 'settled',
         compliance_checked: true,
-        gateway_used: gateway_used || false,
-        gateway_delivery_method: gateway_delivery_method || null,
       }])
       .select()
       .single();
