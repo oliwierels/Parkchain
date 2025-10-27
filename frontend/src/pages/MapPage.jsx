@@ -522,15 +522,15 @@ function MapPage() {
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
-      {/* Animacje CSS dla efektów UX */}
+      {/* 🎨 MEGA ANIMACJE CSS - SUPER WIDOCZNE EFEKTY UX */}
       <style>{`
         @keyframes ripple {
           0% {
             transform: scale(0);
-            opacity: 0.6;
+            opacity: 0.8;
           }
           100% {
-            transform: scale(4);
+            transform: scale(6);
             opacity: 0;
           }
         }
@@ -540,51 +540,119 @@ function MapPage() {
           100% { transform: rotate(360deg); }
         }
 
-        @keyframes modalSlideIn {
+        @keyframes superBounce {
           0% {
-            opacity: 0;
-            transform: scale(0.9) translateY(20px);
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.3);
+          }
+          70% {
+            transform: scale(0.9);
           }
           100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
+            transform: scale(1);
           }
         }
 
-        @keyframes backdropBlur {
-          0% {
-            backdrop-filter: blur(0px);
-            background: rgba(0, 0, 0, 0);
+        @keyframes shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) rotate(-2deg); }
+          20%, 40%, 60%, 80% { transform: translateX(5px) rotate(2deg); }
+        }
+
+        @keyframes megaGlow {
+          0%, 100% {
+            box-shadow: 0 0 5px rgba(99, 102, 241, 0.5),
+                        0 0 20px rgba(99, 102, 241, 0.4),
+                        0 0 40px rgba(99, 102, 241, 0.3);
           }
-          100% {
-            backdrop-filter: blur(8px);
-            background: rgba(0, 0, 0, 0.5);
+          50% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.8),
+                        0 0 60px rgba(99, 102, 241, 0.6),
+                        0 0 100px rgba(99, 102, 241, 0.4);
+          }
+        }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 0.8;
           }
         }
 
         @keyframes popupFloat {
           0% {
             opacity: 0;
-            transform: translateY(10px) scale(0.95);
+            transform: translateY(30px) scale(0.8) rotate(-5deg);
+          }
+          60% {
+            transform: translateY(-5px) scale(1.05) rotate(2deg);
           }
           100% {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0) scale(1) rotate(0deg);
           }
         }
 
-        /* Stylizacja Leaflet Popup dla lepszego UX */
+        @keyframes sparkle {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(0) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            transform: translate(var(--tx), var(--ty)) scale(1.5) rotate(180deg);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+          }
+        }
+
+        @keyframes rainbow {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
+        }
+
+        /* 🎯 Stylizacja Leaflet Popup - MEGA EFEKT */
         .leaflet-popup {
-          animation: popupFloat 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: popupFloat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         }
 
         .leaflet-popup-content-wrapper {
-          border-radius: 16px !important;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+          border-radius: 20px !important;
+          box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3),
+                      0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+          animation: megaGlow 2s infinite ease-in-out !important;
         }
 
         .leaflet-popup-tip {
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* 🌟 Sparkle effects */
+        .sparkle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: linear-gradient(45deg, #FFD700, #FFA500);
+          border-radius: 50%;
+          animation: sparkle 1.5s infinite;
+          pointer-events: none;
         }
       `}</style>
       {/* Minimal Floating Controls */}
@@ -1212,16 +1280,17 @@ function MapPage() {
           borderBottom: '2px solid rgba(99, 102, 241, 0.1)'
         }}>
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: '44px',
+            height: '44px',
             background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            borderRadius: '12px',
+            borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+            boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.2), 0 8px 16px rgba(99, 102, 241, 0.4)',
+            animation: 'pulse 2s infinite, float 3s infinite ease-in-out'
           }}>
-            <FaParking style={{ fontSize: '20px', color: 'white' }} />
+            <FaParking style={{ fontSize: '22px', color: 'white' }} />
           </div>
           <div style={{ flex: 1 }}>
             <h3 style={{
@@ -1453,11 +1522,12 @@ function MapPage() {
           {parking.available_spots > 0 && (
             <button
               onClick={(e) => {
-                // Efekt ripple
                 const button = e.currentTarget;
+
+                // 💥 MEGA EFEKT RIPPLE
                 const ripple = document.createElement('span');
                 const rect = button.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
+                const size = Math.max(rect.width, rect.height) * 2;
                 const x = e.clientX - rect.left - size / 2;
                 const y = e.clientY - rect.top - size / 2;
 
@@ -1466,16 +1536,38 @@ function MapPage() {
                 ripple.style.top = y + 'px';
                 ripple.style.position = 'absolute';
                 ripple.style.borderRadius = '50%';
-                ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+                ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
                 ripple.style.transform = 'scale(0)';
-                ripple.style.animation = 'ripple 0.6s ease-out';
+                ripple.style.animation = 'ripple 1s ease-out';
                 ripple.style.pointerEvents = 'none';
+                ripple.style.zIndex = '10';
 
                 button.style.position = 'relative';
                 button.style.overflow = 'hidden';
                 button.appendChild(ripple);
 
-                setTimeout(() => ripple.remove(), 600);
+                // ✨ DODAJ SPARKLES - PARTICLE EFFECTS!
+                for (let i = 0; i < 12; i++) {
+                  const sparkle = document.createElement('div');
+                  sparkle.className = 'sparkle';
+                  const angle = (Math.PI * 2 * i) / 12;
+                  const distance = 50 + Math.random() * 30;
+                  sparkle.style.left = (e.clientX - rect.left) + 'px';
+                  sparkle.style.top = (e.clientY - rect.top) + 'px';
+                  sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                  sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                  sparkle.style.animation = `sparkle 0.8s ease-out ${i * 0.05}s`;
+
+                  button.appendChild(sparkle);
+                  setTimeout(() => sparkle.remove(), 1000);
+                }
+
+                // 🎯 SHAKE + BOUNCE ANIMATION
+                button.style.animation = 'shake 0.5s, superBounce 0.6s';
+                setTimeout(() => {
+                  button.style.animation = '';
+                  ripple.remove();
+                }, 600);
 
                 handleReserveClick(parking);
               }}
@@ -1507,14 +1599,25 @@ function MapPage() {
               }}
               onMouseOver={(e) => {
                 if (!isModalOpening) {
-                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 8px 28px rgba(99, 102, 241, 0.5)';
+                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.08)';
+                  e.currentTarget.style.boxShadow = '0 20px 60px rgba(99, 102, 241, 0.8), 0 0 0 4px rgba(99, 102, 241, 0.3)';
+                  e.currentTarget.style.filter = 'brightness(1.15)';
+                  e.currentTarget.style.animation = 'pulse 0.8s infinite';
+
+                  // Animacja ikony
+                  const icon = e.currentTarget.querySelector('svg');
+                  if (icon) {
+                    icon.style.animation = 'shake 0.5s';
+                    setTimeout(() => { if(icon) icon.style.animation = ''; }, 500);
+                  }
                 }
               }}
               onMouseOut={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(99, 102, 241, 0.4)';
+                  e.currentTarget.style.filter = 'brightness(1)';
+                  e.currentTarget.style.animation = '';
                 }
               }}
             >

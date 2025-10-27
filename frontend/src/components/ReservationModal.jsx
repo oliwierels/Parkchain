@@ -365,39 +365,42 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       >
         <motion.div
           initial={{
-            scale: 0.85,
+            scale: 0.6,
             opacity: 0,
-            y: 40,
-            rotateX: 10
+            y: 100,
+            rotateX: 25,
+            rotateZ: -10
           }}
           animate={{
-            scale: 1,
+            scale: [0.6, 1.15, 0.95, 1],
             opacity: 1,
             y: 0,
-            rotateX: 0
+            rotateX: 0,
+            rotateZ: 0
           }}
           exit={{
-            scale: 0.9,
+            scale: 0.8,
             opacity: 0,
-            y: 20,
-            rotateX: 5
+            y: 50,
+            rotateX: 15
           }}
           transition={{
             type: 'spring',
-            stiffness: 400,
-            damping: 35,
-            mass: 0.8
+            stiffness: 200,
+            damping: 20,
+            mass: 1.2,
+            duration: 0.8
           }}
           style={{
             backgroundColor: 'white',
-            borderRadius: '24px',
-            padding: '32px',
+            borderRadius: '28px',
+            padding: '36px',
             maxWidth: step === 'payment' ? '900px' : '550px',
             width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
-            boxShadow: '0 30px 90px rgba(0,0,0,0.35), 0 0 0 1px rgba(99, 102, 241, 0.1), 0 0 60px rgba(99, 102, 241, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.8)',
+            boxShadow: '0 40px 120px rgba(0,0,0,0.4), 0 0 0 3px rgba(99, 102, 241, 0.3), 0 0 100px rgba(99, 102, 241, 0.15)',
+            border: '2px solid rgba(255, 255, 255, 0.9)',
             position: 'relative'
           }}
           onClick={(e) => e.stopPropagation()}
