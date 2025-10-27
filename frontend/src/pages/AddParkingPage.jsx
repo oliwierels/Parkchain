@@ -45,6 +45,15 @@ function AddParkingPage() {
   const navigate = useNavigate();
   const { toasts, addToast, removeToast } = useToast();
 
+  // Calculate form completion progress
+  const calculateProgress = () => {
+    const requiredFields = ['name', 'address', 'city', 'price_per_hour', 'total_spots', 'latitude', 'longitude'];
+    const filledFields = requiredFields.filter(field => formData[field] && formData[field].toString().trim() !== '');
+    return Math.round((filledFields.length / requiredFields.length) * 100);
+  };
+
+  const progress = calculateProgress();
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -99,15 +108,39 @@ function AddParkingPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Walidacja
-    if (!formData.name || !formData.address || !formData.price_per_hour || !formData.total_spots) {
-      addToast({ message: 'Wypełnij wszystkie wymagane pola', type: 'warning' });
+    // Szczegółowa walidacja
+    if (!formData.name || formData.name.trim().length < 3) {
+      addToast({ message: 'Nazwa parkingu musi mieć minimum 3 znaki', type: 'warning' });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.address || formData.address.trim().length < 5) {
+      addToast({ message: 'Podaj pełny adres parkingu', type: 'warning' });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.city || formData.city.trim().length < 2) {
+      addToast({ message: 'Podaj miasto', type: 'warning' });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.price_per_hour || parseFloat(formData.price_per_hour) <= 0) {
+      addToast({ message: 'Cena za godzinę musi być większa niż 0', type: 'warning' });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.total_spots || parseInt(formData.total_spots) < 1) {
+      addToast({ message: 'Liczba miejsc musi być większa niż 0', type: 'warning' });
       setLoading(false);
       return;
     }
 
     if (!formData.latitude || !formData.longitude) {
-      addToast({ message: 'Użyj przycisku "Znajdź współrzędne" aby dodać lokalizację', type: 'warning' });
+      addToast({ message: 'Użyj przycisku "Znajdź" lub wybierz lokalizację z mapy', type: 'warning' });
       setLoading(false);
       return;
     }
@@ -189,6 +222,39 @@ function AddParkingPage() {
           transition={{ delay: 0.1 }}
         >
           <Card variant="glass">
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-300">
+                  Postęp wypełniania
+                </span>
+                <span className={`text-sm font-bold ${progress === 100 ? 'text-green-400' : 'text-parkchain-400'}`}>
+                  {progress}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ type: 'spring', stiffness: 100 }}
+                  className={`h-full rounded-full ${
+                    progress === 100
+                      ? 'bg-gradient-to-r from-green-500 to-green-400'
+                      : 'bg-gradient-to-r from-parkchain-500 to-purple-500'
+                  }`}
+                />
+              </div>
+              {progress === 100 && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-green-400 mt-2 flex items-center gap-1"
+                >
+                  ✓ Wszystkie wymagane pola wypełnione!
+                </motion.p>
+              )}
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Nazwa parkingu */}
               <Input
