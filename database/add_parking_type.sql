@@ -8,7 +8,14 @@
 
 -- 1. Dodaj kolumnę type do parking_lots
 ALTER TABLE parking_lots
-ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'outdoor'
+ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'outdoor';
+
+-- 1b. Dodaj constraint dla type
+ALTER TABLE parking_lots
+DROP CONSTRAINT IF EXISTS parking_lots_type_check;
+
+ALTER TABLE parking_lots
+ADD CONSTRAINT parking_lots_type_check
 CHECK (type IN ('covered', 'outdoor', 'ev_charging'));
 
 -- 2. Ustaw domyślną wartość dla istniejących parkingów
