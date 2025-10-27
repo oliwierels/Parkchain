@@ -18,7 +18,10 @@ import {
   FaRocket,
   FaTrophy,
   FaLandmark,
-  FaWarehouse
+  FaWarehouse,
+  FaHeart,
+  FaTicketAlt,
+  FaHistory
 } from 'react-icons/fa';
 
 function Navbar() {
@@ -282,7 +285,46 @@ function Navbar() {
                         <FaChargingStation className="text-base" />
                         <span>Moje ładowarki</span>
                       </NavLink>
-                      
+
+                      {/* New Features */}
+                      <div className="border-t border-gray-700 my-2"></div>
+                      <NavLink
+                        to="/favorites"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaHeart className="text-base text-red-400" />
+                        <span>Ulubione</span>
+                      </NavLink>
+                      <NavLink
+                        to="/activity"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaHistory className="text-base" />
+                        <span>Aktywność</span>
+                      </NavLink>
+                      <NavLink
+                        to="/support"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaTicketAlt className="text-base" />
+                        <span>Wsparcie</span>
+                      </NavLink>
+
                       {/* Separator i przycisk wylogowania */}
                       <div className="border-t border-gray-700 my-2"></div> 
                       <button

@@ -23,6 +23,9 @@ import AchievementsPage from './pages/AchievementsPage';
 import GatewayShowcase from './components/GatewayShowcase';
 import ParkingMarketplacePage from './pages/ParkingMarketplacePage';
 import InstitutionalOperatorDashboard from './pages/InstitutionalOperatorDashboard';
+import FavoritesPage from './pages/FavoritesPage';
+import SupportPage from './pages/SupportPage';
+import ActivityPage from './pages/ActivityPage';
 
 function AppContent() {
   const location = useLocation();
@@ -67,6 +70,11 @@ function AppContent() {
               {/* Mastercard DeFi Hackathon - Parking Marketplace */}
               <Route path="/parking-marketplace" element={<ParkingMarketplacePage />} />
               <Route path="/institutional-operator" element={<InstitutionalOperatorDashboard />} />
+
+              {/* New Features */}
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
             </Routes>
           </div>
   );
