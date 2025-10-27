@@ -304,6 +304,94 @@ router.post('/purchase', authenticateToken, [
 });
 
 // ========================================
+// CREATE USER LISTING (Sell/Resell Tokens)
+// ========================================
+
+router.post('/create-user-listing', authenticateToken, [
+  body('asset_id').isInt(),
+  body('token_amount').isInt({ min: 1 }),
+  body('price_per_token_usdc').isFloat({ min: 0 }),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, errors: errors.array() });
+  }
+
+  const supabase = req.app.get('supabase');
+  const userId = req.user.id;
+
+  try {
+    const { asset_id, token_amount, price_per_token_usdc } = req.body;
+
+    // Check how many tokens user owns
+    const { data: purchases } = await supabase
+      .from('parking_asset_transactions')
+      .select('token_amount')
+      .eq('buyer_id', userId)
+      .eq('asset_id', asset_id)
+      .eq('settlement_status', 'settled');
+
+    const totalOwned = purchases?.reduce((sum, p) => sum + p.token_amount, 0) || 0;
+
+    if (totalOwned < token_amount) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient tokens. You own ${totalOwned} tokens but trying to sell ${token_amount}`
+      });
+    }
+
+    // Get asset info for listing_metadata
+    const { data: asset } = await supabase
+      .from('parking_assets')
+      .select('*')
+      .eq('id', asset_id)
+      .single();
+
+    // Get listing metadata from existing listing
+    const { data: existingListing } = await supabase
+      .from('parking_marketplace_listings')
+      .select('listing_metadata')
+      .eq('asset_id', asset_id)
+      .limit(1)
+      .single();
+
+    const total_price = token_amount * price_per_token_usdc;
+
+    // Create new listing
+    const { data: listing, error: listingError } = await supabase
+      .from('parking_marketplace_listings')
+      .insert([{
+        asset_id,
+        seller_id: userId,
+        listing_type: 'sale',
+        token_amount,
+        price_per_token_usdc,
+        total_price_usdc: total_price,
+        payment_methods: ['USDC', 'SOL', 'EUROC'],
+        status: 'active',
+        listing_metadata: existingListing?.listing_metadata || {},
+      }])
+      .select()
+      .single();
+
+    if (listingError) {
+      console.error('Error creating listing:', listingError);
+      return res.status(500).json({ success: false, error: 'Failed to create listing' });
+    }
+
+    res.json({
+      success: true,
+      listing_id: listing.id,
+      message: 'Listing created successfully',
+    });
+
+  } catch (error) {
+    console.error('Error creating user listing:', error);
+    res.status(500).json({ success: false, error: 'Failed to create listing' });
+  }
+});
+
+// ========================================
 // GET OPERATOR PROFILE
 // ========================================
 
