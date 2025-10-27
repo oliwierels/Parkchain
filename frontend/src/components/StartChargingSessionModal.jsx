@@ -66,7 +66,13 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
         estimated_kwh: chargingDetails?.kWhNeeded || null
       } : null;
 
-      const response = await fetch('http://localhost:3000/api/charging-sessions', {
+      console.log('🔌 Rozpoczynam sesję ładowania...', {
+        station_id: station.id,
+        station_name: station.name,
+        vehicle: selectedModel?.fullName
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/charging-sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,12 +86,22 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się rozpocząć sesji');
+        console.error('❌ Błąd API:', errorData);
+        throw new Error(errorData.error || errorData.details || 'Nie udało się rozpocząć sesji');
       }
 
       const data = await response.json();
-      console.log('✅ Sesja rozpoczęta:', data);
-      alert('⚡ Sesja ładowania rozpoczęta! Możesz ją zakończyć w swoim profilu.');
+      console.log('✅ Sesja rozpoczęta pomyślnie:', data);
+      console.log('📍 ID sesji:', data.id);
+      console.log('⚡ Stacja:', data.charging_stations?.name);
+
+      alert(`⚡ Sesja ładowania rozpoczęta!
+
+Stacja: ${data.charging_stations?.name || station.name}
+ID sesji: ${data.id}
+
+Możesz ją zakończyć w swoim profilu lub na mapie ładowania.`);
+
       onSuccess();
     } catch (err) {
       console.error('❌ Błąd rozpoczynania sesji:', err);

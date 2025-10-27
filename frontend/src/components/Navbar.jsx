@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationCenter from './NotificationCenter';
 import {
   FaHome,
   FaMap,
@@ -15,7 +16,12 @@ import {
   FaChargingStation,
   FaUser,
   FaRocket,
-  FaTrophy
+  FaTrophy,
+  FaLandmark,
+  FaWarehouse,
+  FaHeart,
+  FaTicketAlt,
+  FaHistory
 } from 'react-icons/fa';
 
 function Navbar() {
@@ -77,7 +83,7 @@ function Navbar() {
             <NavLink to="/" className="flex items-center gap-2 group">
               <img
                 className="h-40 w-auto transition-transform group-hover:scale-110"
-                src="/Parkchain.png" // <-- POPRAWIONA ŚCIEŻKA
+                src="/Parkchain.png"
                 alt="ParkChain"
               />
             </NavLink>
@@ -124,7 +130,29 @@ function Navbar() {
                   title="Marketplace DCP tokenów"
                 >
                   <FaGem />
-                  <span>Marketplace</span>
+                  <span>DCP Tokens</span>
+                </NavLink>
+                <NavLink
+                  to="/parking-marketplace"
+                  className={getFeaturedLinkClasses({
+                    active: 'bg-cyan-600',
+                    gradient: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700'
+                  })}
+                  title="🏆 ParkFi - Institutional Parking Marketplace (Mastercard Hackathon)"
+                >
+                  <FaWarehouse />
+                  <span>🅿️ ParkFi</span>
+                </NavLink>
+                <NavLink
+                  to="/institutional-operator"
+                  className={getFeaturedLinkClasses({
+                    active: 'bg-orange-600',
+                    gradient: 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+                  })}
+                  title="🏢 Institutional Operator Dashboard"
+                >
+                  <FaLandmark />
+                  <span>Operator</span>
                 </NavLink>
                 <NavLink
                   to="/badges"
@@ -180,8 +208,12 @@ function Navbar() {
           </div>
 
           {isAuthenticated && user ? (
-            // Nowy kontener dla dropdownu użytkownika
-            <div className="relative" ref={userDropdownRef}>
+            <div className="flex items-center gap-4">
+              {/* Notification Center */}
+              <NotificationCenter />
+
+              {/* User Menu */}
+              <div className="relative" ref={userDropdownRef}>
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-indigo-500 transition-colors"
@@ -253,7 +285,46 @@ function Navbar() {
                         <FaChargingStation className="text-base" />
                         <span>Moje ładowarki</span>
                       </NavLink>
-                      
+
+                      {/* New Features */}
+                      <div className="border-t border-gray-700 my-2"></div>
+                      <NavLink
+                        to="/favorites"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaHeart className="text-base text-red-400" />
+                        <span>Ulubione</span>
+                      </NavLink>
+                      <NavLink
+                        to="/activity"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaHistory className="text-base" />
+                        <span>Aktywność</span>
+                      </NavLink>
+                      <NavLink
+                        to="/support"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={({ isActive }) =>
+                          isActive
+                            ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
+                        }
+                      >
+                        <FaTicketAlt className="text-base" />
+                        <span>Wsparcie</span>
+                      </NavLink>
+
                       {/* Separator i przycisk wylogowania */}
                       <div className="border-t border-gray-700 my-2"></div> 
                       <button
@@ -267,6 +338,7 @@ function Navbar() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
             </div>
           ) : (
             // Przycisk "Zaloguj" (pozostaje bez zmian)
@@ -371,7 +443,31 @@ function Navbar() {
                   }
                 >
                   <FaGem />
-                  <span>Marketplace</span>
+                  <span>DCP Tokens</span>
+                </NavLink>
+                <NavLink
+                  to="/parking-marketplace"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-cyan-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
+                  }
+                >
+                  <FaWarehouse />
+                  <span>🅿️ ParkFi Marketplace</span>
+                </NavLink>
+                <NavLink
+                  to="/institutional-operator"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'bg-orange-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
+                      : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
+                  }
+                >
+                  <FaLandmark />
+                  <span>🏢 Institutional Operator</span>
                 </NavLink>
                 <NavLink
                   to="/badges"

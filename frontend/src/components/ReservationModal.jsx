@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { reservationAPI } from '../services/api';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -202,8 +202,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       const result = await reservationAPI.createReservation(reservationData);
       console.log('✅ Rezerwacja utworzona:', result);
 
-      onSuccess();
-      setTimeout(() => onClose(), 2000); // Close after showing success
+      // Pass reservation data to success callback
+      onSuccess(result);
+      onClose(); // Close immediately, success modal will show
     } catch (err) {
       console.error('❌ Błąd płatności/rezerwacji:', err);
       setError(err.message || 'Nie udało się przetworzyć płatności');
@@ -222,6 +223,21 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     // Convert PLN to SOL (rough estimate: 1 SOL = ~600 PLN)
     const priceSOL = priceCalculation.price / 600;
     const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
+
+    // Check user balance
+    const balance = await connection.getBalance(wallet.publicKey);
+    const minRent = 5000; // 0.000005 SOL minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const requiredBalance = lamports + minRent + estimatedFee;
+
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+
+    if (balance < requiredBalance) {
+      throw new Error(
+        `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+        `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+      );
+    }
 
     // Create transaction
     const transaction = new Transaction().add(
@@ -259,6 +275,21 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
     const priceSOL = priceCalculation.price / 600;
     const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
+
+    // Check user balance
+    const balance = await connection.getBalance(wallet.publicKey);
+    const minRent = 5000; // 0.000005 SOL minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const requiredBalance = lamports + minRent + estimatedFee;
+
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+
+    if (balance < requiredBalance) {
+      throw new Error(
+        `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+        `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+      );
+    }
 
     const transaction = new Transaction().add(
       SystemProgram.transfer({
@@ -390,6 +421,47 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 10px 0' }}>
             {parking.address}
           </p>
+          {/* Parking Type Badge */}
+          {parking.type && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '600',
+              marginBottom: '10px',
+              background: parking.type === 'covered'
+                ? '#EFF6FF'
+                : parking.type === 'ev_charging'
+                ? '#FFFBEB'
+                : '#ECFDF5',
+              border: `2px solid ${
+                parking.type === 'covered'
+                  ? '#3B82F6'
+                  : parking.type === 'ev_charging'
+                  ? '#F59E0B'
+                  : '#10B981'
+              }`,
+              color: parking.type === 'covered'
+                ? '#1E40AF'
+                : parking.type === 'ev_charging'
+                ? '#92400E'
+                : '#065F46'
+            }}>
+              <span>
+                {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
+              </span>
+              <span>
+                {parking.type === 'covered'
+                  ? 'Zadaszony'
+                  : parking.type === 'ev_charging'
+                  ? 'Z ładowarką EV'
+                  : 'Odkryty'}
+              </span>
+            </div>
+          )}
           <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
             {parking.price_per_hour || parking.hourly_rate} zł/godz
           </p>

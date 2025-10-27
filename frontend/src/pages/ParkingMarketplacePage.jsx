@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolana } from '../context/SolanaWalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { FiMapPin, FiDollarSign, FiTrendingUp, FiShield, FiFilter, FiSearch } from 'react-icons/fi';
 import { BsBuilding, BsGlobe, BsCheck2Circle } from 'react-icons/bs';
 import api from '../services/api';
-import gatewayService from '../services/gatewayService';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 
 const ParkingMarketplacePage = () => {
   const { user } = useAuth();
-  const { wallet, connection } = useSolana();
+  const wallet = useWallet();
 
   // State
+  const [activeTab, setActiveTab] = useState('marketplace'); // 'marketplace', 'holdings', 'transactions'
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(null);
+
+  // My Holdings & Transactions
+  const [myHoldings, setMyHoldings] = useState([]);
+  const [myTransactions, setMyTransactions] = useState([]);
+  const [holdingsLoading, setHoldingsLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +41,17 @@ const ParkingMarketplacePage = () => {
   // Selected listing for purchase modal
   const [selectedListing, setSelectedListing] = useState(null);
   const [purchaseAmount, setPurchaseAmount] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState('USDC');
+
+  // Success modal
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState(null);
+
+  // Sell modal
+  const [selectedHolding, setSelectedHolding] = useState(null);
+  const [sellAmount, setSellAmount] = useState(1);
+  const [sellPrice, setSellPrice] = useState(0);
+  const [selling, setSelling] = useState(false);
 
   useEffect(() => {
     fetchMarketplaceListings();
@@ -48,7 +64,7 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketplaceListings = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/listings');
+      const response = await api.get('/parking-marketplace/listings');
       setListings(response.data.listings || []);
       setLoading(false);
     } catch (error) {
@@ -59,10 +75,22 @@ const ParkingMarketplacePage = () => {
 
   const fetchMarketStats = async () => {
     try {
-      const response = await api.get('/api/parking-marketplace/stats');
-      setMarketStats(response.data);
+      const response = await api.get('/parking-marketplace/stats');
+      const stats = response.data.stats || {};
+      setMarketStats({
+        totalVolume: stats.total_volume_usdc || 0,
+        totalAssets: stats.total_assets || 0,
+        avgYield: stats.average_yield || 0,
+        activeListings: stats.total_listings || 0
+      });
     } catch (error) {
       console.error('Error fetching market stats:', error);
+      setMarketStats({
+        totalVolume: 0,
+        totalAssets: 0,
+        avgYield: 0,
+        activeListings: 0
+      });
     }
   };
 
@@ -119,64 +147,142 @@ const ParkingMarketplacePage = () => {
     return ((listing.annual_revenue_usdc / listing.estimated_value_usdc) * 100).toFixed(2);
   };
 
+  const fetchMyHoldings = async () => {
+    setHoldingsLoading(true);
+    try {
+      const response = await api.get('/parking-marketplace/my-holdings');
+      console.log('💼 Holdings response:', response.data);
+      setMyHoldings(response.data.holdings || []);
+    } catch (error) {
+      console.error('❌ Error fetching holdings:', error);
+      setMyHoldings([]);
+    } finally {
+      setHoldingsLoading(false);
+    }
+  };
+
+  const fetchMyTransactions = async () => {
+    setTransactionsLoading(true);
+    try {
+      const response = await api.get('/parking-marketplace/my-transactions');
+      console.log('📊 Transactions response:', response.data);
+      setMyTransactions(response.data.transactions || []);
+    } catch (error) {
+      console.error('❌ Error fetching transactions:', error);
+      setMyTransactions([]);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'holdings') {
+      fetchMyHoldings(); // Always refresh holdings
+    } else if (tab === 'transactions') {
+      fetchMyTransactions(); // Always refresh transactions
+    }
+  };
+
   const handlePurchase = (listing) => {
     setSelectedListing(listing);
     setPurchaseAmount(1);
+    setPaymentMethod('USDC'); // Reset to default
   };
 
   const executePurchase = async () => {
-    if (!wallet || !selectedListing) return;
+    if (!wallet.connected || !selectedListing) return;
 
-    setPurchasing(selectedListing.listing_id);
+    setPurchasing(selectedListing.id);
 
     try {
       // Calculate total cost
       const totalCost = selectedListing.price_per_token_usdc * purchaseAmount;
 
-      // Build transaction (simplified - actual implementation would interact with Solana program)
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: new PublicKey(selectedListing.asset_token_address),
-          lamports: totalCost * 1000000, // Convert to lamports (assuming USDC representation)
-        })
-      );
+      // Simulate processing delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Use Gateway for optimized transaction delivery
-      const result = await gatewayService.executeTransaction(
-        transaction,
-        wallet,
-        connection,
-        {
-          context: 'parking_asset_purchase',
-          assetId: selectedListing.asset_id,
-          tokenAmount: purchaseAmount,
-        }
-      );
+      // Generate mock transaction signature
+      const mockSignature = `DEMO_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-      if (result.success) {
-        // Record transaction in backend
-        await api.post('/api/parking-marketplace/purchase', {
-          listing_id: selectedListing.listing_id,
-          token_amount: purchaseAmount,
-          total_amount_usdc: totalCost,
-          solana_tx_signature: result.signature,
-          payment_method: 'USDC',
-          gateway_used: true,
-          gateway_delivery_method: result.deliveryMethod,
+      // Record transaction in backend
+      const response = await api.post('/parking-marketplace/purchase', {
+        listing_id: selectedListing.id,
+        token_amount: purchaseAmount,
+        total_amount_usdc: totalCost,
+        solana_tx_signature: mockSignature,
+        payment_method: paymentMethod,
+        gateway_used: true,
+        gateway_delivery_method: 'demo',
+      });
+
+      if (response.data.success) {
+        // Show success modal instead of alert
+        setSuccessData({
+          parking: selectedListing.parking_lot_name,
+          tokens: purchaseAmount,
+          cost: totalCost,
+          method: paymentMethod,
+          txSignature: mockSignature
         });
-
-        alert('✅ Purchase successful! You now own ' + purchaseAmount + ' parking asset tokens.');
+        setShowSuccessModal(true);
         setSelectedListing(null);
         fetchMarketplaceListings();
+        // Refresh holdings and transactions
+        fetchMyHoldings();
+        fetchMyTransactions();
       } else {
-        alert('❌ Purchase failed: ' + result.error);
+        alert('❌ Purchase failed: ' + response.data.error);
       }
     } catch (error) {
       console.error('Purchase error:', error);
       alert('❌ Purchase failed: ' + error.message);
     } finally {
       setPurchasing(null);
+    }
+  };
+
+  const handleSell = (holding) => {
+    setSelectedHolding(holding);
+    setSellAmount(1);
+    setSellPrice(0); // User will set their own price
+  };
+
+  const executeSell = async () => {
+    if (!selectedHolding || sellAmount < 1 || sellPrice <= 0) {
+      alert('Please enter valid amount and price');
+      return;
+    }
+
+    setSelling(true);
+
+    try {
+      const response = await api.post('/parking-marketplace/create-user-listing', {
+        asset_id: selectedHolding.asset_id,
+        token_amount: sellAmount,
+        price_per_token_usdc: sellPrice,
+      });
+
+      if (response.data.success) {
+        setSuccessData({
+          parking: selectedHolding.parking_lot_name,
+          tokens: sellAmount,
+          price: sellPrice,
+          totalValue: sellAmount * sellPrice,
+          action: 'listed'
+        });
+        setShowSuccessModal(true);
+        setSelectedHolding(null);
+        fetchMarketplaceListings();
+        fetchMyHoldings();
+      } else {
+        alert('❌ Failed to create listing: ' + response.data.error);
+      }
+    } catch (error) {
+      console.error('Sell error:', error);
+      alert('❌ Failed to create listing: ' + error.message);
+    } finally {
+      setSelling(false);
     }
   };
 
@@ -228,12 +334,53 @@ const ParkingMarketplacePage = () => {
           </p>
         </motion.div>
 
-        {/* Market Stats */}
+        {/* Tabs */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center gap-4 mb-8"
         >
+          <button
+            onClick={() => handleTabChange('marketplace')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'marketplace'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Browse Marketplace
+          </button>
+          <button
+            onClick={() => handleTabChange('holdings')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'holdings'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            My Holdings
+          </button>
+          <button
+            onClick={() => handleTabChange('transactions')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              activeTab === 'transactions'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            My Transactions
+          </button>
+        </motion.div>
+
+        {/* Marketplace View */}
+        {activeTab === 'marketplace' && (
+          <>
+            {/* Market Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+            >
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
             <div className="flex items-center justify-between">
               <div>
@@ -435,7 +582,7 @@ const ParkingMarketplacePage = () => {
                 {/* CTA Button */}
                 <button
                   onClick={() => handlePurchase(listing)}
-                  disabled={purchasing === listing.listing_id || !wallet}
+                  disabled={purchasing === listing.listing_id || !wallet.connected}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   {purchasing === listing.listing_id ? (
@@ -443,7 +590,7 @@ const ParkingMarketplacePage = () => {
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Processing...
                     </span>
-                  ) : !wallet ? (
+                  ) : !wallet.connected ? (
                     'Connect Wallet to Buy'
                   ) : (
                     'Buy Asset Tokens'
@@ -464,6 +611,147 @@ const ParkingMarketplacePage = () => {
             <p className="text-gray-400 text-lg">No listings found matching your filters.</p>
           </motion.div>
         )}
+          </>
+        )}
+
+        {/* My Holdings View */}
+        {activeTab === 'holdings' && (
+          <div className="mt-8">
+            <h2 className="text-white text-3xl font-bold mb-6">My Parking Asset Holdings</h2>
+
+            {holdingsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : myHoldings.length === 0 ? (
+              <div className="text-center py-12 bg-white/10 rounded-xl">
+                <p className="text-gray-300 text-lg mb-4">You don't own any parking tokens yet.</p>
+                <button
+                  onClick={() => handleTabChange('marketplace')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Browse Marketplace
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myHoldings.map((holding) => (
+                  <motion.div
+                    key={holding.asset_id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-white text-xl font-bold mb-1">{holding.parking_lot_name || 'N/A'}</h3>
+                      <p className="text-gray-300 text-sm">{holding.city || 'N/A'}</p>
+                      <p className="text-blue-300 text-sm mt-1">{getAssetTypeLabel(holding.asset_type)}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tokens Owned:</span>
+                        <span className="text-white font-bold">{holding.total_tokens}</span>
+                      </div>
+                      {holding.estimated_value_usdc > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Est. Value:</span>
+                          <span className="text-green-400">${holding.estimated_value_usdc.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {holding.revenue_share_percentage > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Revenue Share:</span>
+                          <span className="text-yellow-400">{holding.revenue_share_percentage}%</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sell Button */}
+                    <button
+                      onClick={() => handleSell(holding)}
+                      className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 rounded-lg transition-all"
+                    >
+                      Sell Tokens
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* My Transactions View */}
+        {activeTab === 'transactions' && (
+          <div className="mt-8">
+            <h2 className="text-white text-3xl font-bold mb-6">My Transaction History</h2>
+
+            {transactionsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : myTransactions.length === 0 ? (
+              <div className="text-center py-12 bg-white/10 rounded-xl">
+                <p className="text-gray-300 text-lg mb-4">No transactions yet.</p>
+                <button
+                  onClick={() => handleTabChange('marketplace')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Browse Marketplace
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {myTransactions.map((tx) => (
+                  <motion.div
+                    key={tx.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-white text-xl font-bold">{tx.parking_lot_name || 'N/A'}</h3>
+                        <p className="text-gray-300 text-sm">{tx.city || 'N/A'}</p>
+                        <p className="text-blue-300 text-sm mt-1">{getAssetTypeLabel(tx.asset_type)}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-400 font-bold text-lg">${tx.total_amount_usdc.toLocaleString()}</div>
+                        <div className="text-gray-400 text-sm">{tx.payment_method}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-400">Tokens:</span>
+                        <span className="text-white ml-2 font-semibold">{tx.token_amount}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Price/Token:</span>
+                        <span className="text-white ml-2 font-semibold">${tx.price_per_token_usdc}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Date:</span>
+                        <span className="text-white ml-2">{new Date(tx.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Status:</span>
+                        <span className="text-green-400 ml-2 font-semibold">{tx.settlement_status}</span>
+                      </div>
+                    </div>
+
+                    {tx.solana_tx_signature && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <span className="text-gray-400 text-xs">Tx: </span>
+                        <span className="text-blue-300 text-xs font-mono">{tx.solana_tx_signature.substring(0, 40)}...</span>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Purchase Modal */}
         {selectedListing && (
@@ -478,6 +766,19 @@ const ParkingMarketplacePage = () => {
               <div className="mb-6">
                 <p className="text-gray-300 mb-2">{selectedListing.parking_lot_name}</p>
                 <p className="text-gray-400 text-sm">{selectedListing.city}</p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                >
+                  <option value="USDC">USDC - USD Coin</option>
+                  <option value="SOL">SOL - Solana</option>
+                  <option value="EUROC">EUROC - Euro Coin</option>
+                </select>
               </div>
 
               <div className="mb-6">
@@ -522,6 +823,168 @@ const ParkingMarketplacePage = () => {
                   className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   {purchasing ? 'Processing...' : 'Confirm Purchase'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Sell Modal */}
+        {selectedHolding && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-gray-900 rounded-xl p-8 max-w-md w-full border border-white/20"
+            >
+              <h2 className="text-white text-2xl font-bold mb-4">Sell Parking Tokens</h2>
+
+              <div className="mb-6">
+                <p className="text-gray-300 mb-2">{selectedHolding.parking_lot_name}</p>
+                <p className="text-gray-400 text-sm">{selectedHolding.city}</p>
+                <p className="text-blue-300 text-sm mt-2">You own: {selectedHolding.total_tokens} tokens</p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Number of Tokens to Sell</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={selectedHolding.total_tokens}
+                  value={sellAmount}
+                  onChange={(e) => setSellAmount(parseInt(e.target.value) || 1)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Price per Token (USDC)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={sellPrice}
+                  onChange={(e) => setSellPrice(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                  placeholder="Enter your selling price"
+                />
+              </div>
+
+              <div className="mb-6 bg-white/10 rounded-lg p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Tokens to Sell</span>
+                  <span className="text-white">{sellAmount}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-300">Price per Token</span>
+                  <span className="text-white">${sellPrice.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-white/20 mt-2 pt-2 flex justify-between">
+                  <span className="text-white font-semibold">Total Listing Value</span>
+                  <span className="text-white font-semibold">
+                    ${(sellPrice * sellAmount).toLocaleString()} USDC
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSelectedHolding(null)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeSell}
+                  disabled={selling || sellPrice <= 0}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  {selling ? 'Creating Listing...' : 'List for Sale'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && successData && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-green-900 via-green-800 to-green-900 rounded-xl p-8 max-w-md w-full border-2 border-green-500 shadow-2xl"
+            >
+              {/* Success Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-green-500 rounded-full p-4">
+                  <BsCheck2Circle className="text-white text-6xl" />
+                </div>
+              </div>
+
+              {/* Success Title */}
+              <h2 className="text-white text-3xl font-bold text-center mb-4">
+                {successData.action === 'listed' ? 'Listing Created! 🎉' : 'Purchase Successful! 🎉'}
+              </h2>
+
+              {/* Success Details */}
+              <div className="bg-white/10 rounded-lg p-4 mb-6 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Parking:</span>
+                  <span className="text-white font-semibold">{successData.parking}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">{successData.action === 'listed' ? 'Tokens Listed:' : 'Tokens Purchased:'}</span>
+                  <span className="text-green-400 font-bold">{successData.tokens}</span>
+                </div>
+                {successData.action === 'listed' ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Price per Token:</span>
+                      <span className="text-white font-bold">${successData.price.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Total Value:</span>
+                      <span className="text-white font-bold">${successData.totalValue.toLocaleString()}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Total Cost:</span>
+                      <span className="text-white font-bold">${successData.cost.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Payment Method:</span>
+                      <span className="text-blue-400 font-semibold">{successData.method}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Transaction Info - Only for purchases */}
+              {successData.txSignature && (
+                <div className="bg-white/5 rounded-lg p-3 mb-6">
+                  <p className="text-gray-400 text-xs mb-1">Transaction Signature:</p>
+                  <p className="text-gray-300 text-xs font-mono break-all">{successData.txSignature}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    handleTabChange('holdings');
+                  }}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  View Holdings
+                </button>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Done
                 </button>
               </div>
             </motion.div>

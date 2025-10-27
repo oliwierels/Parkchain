@@ -11,6 +11,8 @@ import ProfilePage from './pages/ProfilePage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
 import ChargingDashboardPage from './pages/ChargingDashboardPage';
+import ChargingMapPage from './pages/ChargingMapPage';
+import AddChargingStationPage from './pages/AddChargingStationPage';
 import LiveFeedPage from './pages/LiveFeedPage';
 import PointsMarketplacePage from './pages/PointsMarketplacePage';
 import BadgesPage from './pages/BadgesPage';
@@ -21,6 +23,9 @@ import AchievementsPage from './pages/AchievementsPage';
 import GatewayShowcase from './components/GatewayShowcase';
 import ParkingMarketplacePage from './pages/ParkingMarketplacePage';
 import InstitutionalOperatorDashboard from './pages/InstitutionalOperatorDashboard';
+import FavoritesPage from './pages/FavoritesPage';
+import SupportPage from './pages/SupportPage';
+import ActivityPage from './pages/ActivityPage';
 
 function AppContent() {
   const location = useLocation();
@@ -49,6 +54,8 @@ function AppContent() {
               <Route path="/dodaj-parking" element={<AddParkingPage />} />
 
               {/* DeCharge Hackathon */}
+              <Route path="/charging-map" element={<ChargingMapPage />} />
+              <Route path="/add-charging-station" element={<AddChargingStationPage />} />
               <Route path="/live-feed" element={<LiveFeedPage />} />
               <Route path="/marketplace" element={<PointsMarketplacePage />} />
               <Route path="/badges" element={<BadgesPage />} />
@@ -63,6 +70,11 @@ function AppContent() {
               {/* Mastercard DeFi Hackathon - Parking Marketplace */}
               <Route path="/parking-marketplace" element={<ParkingMarketplacePage />} />
               <Route path="/institutional-operator" element={<InstitutionalOperatorDashboard />} />
+
+              {/* New Features */}
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
             </Routes>
           </div>
   );

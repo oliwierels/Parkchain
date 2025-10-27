@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useSolana } from '../context/SolanaWalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
   FiDollarSign,
   FiTrendingUp,
@@ -16,7 +16,7 @@ import api from '../services/api';
 
 const InstitutionalOperatorDashboard = () => {
   const { user } = useAuth();
-  const { wallet } = useSolana();
+  const wallet = useWallet();
 
   const [operatorProfile, setOperatorProfile] = useState(null);
   const [tokenizedAssets, setTokenizedAssets] = useState([]);
@@ -26,14 +26,19 @@ const InstitutionalOperatorDashboard = () => {
 
   // Modal states
   const [showTokenizeModal, setShowTokenizeModal] = useState(false);
+  const [showAssetDetailsModal, setShowAssetDetailsModal] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
   const [selectedParkingLot, setSelectedParkingLot] = useState(null);
 
   // Form state for tokenization
   const [tokenizeForm, setTokenizeForm] = useState({
-    parking_lot_id: '',
+    parking_lot_name: '',
+    city: '',
+    address: '',
     spot_number: '',
     asset_type: 'single_spot',
     total_supply: 1,
+    price_per_token_usdc: 100,
     estimated_value_usdc: 0,
     annual_revenue_usdc: 0,
     revenue_share_percentage: 50,
@@ -46,10 +51,10 @@ const InstitutionalOperatorDashboard = () => {
   const fetchOperatorData = async () => {
     try {
       const [profileRes, assetsRes, listingsRes, revenueRes] = await Promise.all([
-        api.get('/api/institutional-operators/profile'),
-        api.get('/api/institutional-operators/assets'),
-        api.get('/api/institutional-operators/listings'),
-        api.get('/api/institutional-operators/revenue-distributions'),
+        api.get('/institutional-operators/profile'),
+        api.get('/institutional-operators/assets'),
+        api.get('/institutional-operators/listings'),
+        api.get('/institutional-operators/revenue-distributions'),
       ]);
 
       setOperatorProfile(profileRes.data);
@@ -64,20 +69,41 @@ const InstitutionalOperatorDashboard = () => {
   };
 
   const handleTokenizeAsset = async () => {
-    if (!wallet) {
+    if (!wallet.connected) {
       alert('Please connect your Solana wallet first');
+      return;
+    }
+
+    // Validate required fields
+    if (!tokenizeForm.parking_lot_name || !tokenizeForm.city) {
+      alert('⚠️ Please fill in Parking Lot Name and City (required fields)');
       return;
     }
 
     try {
       // Call backend API to tokenize asset
-      const response = await api.post('/api/institutional-operators/tokenize', {
+      const response = await api.post('/institutional-operators/tokenize', {
         ...tokenizeForm,
         operator_wallet: wallet.publicKey.toBase58(),
       });
 
       if (response.data.success) {
-        alert('✅ Asset tokenized successfully!');
+        alert(`✅ Asset tokenized successfully!\n\n🎯 Your parking is now available in the marketplace!\n\nAsset ID: ${response.data.asset_id}\nListing ID: ${response.data.listing_id}\n\n📍 Go to ParkFi Marketplace to see your listing.`);
+
+        // Reset form
+        setTokenizeForm({
+          parking_lot_name: '',
+          city: '',
+          address: '',
+          spot_number: '',
+          asset_type: 'single_spot',
+          total_supply: 1,
+          price_per_token_usdc: 100,
+          estimated_value_usdc: 0,
+          annual_revenue_usdc: 0,
+          revenue_share_percentage: 50,
+        });
+
         setShowTokenizeModal(false);
         fetchOperatorData();
       }
@@ -153,17 +179,17 @@ const InstitutionalOperatorDashboard = () => {
                     )}
                   </div>
                   <p className="text-gray-300 mb-2">
-                    {operatorProfile.organization_type.replace('_', ' ').toUpperCase()}
+                    {operatorProfile.organization_type ? operatorProfile.organization_type.replace('_', ' ').toUpperCase() : 'Parking Operator'}
                   </p>
                   <p className="text-gray-400 text-sm">
-                    {operatorProfile.headquarters_city}, {operatorProfile.headquarters_country}
+                    {operatorProfile.headquarters_city || 'N/A'}, {operatorProfile.headquarters_country || 'N/A'}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-400 text-sm">Operator Rating</p>
                 <p className="text-yellow-400 text-2xl font-bold">
-                  {operatorProfile.operator_rating} ⭐
+                  {operatorProfile.operator_rating || '0.0'} ⭐
                 </p>
               </div>
             </div>
@@ -295,7 +321,13 @@ const InstitutionalOperatorDashboard = () => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-white/10">
-                  <button className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm font-semibold py-2 rounded transition-all">
+                  <button
+                    onClick={() => {
+                      setSelectedAsset(asset);
+                      setShowAssetDetailsModal(true);
+                    }}
+                    className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm font-semibold py-2 rounded transition-all"
+                  >
                     <FiEdit className="inline mr-1" />
                     Manage Asset
                   </button>
@@ -364,6 +396,223 @@ const InstitutionalOperatorDashboard = () => {
           )}
         </motion.div>
 
+        {/* Asset Details Modal */}
+        {showAssetDetailsModal && selectedAsset && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-gray-900 rounded-xl p-8 max-w-3xl w-full border border-white/20 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-white text-3xl font-bold">Asset Details</h2>
+                <button
+                  onClick={() => setShowAssetDetailsModal(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Asset Header */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-6 border border-blue-400/30">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-white text-2xl font-bold mb-2">
+                        {selectedAsset.parking_lot_name || 'Parking Asset'}
+                      </h3>
+                      <p className="text-gray-300 mb-1">
+                        {selectedAsset.spot_number ? `Spot #${selectedAsset.spot_number}` : 'Bundle Asset'}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {selectedAsset.city || 'N/A'} • {selectedAsset.address || 'No address'}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                      selectedAsset.compliance_status === 'compliant'
+                        ? 'bg-green-500/20 text-green-300'
+                        : 'bg-yellow-500/20 text-yellow-300'
+                    }`}>
+                      {selectedAsset.compliance_status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Token Information */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiPackage />
+                    Token Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Asset Token Address</p>
+                      <p className="text-white font-mono text-sm break-all">
+                        {selectedAsset.asset_token_address || 'Not minted'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Asset Type</p>
+                      <p className="text-white">
+                        {selectedAsset.asset_type?.replace('_', ' ').toUpperCase() || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Total Supply</p>
+                      <p className="text-white font-semibold">{selectedAsset.total_supply} tokens</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Circulating Supply</p>
+                      <p className="text-white font-semibold">{selectedAsset.circulating_supply || 0} tokens</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Information */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiDollarSign />
+                    Financial Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Estimated Value</p>
+                      <p className="text-green-400 text-2xl font-bold">
+                        ${parseFloat(selectedAsset.estimated_value_usdc || 0).toLocaleString()} USDC
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Annual Revenue</p>
+                      <p className="text-blue-400 text-2xl font-bold">
+                        ${parseFloat(selectedAsset.annual_revenue_usdc || 0).toLocaleString()} USDC
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Revenue Share</p>
+                      <p className="text-purple-400 text-xl font-bold">
+                        {selectedAsset.revenue_share_percentage}% for token holders
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Expected Yield</p>
+                      <p className="text-yellow-400 text-xl font-bold">
+                        {selectedAsset.annual_revenue_usdc && selectedAsset.estimated_value_usdc
+                          ? ((parseFloat(selectedAsset.annual_revenue_usdc) / parseFloat(selectedAsset.estimated_value_usdc)) * 100).toFixed(2)
+                          : '0.00'}% APY
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Asset Status */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiBarChart2 />
+                    Asset Status
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Active</p>
+                      <p className={`text-2xl font-bold ${selectedAsset.is_active ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedAsset.is_active ? '✓' : '✗'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Tradeable</p>
+                      <p className={`text-2xl font-bold ${selectedAsset.is_tradeable ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedAsset.is_tradeable ? '✓' : '✗'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Compliance</p>
+                      <p className={`text-sm font-bold ${selectedAsset.compliance_status === 'compliant' ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {selectedAsset.compliance_status?.toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operational Information */}
+                {(selectedAsset.operational_hours || selectedAsset.spot_features || selectedAsset.access_restrictions) && (
+                  <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                    <h4 className="text-white text-xl font-semibold mb-4">Operational Information</h4>
+                    <div className="space-y-3">
+                      {selectedAsset.operational_hours && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Operational Hours</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.operational_hours === 'object'
+                              ? JSON.stringify(selectedAsset.operational_hours)
+                              : selectedAsset.operational_hours}
+                          </p>
+                        </div>
+                      )}
+                      {selectedAsset.spot_features && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Spot Features</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.spot_features === 'object'
+                              ? JSON.stringify(selectedAsset.spot_features)
+                              : selectedAsset.spot_features}
+                          </p>
+                        </div>
+                      )}
+                      {selectedAsset.access_restrictions && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Access Restrictions</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.access_restrictions === 'object'
+                              ? JSON.stringify(selectedAsset.access_restrictions)
+                              : selectedAsset.access_restrictions}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Timestamps */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400 mb-1">Created</p>
+                      <p className="text-white">
+                        {selectedAsset.created_at ? new Date(selectedAsset.created_at).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-1">Last Updated</p>
+                      <p className="text-white">
+                        {selectedAsset.updated_at ? new Date(selectedAsset.updated_at).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <button
+                  onClick={() => setShowAssetDetailsModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    // Future: Add edit functionality
+                    alert('Edit functionality coming soon!');
+                  }}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <FiEdit />
+                  Edit Asset
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {/* Tokenize Asset Modal */}
         {showTokenizeModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -375,6 +624,53 @@ const InstitutionalOperatorDashboard = () => {
               <h2 className="text-white text-3xl font-bold mb-6">Tokenize Parking Asset</h2>
 
               <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 mb-2">Parking Lot Name *</label>
+                  <input
+                    type="text"
+                    value={tokenizeForm.parking_lot_name}
+                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, parking_lot_name: e.target.value })}
+                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                    placeholder="e.g., Centralna Parking Warsaw"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">City *</label>
+                    <input
+                      type="text"
+                      value={tokenizeForm.city}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, city: e.target.value })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="Warszawa"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Spot/ID</label>
+                    <input
+                      type="text"
+                      value={tokenizeForm.spot_number}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, spot_number: e.target.value })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="A-42"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2">Address</label>
+                  <input
+                    type="text"
+                    value={tokenizeForm.address}
+                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, address: e.target.value })}
+                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                    placeholder="ul. Marszałkowska 142"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-gray-300 mb-2">Asset Type</label>
                   <select
@@ -388,59 +684,50 @@ const InstitutionalOperatorDashboard = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 mb-2">Parking Lot ID</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.parking_lot_id}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, parking_lot_id: e.target.value })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="Enter parking lot ID"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">Total Supply (Tokens)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.total_supply}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, total_supply: parseInt(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="1000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Price per Token (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.price_per_token_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, price_per_token_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="100"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 mb-2">Spot Number (e.g., A-42)</label>
-                  <input
-                    type="text"
-                    value={tokenizeForm.spot_number}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, spot_number: e.target.value })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="A-42"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Total Supply (Number of Tokens)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.total_supply}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, total_supply: parseInt(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Estimated Value (USDC)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.estimated_value_usdc}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, estimated_value_usdc: parseFloat(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="10000"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 mb-2">Annual Revenue (USDC)</label>
-                  <input
-                    type="number"
-                    value={tokenizeForm.annual_revenue_usdc}
-                    onChange={(e) => setTokenizeForm({ ...tokenizeForm, annual_revenue_usdc: parseFloat(e.target.value) })}
-                    className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
-                    placeholder="800"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2">Estimated Value (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.estimated_value_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, estimated_value_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="100000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2">Annual Revenue (USDC)</label>
+                    <input
+                      type="number"
+                      value={tokenizeForm.annual_revenue_usdc}
+                      onChange={(e) => setTokenizeForm({ ...tokenizeForm, annual_revenue_usdc: parseFloat(e.target.value) })}
+                      className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
+                      placeholder="8000"
+                    />
+                  </div>
                 </div>
 
                 <div>

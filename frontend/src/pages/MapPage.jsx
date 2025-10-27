@@ -1,6 +1,6 @@
 // frontend/src/pages/MapPage.jsx
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { motion } from 'framer-motion';
@@ -8,11 +8,15 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
+import ReservationSuccessModal from '../components/ReservationSuccessModal';
+import ReservationQRModal from '../components/ReservationQRModal';
 import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
+import AdvancedFilters from '../components/AdvancedFilters';
 import { useAuth } from '../context/AuthContext';
+import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
 import {
   FaHome,
   FaCog,
@@ -33,7 +37,8 @@ import {
   FaTimesCircle,
   FaTrophy,
   FaWalking,
-  FaRoad
+  FaRoad,
+  FaFilter
 } from 'react-icons/fa';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -204,6 +209,9 @@ function MapPage() {
   const [selectedParking, setSelectedParking] = useState(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successReservation, setSuccessReservation] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   // Nowe state dla wyszukiwania destynacji
   const [searchMode, setSearchMode] = useState(false);
@@ -226,6 +234,8 @@ function MapPage() {
   // Filtry
   const [showParkings, setShowParkings] = useState(true);
   const [showCharging, setShowCharging] = useState(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [filteredParkings, setFilteredParkings] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -259,6 +269,56 @@ function MapPage() {
     fetchData();
   }, []);
 
+  // ========== WEBSOCKET LIVE UPDATES ==========
+
+  // Handle parking updates via WebSocket
+  const handleParkingUpdate = useCallback((data) => {
+    console.log('🔄 Live parking update:', data);
+
+    setParkings(prevParkings => {
+      const updatedParkings = prevParkings.map(parking => {
+        if (parking.id === data.parkingLotId) {
+          return {
+            ...parking,
+            available_spots: data.availableSpots,
+            occupied_spots: data.occupiedSpots,
+            total_spots: data.availableSpots + data.occupiedSpots
+          };
+        }
+        return parking;
+      });
+      return updatedParkings;
+    });
+  }, []);
+
+  // Handle charging session updates via WebSocket
+  const handleChargingUpdate = useCallback((data) => {
+    console.log('🔄 Live charging update:', data);
+
+    setChargingStations(prevStations => {
+      const updatedStations = prevStations.map(station => {
+        if (station.id === data.station_id) {
+          // Update available connectors based on session status
+          const availableChange = data.status === 'active' ? -1 : 1;
+          return {
+            ...station,
+            available_connectors: Math.max(0, station.available_connectors + availableChange)
+          };
+        }
+        return station;
+      });
+      return updatedStations;
+    });
+  }, []);
+
+  // Subscribe to parking feed for live updates
+  useParkingFeed(handleParkingUpdate);
+
+  // Subscribe to charging feed for live updates
+  useChargingFeed(handleChargingUpdate);
+
+  // ========== END WEBSOCKET ==========
+
   useEffect(() => {
     if (mapRef.current) {
       setTimeout(() => {
@@ -272,11 +332,36 @@ function MapPage() {
     setShowReservationModal(true);
   };
 
-  const handleReservationSuccess = () => {
-    alert('Rezerwacja utworzona!');
+  const handleReservationSuccess = (reservation) => {
+    console.log('✅ Rezerwacja sukces:', reservation);
     setShowReservationModal(false);
+
+    // Przygotuj dane dla success modal
+    const reservationData = {
+      ...reservation,
+      parking_lot_name: selectedParking?.name,
+      address: selectedParking?.address
+    };
+
+    setSuccessReservation(reservationData);
+    setShowSuccessModal(true);
+
     // Odśwież parkingi
     parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
+
+  const handleViewQRFromSuccess = () => {
+    setShowSuccessModal(false);
+    setShowQRModal(true);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessReservation(null);
+  };
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false);
   };
 
   const handleReportClick = (parking) => {
@@ -472,16 +557,20 @@ function MapPage() {
             </motion.div>
           </Link>
 
-          {/* Settings - prawy górny róg */}
-          <Link to="/profile" style={{ pointerEvents: 'auto' }}>
+          {/* Controls - prawy górny róg */}
+          <div style={{ display: 'flex', gap: '12px', pointerEvents: 'auto' }}>
+            {/* Filters Button */}
             <motion.div
+              onClick={() => setShowAdvancedFilters(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '48px',
                 height: '48px',
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: showAdvancedFilters
+                  ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                  : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
@@ -490,15 +579,46 @@ function MapPage() {
               }}
               whileHover={{
                 scale: 1.1,
-                rotate: 90,
                 boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
               }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              title="Advanced Filters"
             >
-              <FaCog style={{ fontSize: '20px', color: '#6366F1' }} />
+              <FaFilter style={{
+                fontSize: '18px',
+                color: showAdvancedFilters ? 'white' : '#6366F1'
+              }} />
             </motion.div>
-          </Link>
+
+            {/* Settings */}
+            <Link to="/profile">
+              <motion.div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '48px',
+                  height: '48px',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  cursor: 'pointer'
+                }}
+                whileHover={{
+                  scale: 1.1,
+                  rotate: 90,
+                  boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
+                }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              >
+                <FaCog style={{ fontSize: '20px', color: '#6366F1' }} />
+              </motion.div>
+            </Link>
+          </div>
         </div>
       </div>
       {error && (
@@ -885,8 +1005,10 @@ function MapPage() {
 
       {/* Markery parkingów */}
       {showParkings && parkings && parkings.length > 0 && (() => {
-        const validParkings = parkings.filter(p => p.latitude && p.longitude);
-        console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkings.length} parkingów na mapie`);
+        // Use filtered parkings if available, otherwise use all parkings
+        const parkingsToDisplay = filteredParkings.length > 0 ? filteredParkings : parkings;
+        const validParkings = parkingsToDisplay.filter(p => p.latitude && p.longitude);
+        console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkingsToDisplay.length} parkingów na mapie`);
         return validParkings;
       })()
   .map((parking) => (
@@ -943,7 +1065,7 @@ function MapPage() {
         <div style={{
           fontSize: '13px',
           color: '#6b7280',
-          margin: '0 0 16px 0',
+          margin: '0 0 12px 0',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -954,6 +1076,48 @@ function MapPage() {
           <FaMapMarkerAlt style={{ fontSize: '14px', color: '#6366F1', flexShrink: 0 }} />
           <span>{parking.address}</span>
         </div>
+
+        {/* Typ parkingu / Amenities Badge */}
+        {parking.type && (
+          <div style={{
+            marginBottom: '16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            fontSize: '12px',
+            fontWeight: '600',
+            background: parking.type === 'covered'
+              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)'
+              : parking.type === 'ev_charging'
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)'
+              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
+            border: `2px solid ${
+              parking.type === 'covered'
+                ? 'rgba(59, 130, 246, 0.3)'
+                : parking.type === 'ev_charging'
+                ? 'rgba(245, 158, 11, 0.3)'
+                : 'rgba(16, 185, 129, 0.3)'
+            }`,
+            color: parking.type === 'covered'
+              ? '#1e40af'
+              : parking.type === 'ev_charging'
+              ? '#92400e'
+              : '#065f46'
+          }}>
+            <span style={{ fontSize: '14px' }}>
+              {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
+            </span>
+            <span>
+              {parking.type === 'covered'
+                ? 'Zadaszony'
+                : parking.type === 'ev_charging'
+                ? 'Z ładowarką EV'
+                : 'Odkryty'}
+            </span>
+          </div>
+        )}
 
         {/* Status dostępności z wizualnym wskaźnikiem */}
         <div style={{
@@ -1469,6 +1633,145 @@ function MapPage() {
 ))}
       </MapContainer>
 
+      {/* Floating Action Buttons - Prawy dolny róg */}
+      <div style={{
+        position: 'fixed',
+        bottom: '30px',
+        right: '30px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        pointerEvents: 'none'
+      }}>
+        {/* Add Parking Button */}
+        <motion.button
+          onClick={handleToggleAddParkingMode}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            border: 'none',
+            background: addParkingMode
+              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+              : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+            color: 'white',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+            position: 'relative'
+          }}
+          whileHover={{
+            scale: 1.1,
+            boxShadow: '0 12px 40px rgba(99, 102, 241, 0.5)'
+          }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          title={addParkingMode ? "Anuluj dodawanie parkingu" : "Dodaj parking"}
+        >
+          <FaParking />
+          {addParkingMode && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              ×
+            </div>
+          )}
+        </motion.button>
+
+        {/* Add Charging Station Button */}
+        <motion.button
+          onClick={handleToggleAddChargingMode}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            border: 'none',
+            background: addChargingMode
+              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+              : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+            color: 'white',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(245, 158, 11, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+            position: 'relative'
+          }}
+          whileHover={{
+            scale: 1.1,
+            boxShadow: '0 12px 40px rgba(245, 158, 11, 0.5)'
+          }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          title={addChargingMode ? "Anuluj dodawanie ładowarki" : "Dodaj ładowarkę EV"}
+        >
+          <FaChargingStation />
+          {addChargingMode && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              ×
+            </div>
+          )}
+        </motion.button>
+
+        {/* Helper text */}
+        {(addParkingMode || addChargingMode) && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            style={{
+              position: 'absolute',
+              right: '75px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              padding: '12px 16px',
+              background: 'rgba(0, 0, 0, 0.85)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+              pointerEvents: 'none'
+            }}
+          >
+            {addParkingMode ? '📍 Kliknij na mapie aby dodać parking' : '⚡ Kliknij na mapie aby dodać ładowarkę'}
+          </motion.div>
+        )}
+      </div>
+
       {showReservationModal && selectedParking && (
         <ReservationModal
           parking={selectedParking}
@@ -1520,6 +1823,30 @@ function MapPage() {
             setShowChargingSessionModal(false);
             setSelectedChargingStation(null);
           }}
+        />
+      )}
+
+      {showSuccessModal && successReservation && (
+        <ReservationSuccessModal
+          reservation={successReservation}
+          onClose={handleCloseSuccessModal}
+          onViewQR={handleViewQRFromSuccess}
+        />
+      )}
+
+      {showQRModal && successReservation && (
+        <ReservationQRModal
+          reservation={successReservation}
+          onClose={handleCloseQRModal}
+        />
+      )}
+
+      {showAdvancedFilters && (
+        <AdvancedFilters
+          parkings={parkings}
+          isOpen={showAdvancedFilters}
+          onClose={() => setShowAdvancedFilters(false)}
+          onFilterChange={setFilteredParkings}
         />
       )}
     </div>
