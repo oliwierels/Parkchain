@@ -8,6 +8,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
+import ReservationSuccessModal from '../components/ReservationSuccessModal';
+import ReservationQRModal from '../components/ReservationQRModal';
 import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
@@ -205,6 +207,9 @@ function MapPage() {
   const [selectedParking, setSelectedParking] = useState(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successReservation, setSuccessReservation] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   // Nowe state dla wyszukiwania destynacji
   const [searchMode, setSearchMode] = useState(false);
@@ -323,11 +328,36 @@ function MapPage() {
     setShowReservationModal(true);
   };
 
-  const handleReservationSuccess = () => {
-    alert('Rezerwacja utworzona!');
+  const handleReservationSuccess = (reservation) => {
+    console.log('✅ Rezerwacja sukces:', reservation);
     setShowReservationModal(false);
+
+    // Przygotuj dane dla success modal
+    const reservationData = {
+      ...reservation,
+      parking_lot_name: selectedParking?.name,
+      address: selectedParking?.address
+    };
+
+    setSuccessReservation(reservationData);
+    setShowSuccessModal(true);
+
     // Odśwież parkingi
     parkingAPI.getAllParkings().then(data => setParkings(data));
+  };
+
+  const handleViewQRFromSuccess = () => {
+    setShowSuccessModal(false);
+    setShowQRModal(true);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessReservation(null);
+  };
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false);
   };
 
   const handleReportClick = (parking) => {
@@ -1710,6 +1740,21 @@ function MapPage() {
             setShowChargingSessionModal(false);
             setSelectedChargingStation(null);
           }}
+        />
+      )}
+
+      {showSuccessModal && successReservation && (
+        <ReservationSuccessModal
+          reservation={successReservation}
+          onClose={handleCloseSuccessModal}
+          onViewQR={handleViewQRFromSuccess}
+        />
+      )}
+
+      {showQRModal && successReservation && (
+        <ReservationQRModal
+          reservation={successReservation}
+          onClose={handleCloseQRModal}
         />
       )}
     </div>
