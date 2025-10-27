@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChargingFeed } from '../hooks/useWebSocket';
+import ChargingSessionQRModal from '../components/ChargingSessionQRModal';
 import {
   Card,
   Button,
@@ -43,6 +44,8 @@ function ChargingDashboardPage() {
     energy_delivered_kwh: '',
     charging_duration_minutes: ''
   });
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedSessionForQR, setSelectedSessionForQR] = useState(null);
 
   useEffect(() => {
     fetchChargingData();
@@ -204,6 +207,16 @@ function ChargingDashboardPage() {
       console.error('Błąd weryfikacji:', err);
       addToast({ message: 'Nie udało się zweryfikować sesji: ' + err.message, type: 'error' });
     }
+  };
+
+  const handleShowQR = (session) => {
+    setSelectedSessionForQR(session);
+    setShowQRModal(true);
+  };
+
+  const handleCloseQR = () => {
+    setShowQRModal(false);
+    setSelectedSessionForQR(null);
   };
 
   const getStatusVariant = (status) => {
@@ -567,6 +580,7 @@ function ChargingDashboardPage() {
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Energia</th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koszt</th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Akcje</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700">
@@ -589,6 +603,20 @@ function ChargingDashboardPage() {
                           <Badge variant={getStatusVariant(session.status)} size="md">
                             {getStatusText(session.status)}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {['active', 'pending_verification'].includes(session.status) && (
+                            <Button
+                              onClick={() => handleShowQR(session)}
+                              variant="primary"
+                              size="sm"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                              </svg>
+                              QR
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -693,6 +721,14 @@ function ChargingDashboardPage() {
           </>
         )}
       </Modal>
+
+      {/* QR Code Modal */}
+      {showQRModal && selectedSessionForQR && (
+        <ChargingSessionQRModal
+          session={selectedSessionForQR}
+          onClose={handleCloseQR}
+        />
+      )}
     </div>
   );
 }
