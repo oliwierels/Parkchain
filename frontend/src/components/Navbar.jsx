@@ -78,10 +78,10 @@ function Navbar() {
           <div className="flex items-center flex-shrink-0">
             <NavLink to="/" className="flex items-center gap-2 group">
               <img
-                className="h-8 w-auto transition-transform group-hover:scale-110"
-                src="/logo-no-background.svg"
-                alt="ParkChain"
-              />
+                className="h-40 w-auto transition-transform group-hover:scale-110"
+                src="/Projekt bez nazwy.png" // <-- POPRAWIONA ŚCIEŻKA
+                alt="ParkChain"
+              />
             </NavLink>
           </div>
 
