@@ -80,7 +80,7 @@ function Navbar() {
             <NavLink to="/" className="flex items-center gap-2 group">
               <img
                 className="h-40 w-auto transition-transform group-hover:scale-110"
-                src="/Projekt bez nazwy.png" // <-- POPRAWIONA ŚCIEŻKA
+                src="/Parkchain.png"
                 alt="ParkChain"
               />
             </NavLink>
