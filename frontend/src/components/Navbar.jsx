@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationCenter from './NotificationCenter';
 import {
   FaHome,
   FaMap,
@@ -204,8 +205,12 @@ function Navbar() {
           </div>
 
           {isAuthenticated && user ? (
-            // Nowy kontener dla dropdownu użytkownika
-            <div className="relative" ref={userDropdownRef}>
+            <div className="flex items-center gap-4">
+              {/* Notification Center */}
+              <NotificationCenter />
+
+              {/* User Menu */}
+              <div className="relative" ref={userDropdownRef}>
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-indigo-500 transition-colors"
@@ -291,6 +296,7 @@ function Navbar() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
             </div>
           ) : (
             // Przycisk "Zaloguj" (pozostaje bez zmian)
