@@ -900,11 +900,12 @@ app.get('/api/charging-stations', async (req, res) => {
 
 // POST /api/charging-sessions - rozpocznij sesję ładowania
 app.post('/api/charging-sessions', authenticateToken, [
-  body('station_id').isInt().withMessage('ID stacji jest wymagane'),
+  body('station_id').notEmpty().withMessage('ID stacji jest wymagane'),
   body('vehicle_info').optional().isObject()
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('❌ Validation errors:', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -912,47 +913,102 @@ app.post('/api/charging-sessions', authenticateToken, [
     const { station_id, vehicle_info } = req.body;
     const user_id = req.user.id;
 
+    console.log(`🔌 Starting charging session - Station ID: ${station_id}, User ID: ${user_id}`);
+
     // Sprawdź czy stacja istnieje i jest dostępna
     const { data: station, error: stationError } = await supabase
       .from('charging_stations')
       .select('*')
       .eq('id', station_id)
-      .single();
+      .maybeSingle();
 
-    if (stationError || !station) {
+    if (stationError) {
+      console.error('❌ Error fetching station:', stationError);
+      throw stationError;
+    }
+
+    if (!station) {
+      console.error(`❌ Station not found: ${station_id}`);
       return res.status(404).json({ error: 'Stacja ładowania nie znaleziona' });
     }
 
+    console.log(`✅ Station found: ${station.name}, Available connectors: ${station.available_connectors}`);
+
     if (station.available_connectors <= 0) {
+      console.error(`❌ No available connectors at station ${station_id}`);
       return res.status(400).json({ error: 'Brak dostępnych złączy' });
     }
 
     // Utwórz sesję ładowania
+    const sessionData = {
+      station_id,
+      user_id,
+      start_time: new Date().toISOString(),
+      status: 'active',
+      vehicle_info: vehicle_info || null,
+      energy_delivered_kwh: 0,
+      points_earned: 0
+    };
+
+    console.log('📝 Creating session with data:', sessionData);
+
     const { data, error } = await supabase
       .from('charging_sessions')
-      .insert([{
-        station_id,
-        user_id,
-        start_time: new Date().toISOString(),
-        status: 'active',
-        vehicle_info: vehicle_info || null
-      }])
-      .select()
+      .insert([sessionData])
+      .select(`
+        *,
+        charging_stations (
+          id,
+          name,
+          address,
+          city,
+          charger_type,
+          max_power_kw,
+          price_per_kwh
+        ),
+        users (
+          id,
+          full_name
+        )
+      `)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error creating session:', error);
+      throw error;
+    }
+
+    console.log('✅ Charging session created successfully:', data.id);
 
     // Zmniejsz dostępne złącza
-    await supabase
+    const { error: updateError } = await supabase
       .from('charging_stations')
       .update({ available_connectors: station.available_connectors - 1 })
       .eq('id', station_id);
 
-    console.log('✅ Created charging session:', data);
+    if (updateError) {
+      console.error('⚠️ Warning: Could not update available connectors:', updateError);
+    }
+
+    console.log('✅ Session created and station updated. Session ID:', data.id);
+
+    // Broadcast new session through WebSocket if available
+    const websocketService = req.app.get('websocketService');
+    if (websocketService && typeof websocketService.broadcast === 'function') {
+      websocketService.broadcast('charging_session_started', {
+        session: data,
+        timestamp: new Date().toISOString()
+      });
+      console.log('📡 Broadcasted session start via WebSocket');
+    }
+
     res.status(201).json(data);
   } catch (error) {
-    console.error('Error creating charging session:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error creating charging session:', error);
+    res.status(500).json({
+      error: error.message,
+      details: error.details || error.hint || null
+    });
   }
 });
 
