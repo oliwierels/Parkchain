@@ -1,47 +1,17 @@
--- ========================================
--- DODANIE POLA TYPE DO PARKING_LOTS
--- ========================================
--- Dodaje pole 'type' do określenia typu parkingu:
--- - covered (zadaszony)
--- - outdoor (odkryty)
--- - ev_charging (z ładowarką EV)
+-- Add parking type column and set all existing to covered
+-- Run this in Supabase SQL Editor
 
--- 1. Dodaj kolumnę type do parking_lots
+-- 1. Add type column if it doesn't exist
 ALTER TABLE parking_lots
-ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'outdoor';
+ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'covered';
 
--- 1b. Dodaj constraint dla type
-ALTER TABLE parking_lots
-DROP CONSTRAINT IF EXISTS parking_lots_type_check;
-
-ALTER TABLE parking_lots
-ADD CONSTRAINT parking_lots_type_check
-CHECK (type IN ('covered', 'outdoor', 'ev_charging'));
-
--- 2. Ustaw domyślną wartość dla istniejących parkingów
+-- 2. Set all existing parkings to covered
 UPDATE parking_lots
-SET type = 'outdoor'
-WHERE type IS NULL;
+SET type = 'covered'
+WHERE type IS NULL OR type = '';
 
--- 3. Dodaj indeks dla szybszego filtrowania
-CREATE INDEX IF NOT EXISTS idx_parking_lots_type ON parking_lots(type);
+-- 3. Add comment
+COMMENT ON COLUMN parking_lots.type IS 'Parking type: covered, outdoor, ev_charging';
 
--- ========================================
--- WERYFIKACJA
--- ========================================
-
-SELECT '✅ Kolumna type została dodana do parking_lots!' AS status;
-
--- Pokaż strukturę kolumny
-SELECT column_name, data_type, column_default, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'parking_lots'
-AND column_name = 'type';
-
--- Pokaż rozkład typów parkingów
-SELECT
-  type,
-  COUNT(*) as count
-FROM parking_lots
-GROUP BY type
-ORDER BY count DESC;
+-- 4. Verify
+SELECT id, name, type FROM parking_lots LIMIT 10;
