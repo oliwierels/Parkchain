@@ -14,6 +14,7 @@ import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
+import AdvancedFilters from '../components/AdvancedFilters';
 import { useAuth } from '../context/AuthContext';
 import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
 import {
@@ -36,7 +37,8 @@ import {
   FaTimesCircle,
   FaTrophy,
   FaWalking,
-  FaRoad
+  FaRoad,
+  FaFilter
 } from 'react-icons/fa';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -232,6 +234,8 @@ function MapPage() {
   // Filtry
   const [showParkings, setShowParkings] = useState(true);
   const [showCharging, setShowCharging] = useState(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [filteredParkings, setFilteredParkings] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -553,16 +557,20 @@ function MapPage() {
             </motion.div>
           </Link>
 
-          {/* Settings - prawy górny róg */}
-          <Link to="/profile" style={{ pointerEvents: 'auto' }}>
+          {/* Controls - prawy górny róg */}
+          <div style={{ display: 'flex', gap: '12px', pointerEvents: 'auto' }}>
+            {/* Filters Button */}
             <motion.div
+              onClick={() => setShowAdvancedFilters(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '48px',
                 height: '48px',
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: showAdvancedFilters
+                  ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                  : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
@@ -571,15 +579,46 @@ function MapPage() {
               }}
               whileHover={{
                 scale: 1.1,
-                rotate: 90,
                 boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
               }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              title="Advanced Filters"
             >
-              <FaCog style={{ fontSize: '20px', color: '#6366F1' }} />
+              <FaFilter style={{
+                fontSize: '18px',
+                color: showAdvancedFilters ? 'white' : '#6366F1'
+              }} />
             </motion.div>
-          </Link>
+
+            {/* Settings */}
+            <Link to="/profile">
+              <motion.div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '48px',
+                  height: '48px',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  cursor: 'pointer'
+                }}
+                whileHover={{
+                  scale: 1.1,
+                  rotate: 90,
+                  boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)'
+                }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              >
+                <FaCog style={{ fontSize: '20px', color: '#6366F1' }} />
+              </motion.div>
+            </Link>
+          </div>
         </div>
       </div>
       {error && (
@@ -966,8 +1005,10 @@ function MapPage() {
 
       {/* Markery parkingów */}
       {showParkings && parkings && parkings.length > 0 && (() => {
-        const validParkings = parkings.filter(p => p.latitude && p.longitude);
-        console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkings.length} parkingów na mapie`);
+        // Use filtered parkings if available, otherwise use all parkings
+        const parkingsToDisplay = filteredParkings.length > 0 ? filteredParkings : parkings;
+        const validParkings = parkingsToDisplay.filter(p => p.latitude && p.longitude);
+        console.log(`🗺️ Wyświetlam ${validParkings.length} z ${parkingsToDisplay.length} parkingów na mapie`);
         return validParkings;
       })()
   .map((parking) => (
@@ -1755,6 +1796,14 @@ function MapPage() {
         <ReservationQRModal
           reservation={successReservation}
           onClose={handleCloseQRModal}
+        />
+      )}
+
+      {showAdvancedFilters && (
+        <AdvancedFilters
+          parkings={parkings}
+          onClose={() => setShowAdvancedFilters(false)}
+          onFilteredResults={setFilteredParkings}
         />
       )}
     </div>
