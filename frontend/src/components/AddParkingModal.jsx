@@ -567,8 +567,9 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
