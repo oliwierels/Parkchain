@@ -211,7 +211,11 @@ router.get('/stats', async (req, res) => {
 router.post('/purchase', authenticateToken, [
   body('listing_id').isInt(),
   body('token_amount').isInt({ min: 1 }),
-  body('payment_method').isIn(['USDC', 'SOL', 'EUROC']),
+  body('total_amount_usdc').isFloat({ min: 0 }),
+  body('solana_tx_signature').isString(),
+  body('payment_method').isString(),
+  body('gateway_used').optional().isBoolean(),
+  body('gateway_delivery_method').optional().isString(),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -222,7 +226,15 @@ router.post('/purchase', authenticateToken, [
   const buyerId = req.user.id; // FIXED: was req.user.userId
 
   try {
-    const { listing_id, token_amount, payment_method, solana_tx_signature } = req.body;
+    const {
+      listing_id,
+      token_amount,
+      total_amount_usdc,
+      payment_method,
+      solana_tx_signature,
+      gateway_used,
+      gateway_delivery_method
+    } = req.body;
 
     // Get listing
     const { data: listing, error: listingError } = await supabase
@@ -255,12 +267,14 @@ router.post('/purchase', authenticateToken, [
         seller_id: listing.seller_id,
         token_amount,
         price_per_token_usdc: listing.price_per_token_usdc,
-        total_amount_usdc: totalAmount,
+        total_amount_usdc: total_amount_usdc || totalAmount,
         payment_method,
         payment_status: 'completed',
         solana_tx_signature: solana_tx_signature || `DEMO_${Date.now()}`,
         settlement_status: 'settled',
         compliance_checked: true,
+        gateway_used: gateway_used || false,
+        gateway_delivery_method: gateway_delivery_method || null,
       }])
       .select()
       .single();
