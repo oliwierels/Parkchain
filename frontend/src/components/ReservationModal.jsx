@@ -345,17 +345,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+        animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
+        exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -364,28 +364,64 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          initial={{
+            scale: 0.85,
+            opacity: 0,
+            y: 40,
+            rotateX: 10
+          }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            rotateX: 0
+          }}
+          exit={{
+            scale: 0.9,
+            opacity: 0,
+            y: 20,
+            rotateX: 5
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 35,
+            mass: 0.8
+          }}
           style={{
             backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '30px',
+            borderRadius: '24px',
+            padding: '32px',
             maxWidth: step === 'payment' ? '900px' : '550px',
             width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.05)'
+            boxShadow: '0 30px 90px rgba(0,0,0,0.35), 0 0 0 1px rgba(99, 102, 241, 0.1), 0 0 60px rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.8)',
+            position: 'relative'
           }}
           onClick={(e) => e.stopPropagation()}
         >
+        {/* Dekoracyjny gradient na górze modalu */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '200px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%)',
+          borderRadius: '24px 24px 0 0',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} />
         {/* Header with close button */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          marginBottom: '25px'
+          marginBottom: '25px',
+          position: 'relative',
+          zIndex: 1
         }}>
           <div style={{ flex: 1 }}>
             <motion.h2
@@ -402,22 +438,53 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             {/* Progress bar */}
             <div style={{
               width: '100%',
-              height: '8px',
-              backgroundColor: '#e5e7eb',
+              height: '10px',
+              backgroundColor: 'rgba(99, 102, 241, 0.08)',
               borderRadius: '999px',
               overflow: 'hidden',
-              marginBottom: '15px'
+              marginBottom: '15px',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
+              position: 'relative'
             }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 100,
+                  damping: 20,
+                  mass: 0.5
+                }}
                 style={{
                   height: '100%',
-                  background: 'linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%)',
-                  borderRadius: '999px'
+                  background: 'linear-gradient(90deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)',
+                  borderRadius: '999px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)'
                 }}
-              />
+              >
+                {/* Shimmer effect */}
+                <motion.div
+                  animate={{
+                    x: ['-200%', '200%']
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    ease: 'linear'
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)',
+                    width: '50%'
+                  }}
+                />
+              </motion.div>
             </div>
 
             {/* Step indicators */}
@@ -428,31 +495,55 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 alignItems: 'center',
                 gap: '6px'
               }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  backgroundColor: getStepNumber() >= 1 ? '#6366F1' : '#E5E7EB',
-                  color: 'white',
-                  transition: 'all 0.3s'
-                }}>
+                <motion.div
+                  animate={{
+                    scale: getStepNumber() >= 1 ? [1, 1.15, 1] : 1,
+                    backgroundColor: getStepNumber() >= 1 ? '#6366F1' : '#E5E7EB'
+                  }}
+                  transition={{
+                    scale: { duration: 0.4, times: [0, 0.5, 1] },
+                    backgroundColor: { duration: 0.3 }
+                  }}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    boxShadow: getStepNumber() >= 1 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                  }}
+                >
                   {getStepNumber() > 1 ? '✓' : '1'}
-                </div>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: getStepNumber() >= 1 ? '#6366F1' : '#9CA3AF'
-                }}>
+                </motion.div>
+                <motion.span
+                  animate={{
+                    color: getStepNumber() >= 1 ? '#6366F1' : '#9CA3AF'
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
                   Szczegóły
-                </span>
+                </motion.span>
               </div>
 
-              <div style={{ width: '30px', height: '2px', backgroundColor: '#E5E7EB' }} />
+              <motion.div
+                animate={{
+                  backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB',
+                  scaleX: getStepNumber() >= 2 ? [0, 1] : 1
+                }}
+                transition={{ duration: 0.4 }}
+                style={{
+                  width: '30px',
+                  height: '2px',
+                  transformOrigin: 'left'
+                }}
+              />
 
               {/* Step 2 */}
               <div style={{
@@ -460,31 +551,55 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 alignItems: 'center',
                 gap: '6px'
               }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB',
-                  color: 'white',
-                  transition: 'all 0.3s'
-                }}>
+                <motion.div
+                  animate={{
+                    scale: getStepNumber() >= 2 ? [1, 1.15, 1] : 1,
+                    backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB'
+                  }}
+                  transition={{
+                    scale: { duration: 0.4, times: [0, 0.5, 1] },
+                    backgroundColor: { duration: 0.3 }
+                  }}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    boxShadow: getStepNumber() >= 2 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                  }}
+                >
                   {getStepNumber() > 2 ? '✓' : '2'}
-                </div>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: getStepNumber() >= 2 ? '#6366F1' : '#9CA3AF'
-                }}>
+                </motion.div>
+                <motion.span
+                  animate={{
+                    color: getStepNumber() >= 2 ? '#6366F1' : '#9CA3AF'
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
                   Płatność
-                </span>
+                </motion.span>
               </div>
 
-              <div style={{ width: '30px', height: '2px', backgroundColor: '#E5E7EB' }} />
+              <motion.div
+                animate={{
+                  backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB',
+                  scaleX: getStepNumber() >= 3 ? [0, 1] : 1
+                }}
+                transition={{ duration: 0.4 }}
+                style={{
+                  width: '30px',
+                  height: '2px',
+                  transformOrigin: 'left'
+                }}
+              />
 
               {/* Step 3 */}
               <div style={{
@@ -492,76 +607,119 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 alignItems: 'center',
                 gap: '6px'
               }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB',
-                  color: 'white',
-                  transition: 'all 0.3s'
-                }}>
+                <motion.div
+                  animate={{
+                    scale: getStepNumber() >= 3 ? [1, 1.15, 1] : 1,
+                    backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB'
+                  }}
+                  transition={{
+                    scale: { duration: 0.4, times: [0, 0.5, 1] },
+                    backgroundColor: { duration: 0.3 }
+                  }}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    boxShadow: getStepNumber() >= 3 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                  }}
+                >
                   {getStepNumber() > 3 ? '✓' : '3'}
-                </div>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: getStepNumber() >= 3 ? '#6366F1' : '#9CA3AF'
-                }}>
+                </motion.div>
+                <motion.span
+                  animate={{
+                    color: getStepNumber() >= 3 ? '#6366F1' : '#9CA3AF'
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
                   Potwierdzenie
-                </span>
+                </motion.span>
               </div>
             </div>
           </div>
 
-          <button
+          <motion.button
             onClick={onClose}
             disabled={loading}
+            whileHover={!loading ? {
+              scale: 1.1,
+              backgroundColor: '#FEE2E2',
+              color: '#DC2626',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
+            } : {}}
+            whileTap={!loading ? { scale: 0.95 } : {}}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             style={{
               background: '#F3F4F6',
               border: 'none',
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px',
+              fontSize: '22px',
               cursor: loading ? 'not-allowed' : 'pointer',
               color: '#6B7280',
-              transition: 'all 0.2s',
-              marginLeft: '15px'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.target.style.backgroundColor = '#E5E7EB';
-                e.target.style.transform = 'scale(1.05)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#F3F4F6';
-              e.target.style.transform = 'scale(1)';
+              marginLeft: '15px',
+              fontWeight: '300',
+              lineHeight: '1'
             }}
           >
             ×
-          </button>
+          </motion.button>
         </div>
 
-        <div style={{
-          backgroundColor: '#f3f4f6',
-          padding: '15px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 5px 0' }}>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%)',
+            padding: '18px',
+            borderRadius: '16px',
+            marginBottom: '20px',
+            border: '2px solid rgba(99, 102, 241, 0.15)',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          <h3 style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            margin: '0 0 6px 0',
+            color: '#1f2937',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{
+              fontSize: '16px',
+              width: '28px',
+              height: '28px',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>🅿️</span>
             {parking.name}
           </h3>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 10px 0' }}>
-            {parking.address}
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280',
+            margin: '0 0 12px 0',
+            paddingLeft: '36px'
+          }}>
+            📍 {parking.address}
           </p>
           {/* Parking Type Badge */}
           {parking.type && (
@@ -604,10 +762,28 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               </span>
             </div>
           )}
-          <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#6366F1', margin: 0 }}>
-            {parking.price_per_hour || parking.hourly_rate} zł/godz
-          </p>
-        </div>
+          <div style={{
+            marginTop: '10px',
+            padding: '10px 14px',
+            background: 'white',
+            borderRadius: '10px',
+            border: '2px solid rgba(99, 102, 241, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '18px' }}>💰</span>
+            <span style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              {parking.price_per_hour || parking.hourly_rate} zł/godz
+            </span>
+          </div>
+        </motion.div>
 
         {error && (
           <div style={{
@@ -624,7 +800,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
         {/* Step 1: Reservation Details */}
         {step === 'details' && (
-          <form onSubmit={handleDetailsSubmit}>
+          <motion.form
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            onSubmit={handleDetailsSubmit}
+          >
           {/* Data i godzina rozpoczęcia */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{
@@ -859,11 +1041,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               {loading ? 'Ładowanie...' : 'Dalej: Wybierz płatność →'}
             </button>
           </div>
-        </form>
+        </motion.form>
         )}
 
         {/* Step 2: Payment Method Selection */}
         {step === 'payment' && priceCalculation && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          >
           <div>
             <PaymentMethodSelector
               amount={priceCalculation.price}
@@ -913,11 +1101,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               </button>
             </div>
           </div>
+          </motion.div>
         )}
 
         {/* Step 3: Processing Payment */}
         {step === 'processing' && (
-          <div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          >
             {/* Gateway Progress Indicator */}
             {gatewayProgress && paymentMethod === 'gateway' && (
               <div style={{
@@ -1031,9 +1225,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
         )}
-        </motion.div>
 
         {/* CSS Animation */}
         <style>{`
@@ -1042,6 +1235,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             to { transform: rotate(360deg); }
           }
         `}</style>
+      </motion.div>
       </motion.div>
     </AnimatePresence>
   );
