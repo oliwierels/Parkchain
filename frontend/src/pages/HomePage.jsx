@@ -135,31 +135,31 @@ function HomePage() {
   ];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-gray-50 via-white to-gray-100">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Floating Minimal Navbar */}
       <motion.nav
         className="fixed top-0 left-0 right-0 z-40 px-6 py-2"
         style={{ opacity: navbarOpacity }}
       >
         <motion.div
-          className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-lg shadow-gray-200/50"
+          className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10"
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
         >
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-parkchain-400 to-parkchain-600 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-gradient-to-br from-parkchain-400 to-parkchain-600 rounded-xl flex items-center justify-center">
               <FaParking className="text-white text-xl" />
             </div>
-            <span className="text-gray-900 font-bold text-lg">Parkchain</span>
+            <span className="text-white font-bold text-lg">Parkchain</span>
           </Link>
 
           <div className="flex items-center gap-4">
             {!isAuthenticated ? (
               <Link to="/login">
                 <motion.button
-                  className="px-6 py-2 bg-gradient-to-r from-parkchain-500 to-parkchain-600 text-white rounded-xl font-medium shadow-lg shadow-parkchain-500/30"
-                  whileHover={{ scale: 1.05, boxShadow: "0 15px 30px -5px rgba(99, 102, 241, 0.4)" }}
+                  className="px-6 py-2 bg-gradient-to-r from-parkchain-500 to-parkchain-600 text-white rounded-xl font-medium"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)" }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
@@ -169,8 +169,8 @@ function HomePage() {
             ) : (
               <Link to="/map">
                 <motion.button
-                  className="px-6 py-2 bg-gray-100 text-gray-900 rounded-xl font-medium border border-gray-300 shadow-md"
-                  whileHover={{ scale: 1.05, backgroundColor: "rgb(243, 244, 246)" }}
+                  className="px-6 py-2 bg-white/10 text-white rounded-xl font-medium border border-white/20"
+                  whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
@@ -182,28 +182,50 @@ function HomePage() {
         </motion.div>
       </motion.nav>
 
-      {/* Subtle accent lines */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Mouse follower gradient */}
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-30"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(99, 102, 241, 0.05), transparent 40%)`
+        }}
+      />
+
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute top-20 left-20 w-64 h-64 bg-parkchain-200/30 rounded-full blur-3xl"
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-parkchain-500/10 rounded-full blur-3xl"
           animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.3, 1],
+            x: [0, 50, 0],
+            y: [0, 30, 0],
           }}
           transition={{
-            duration: 8,
+            duration: 20,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
         <motion.div
-          className="absolute bottom-40 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl"
+          className="absolute top-1/2 -right-40 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl"
           animate={{
             scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2],
+            x: [0, -50, 0],
+            y: [0, -30, 0],
           }}
           transition={{
-            duration: 10,
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-1/2 w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.4, 1],
+            x: [0, -30, 0],
+          }}
+          transition={{
+            duration: 15,
             repeat: Infinity,
             ease: "easeInOut"
           }}
@@ -284,12 +306,12 @@ function HomePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6, ease: [0.6, 0.01, 0.05, 0.95] }}
-            className="text-6xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-6 leading-tight"
+            className="text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight"
             style={{ y: y2 }}
           >
             Przyszłość
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-500 via-purple-500 to-pink-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 via-purple-400 to-pink-400">
               Parkowania
             </span>
           </motion.h1>
@@ -299,10 +321,10 @@ function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.6 }}
-            className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+            className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed"
           >
             Inteligentna platforma łącząca parkingi, ładowarki EV i społeczność.
-            <span className="block mt-2 text-parkchain-600 font-semibold">
+            <span className="block mt-2 text-parkchain-400 font-semibold">
               Wszystko w jednym miejscu.
             </span>
           </motion.p>
@@ -321,15 +343,15 @@ function HomePage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-full border border-gray-200 shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 backdrop-blur-xl rounded-full border border-white/10"
                 >
-                  <div className="w-2 h-2 bg-parkchain-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-700 text-sm">
+                  <div className="w-2 h-2 bg-parkchain-400 rounded-full animate-pulse"></div>
+                  <span className="text-gray-300 text-sm">
                     Auto-start za{' '}
                     <motion.span
                       key={autoRedirectCountdown}
-                      initial={{ scale: 1.3, color: '#000000' }}
-                      animate={{ scale: 1, color: '#7c3aed' }}
+                      initial={{ scale: 1.3, color: '#ffffff' }}
+                      animate={{ scale: 1, color: '#a78bfa' }}
                       transition={{ duration: 0.3 }}
                       className="font-bold"
                     >
@@ -344,10 +366,10 @@ function HomePage() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-50 backdrop-blur-xl rounded-full border border-green-300 shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/10 backdrop-blur-xl rounded-full border border-green-500/30"
                 >
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-green-700 text-sm font-medium">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="text-green-400 text-sm font-medium">
                     Eksploruj w swoim tempie
                   </span>
                 </motion.div>
@@ -375,7 +397,7 @@ function HomePage() {
               >
                 {/* Glow effect */}
                 <motion.div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-3xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`}
+                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-3xl blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500`}
                   animate={hoveredCard === feature.id ? { scale: 1.1 } : { scale: 1 }}
                 />
 
@@ -383,12 +405,12 @@ function HomePage() {
                 <motion.button
                   onClick={() => handleNavigate(feature.path)}
                   disabled={isTransitioning}
-                  className="relative w-full h-full bg-white backdrop-blur-xl border border-gray-200 rounded-3xl p-8 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-gray-300/30"
+                  className="relative w-full h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-black/20"
                   whileHover={{
                     scale: 1.03,
                     y: -12,
-                    borderColor: "rgb(209, 213, 219)",
-                    boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.15)"
+                    borderColor: "rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.5)"
                   }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -398,7 +420,7 @@ function HomePage() {
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="absolute top-6 right-6 px-3 py-1 bg-gray-100 backdrop-blur-sm rounded-full text-xs font-bold text-gray-700 border border-gray-300 shadow-sm"
+                      className="absolute top-6 right-6 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs font-bold text-white border border-white/20"
                     >
                       {feature.badge}
                     </motion.div>
@@ -414,24 +436,24 @@ function HomePage() {
                   </motion.div>
 
                   {/* Content */}
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-gray-900 group-hover:to-gray-700 transition-all duration-300">
+                  <h3 className="text-3xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 transition-all duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 text-lg mb-4 leading-relaxed">
+                  <p className="text-gray-400 text-lg mb-4 leading-relaxed">
                     {feature.description}
                   </p>
 
                   {/* Stats */}
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${feature.gradient}`}></div>
-                    <span className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
+                    <span className="text-sm font-medium text-gray-500 group-hover:text-gray-400 transition-colors">
                       {feature.stats}
                     </span>
                   </div>
 
                   {/* Arrow */}
                   <motion.div
-                    className="absolute bottom-8 right-8 text-gray-300 group-hover:text-gray-900 transition-colors"
+                    className="absolute bottom-8 right-8 text-white/30 group-hover:text-white transition-colors"
                     animate={hoveredCard === feature.id ? { x: 5 } : { x: 0 }}
                   >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -448,25 +470,25 @@ function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-8 mt-16 text-gray-600"
+            className="flex flex-wrap items-center justify-center gap-8 mt-16 text-gray-400"
           >
             <motion.div
               className="flex items-center gap-3"
-              whileHover={{ scale: 1.05, color: "#111827" }}
+              whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
-              <FaBolt className="text-yellow-500 text-xl" />
+              <FaBolt className="text-yellow-400 text-xl" />
               <span className="text-sm font-medium">Rezerwacja w 30s</span>
             </motion.div>
             <motion.div
               className="flex items-center gap-3"
-              whileHover={{ scale: 1.05, color: "#111827" }}
+              whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
-              <FaLock className="text-parkchain-500 text-xl" />
+              <FaLock className="text-parkchain-400 text-xl" />
               <span className="text-sm font-medium">100% Bezpieczne</span>
             </motion.div>
             <motion.div
               className="flex items-center gap-3"
-              whileHover={{ scale: 1.05, color: "#111827" }}
+              whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">Dostępne 24/7</span>
@@ -483,8 +505,8 @@ function HomePage() {
             <motion.div
               animate={{ y: [0, 12, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="text-gray-400 flex flex-col items-center gap-2 cursor-pointer"
-              whileHover={{ scale: 1.2, color: "#111827" }}
+              className="text-gray-500 flex flex-col items-center gap-2 cursor-pointer"
+              whileHover={{ scale: 1.2, color: "#ffffff" }}
               onClick={() => {
                 window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
               }}
@@ -497,7 +519,7 @@ function HomePage() {
       </motion.div>
 
       {/* Second Section - Why Parkchain */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20 bg-gradient-to-b from-white via-gray-50 to-white">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20 bg-gradient-to-b from-transparent via-black/20 to-transparent">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -506,10 +528,10 @@ function HomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-20"
           >
-            <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-6">
-              Dlaczego <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-500 to-purple-500">Parkchain?</span>
+            <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
+              Dlaczego <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 to-purple-400">Parkchain?</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Łączymy technologię blockchain z inteligentną infrastrukturą parkingową
             </p>
           </motion.div>
@@ -543,23 +565,23 @@ function HomePage() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="relative group"
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} rounded-3xl blur-2xl opacity-0 group-hover:opacity-15 transition-opacity duration-500`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} rounded-3xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`}></div>
                 <motion.div
-                  className="relative bg-white backdrop-blur-xl p-8 rounded-3xl border border-gray-200 h-full shadow-lg shadow-gray-200/50"
-                  whileHover={{ scale: 1.05, y: -5, borderColor: "rgb(209, 213, 219)", boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.1)" }}
+                  className="relative bg-white/5 backdrop-blur-xl p-8 rounded-3xl border border-white/10 h-full"
+                  whileHover={{ scale: 1.05, y: -5, borderColor: "rgba(255, 255, 255, 0.2)" }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
                   <motion.div
-                    className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl mb-6 shadow-lg`}
+                    className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl mb-6`}
                     whileHover={{ rotate: 12, scale: 1.1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                   >
                     <item.icon className="text-3xl text-white" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl font-bold text-white mb-4">
                     {item.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-400 leading-relaxed">
                     {item.description}
                   </p>
                 </motion.div>
