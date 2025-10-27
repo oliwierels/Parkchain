@@ -1,6 +1,6 @@
 // frontend/src/pages/MapPage.jsx
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { motion } from 'framer-motion';
@@ -13,6 +13,7 @@ import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import { useAuth } from '../context/AuthContext';
+import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
 import {
   FaHome,
   FaCog,
@@ -258,6 +259,56 @@ function MapPage() {
     };
     fetchData();
   }, []);
+
+  // ========== WEBSOCKET LIVE UPDATES ==========
+
+  // Handle parking updates via WebSocket
+  const handleParkingUpdate = useCallback((data) => {
+    console.log('🔄 Live parking update:', data);
+
+    setParkings(prevParkings => {
+      const updatedParkings = prevParkings.map(parking => {
+        if (parking.id === data.parkingLotId) {
+          return {
+            ...parking,
+            available_spots: data.availableSpots,
+            occupied_spots: data.occupiedSpots,
+            total_spots: data.availableSpots + data.occupiedSpots
+          };
+        }
+        return parking;
+      });
+      return updatedParkings;
+    });
+  }, []);
+
+  // Handle charging session updates via WebSocket
+  const handleChargingUpdate = useCallback((data) => {
+    console.log('🔄 Live charging update:', data);
+
+    setChargingStations(prevStations => {
+      const updatedStations = prevStations.map(station => {
+        if (station.id === data.station_id) {
+          // Update available connectors based on session status
+          const availableChange = data.status === 'active' ? -1 : 1;
+          return {
+            ...station,
+            available_connectors: Math.max(0, station.available_connectors + availableChange)
+          };
+        }
+        return station;
+      });
+      return updatedStations;
+    });
+  }, []);
+
+  // Subscribe to parking feed for live updates
+  useParkingFeed(handleParkingUpdate);
+
+  // Subscribe to charging feed for live updates
+  useChargingFeed(handleChargingUpdate);
+
+  // ========== END WEBSOCKET ==========
 
   useEffect(() => {
     if (mapRef.current) {

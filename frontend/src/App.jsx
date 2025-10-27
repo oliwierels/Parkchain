@@ -11,6 +11,8 @@ import ProfilePage from './pages/ProfilePage';
 import MyReservationsPage from './pages/MyReservationsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
 import ChargingDashboardPage from './pages/ChargingDashboardPage';
+import ChargingMapPage from './pages/ChargingMapPage';
+import AddChargingStationPage from './pages/AddChargingStationPage';
 import LiveFeedPage from './pages/LiveFeedPage';
 import PointsMarketplacePage from './pages/PointsMarketplacePage';
 import BadgesPage from './pages/BadgesPage';
@@ -49,6 +51,8 @@ function AppContent() {
               <Route path="/dodaj-parking" element={<AddParkingPage />} />
 
               {/* DeCharge Hackathon */}
+              <Route path="/charging-map" element={<ChargingMapPage />} />
+              <Route path="/add-charging-station" element={<AddChargingStationPage />} />
               <Route path="/live-feed" element={<LiveFeedPage />} />
               <Route path="/marketplace" element={<PointsMarketplacePage />} />
               <Route path="/badges" element={<BadgesPage />} />

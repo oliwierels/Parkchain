@@ -1,6 +1,7 @@
 // backend/server.js
 
 import express from 'express';
+import http from 'http';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,6 +14,7 @@ import jwt from 'jsonwebtoken';
 import { geocodeAddress } from './services/geocodingService.js';
 import { authenticateToken } from './middleware/auth.js';
 import parkingMarketplaceRoutes from './routes/parkingMarketplaceSupabase.js';
+import websocketService from './services/websocketService.js';
 
 // Załaduj zmienne środowiskowe
 dotenv.config();
@@ -2038,14 +2040,7 @@ app.use('/api/institutional-operators', parkingMarketplaceRoutes);
 
 console.log('✅ Parking Marketplace routes registered');
 
-// Start serwera
-app.listen(port, () => {
-  console.log(`🚀 Parkchain API running on port ${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// 404 handler - LEAVE THIS AT THE END.
-// OTHERWISE YOU'LL GET NOT FOUND ERRORS ON ENDPOINTS BELOW
+// 404 handler - must be before server start
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -2060,6 +2055,30 @@ app.use((err, req, res, next) => {
     error: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
+});
+
+// Create HTTP server and initialize WebSocket
+const server = http.createServer(app);
+
+// Initialize WebSocket service
+websocketService.initialize(server);
+
+// Make websocketService available to routes
+app.set('websocketService', websocketService);
+
+// Start server
+server.listen(port, () => {
+  console.log(`🚀 Parkchain API running on port ${port}`);
+  console.log(`🔌 WebSocket server ready on ws://localhost:${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Log WebSocket stats
+  setInterval(() => {
+    const stats = websocketService.getStats();
+    if (stats.totalConnections > 0) {
+      console.log(`📊 WebSocket Stats:`, stats);
+    }
+  }, 60000); // Every minute
 });
 
 export { supabase };

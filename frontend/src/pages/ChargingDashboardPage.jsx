@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useChargingFeed } from '../hooks/useWebSocket';
 import {
   Card,
   Button,
@@ -46,6 +47,49 @@ function ChargingDashboardPage() {
   useEffect(() => {
     fetchChargingData();
   }, []);
+
+  // ========== WEBSOCKET LIVE UPDATES ==========
+
+  // Handle charging session updates via WebSocket
+  const handleChargingUpdate = useCallback((data) => {
+    console.log('🔄 Live charging session update:', data);
+
+    // Update sessions list
+    setMySessions(prevSessions => {
+      const sessionExists = prevSessions.some(s => s.id === data.id);
+
+      if (sessionExists) {
+        // Update existing session
+        return prevSessions.map(session =>
+          session.id === data.id ? { ...session, ...data } : session
+        );
+      } else {
+        // Add new session if it belongs to my chargers
+        return [data, ...prevSessions];
+      }
+    });
+
+    // Recalculate stats
+    setStats(prev => {
+      const activeSessions = mySessions.filter(s => s.status === 'active').length;
+      const pendingVerification = mySessions.filter(s => s.status === 'pending_verification').length;
+      const totalEnergy = mySessions
+        .filter(s => s.energy_delivered_kwh)
+        .reduce((sum, s) => sum + parseFloat(s.energy_delivered_kwh || 0), 0);
+
+      return {
+        ...prev,
+        activeSessions,
+        pendingVerification,
+        totalEnergy: totalEnergy.toFixed(2)
+      };
+    });
+  }, [mySessions]);
+
+  // Subscribe to charging feed for live updates
+  useChargingFeed(handleChargingUpdate);
+
+  // ========== END WEBSOCKET ==========
 
   const fetchChargingData = async () => {
     try {
