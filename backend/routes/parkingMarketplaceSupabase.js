@@ -126,7 +126,7 @@ router.get('/listings', async (req, res) => {
       .select(`
         *,
         asset:parking_assets(*),
-        seller:users(id, full_name, email)
+        seller:users!parking_marketplace_listings_seller_id_fkey(id, full_name, email)
       `)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -143,6 +143,10 @@ router.get('/listings', async (req, res) => {
       city: listing.asset?.city || listing.listing_metadata?.city,
       address: listing.asset?.address || listing.listing_metadata?.address,
       organization_name: listing.seller?.full_name || 'Unknown Operator',
+      // Add financial data for yield calculation
+      estimated_value_usdc: listing.asset?.estimated_value_usdc || 0,
+      annual_revenue_usdc: listing.asset?.annual_revenue_usdc || 0,
+      revenue_share_percentage: listing.asset?.revenue_share_percentage || 0,
     }));
 
     res.json({
@@ -525,7 +529,7 @@ router.get('/my-transactions', authenticateToken, async (req, res) => {
         *,
         asset:parking_assets(*),
         listing:parking_marketplace_listings(listing_metadata),
-        seller:users(id, full_name, email)
+        seller:users!parking_asset_transactions_seller_id_fkey(id, full_name, email)
       `)
       .eq('buyer_id', userId)
       .order('created_at', { ascending: false });
