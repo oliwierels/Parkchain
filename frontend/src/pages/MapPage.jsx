@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parkingAPI } from '../services/api';
@@ -18,7 +18,6 @@ import AdvancedFilters from '../components/AdvancedFilters';
 import ParkingSuccessAnimation from '../components/ParkingSuccessAnimation';
 import { useAuth } from '../context/AuthContext';
 import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaHome,
   FaCog,
