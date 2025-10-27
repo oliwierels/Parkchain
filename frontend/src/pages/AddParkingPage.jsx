@@ -16,7 +16,10 @@ import {
   FaParking,
   FaMapMarkedAlt,
   FaMoneyBillWave,
-  FaSearch
+  FaSearch,
+  FaUmbrella,
+  FaSun,
+  FaBolt
 } from 'react-icons/fa';
 import MapPickerModal from '../components/MapPickerModal';
 
@@ -31,7 +34,8 @@ function AddParkingPage() {
     longitude: '',
     price_per_day: '',
     price_per_week: '',
-    price_per_month: ''
+    price_per_month: '',
+    type: 'outdoor' // covered, outdoor, ev_charging
   });
   const [loading, setLoading] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -118,7 +122,8 @@ function AddParkingPage() {
         price_per_hour: parseFloat(formData.price_per_hour),
         total_spots: parseInt(formData.total_spots),
         latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude)
+        longitude: parseFloat(formData.longitude),
+        type: formData.type
       };
 
       // Add optional pricing if provided
@@ -248,6 +253,59 @@ function AddParkingPage() {
                 placeholder="Warszawa"
                 fullWidth
               />
+
+              {/* Typ parkingu / Amenities */}
+              <div>
+                <label className="block mb-3 font-bold text-gray-300 text-sm">
+                  Typ parkingu *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Zadaszony */}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: 'covered' })}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      formData.type === 'covered'
+                        ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                        : 'border-gray-600 bg-slate-800 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <FaUmbrella className="text-2xl mx-auto mb-2" />
+                    <div className="font-semibold text-sm">Zadaszony</div>
+                    <div className="text-xs opacity-70 mt-1">Ochrona przed pogodą</div>
+                  </button>
+
+                  {/* Odkryty */}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: 'outdoor' })}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      formData.type === 'outdoor'
+                        ? 'border-green-500 bg-green-500/20 text-green-300'
+                        : 'border-gray-600 bg-slate-800 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <FaSun className="text-2xl mx-auto mb-2" />
+                    <div className="font-semibold text-sm">Odkryty</div>
+                    <div className="text-xs opacity-70 mt-1">Parking na świeżym powietrzu</div>
+                  </button>
+
+                  {/* Z ładowarką EV */}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: 'ev_charging' })}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      formData.type === 'ev_charging'
+                        ? 'border-yellow-500 bg-yellow-500/20 text-yellow-300'
+                        : 'border-gray-600 bg-slate-800 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <FaBolt className="text-2xl mx-auto mb-2" />
+                    <div className="font-semibold text-sm">Z ładowarką EV</div>
+                    <div className="text-xs opacity-70 mt-1">Stacja ładowania pojazdów</div>
+                  </button>
+                </div>
+              </div>
 
               {/* Współrzędne */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

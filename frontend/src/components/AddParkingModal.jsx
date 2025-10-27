@@ -14,7 +14,8 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
     price_per_month: '',
     total_spots: '',
     latitude: latitude,
-    longitude: longitude
+    longitude: longitude,
+    type: 'outdoor' // covered, outdoor, ev_charging
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -49,7 +50,8 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
         price_per_month: formData.price_per_month ? parseFloat(formData.price_per_month) : null,
         total_spots: parseInt(formData.total_spots),
         latitude: latitude,
-        longitude: longitude
+        longitude: longitude,
+        type: formData.type
       };
 
       console.log('📝 Dodawanie parkingu:', parkingData);
@@ -252,6 +254,81 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 boxSizing: 'border-box'
               }}
             />
+          </div>
+
+          {/* Typ parkingu */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              Typ parkingu <span style={{ color: '#EF4444' }}>*</span>
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px'
+            }}>
+              {/* Zadaszony */}
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'covered' })}
+                style={{
+                  padding: '12px 8px',
+                  border: formData.type === 'covered' ? '2px solid #3B82F6' : '2px solid #D1D5DB',
+                  borderRadius: '8px',
+                  backgroundColor: formData.type === 'covered' ? '#EFF6FF' : 'white',
+                  color: formData.type === 'covered' ? '#3B82F6' : '#6B7280',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                ☂️ Zadaszony
+              </button>
+
+              {/* Odkryty */}
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'outdoor' })}
+                style={{
+                  padding: '12px 8px',
+                  border: formData.type === 'outdoor' ? '2px solid #10B981' : '2px solid #D1D5DB',
+                  borderRadius: '8px',
+                  backgroundColor: formData.type === 'outdoor' ? '#ECFDF5' : 'white',
+                  color: formData.type === 'outdoor' ? '#10B981' : '#6B7280',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                ☀️ Odkryty
+              </button>
+
+              {/* Z ładowarką */}
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'ev_charging' })}
+                style={{
+                  padding: '12px 8px',
+                  border: formData.type === 'ev_charging' ? '2px solid #F59E0B' : '2px solid #D1D5DB',
+                  borderRadius: '8px',
+                  backgroundColor: formData.type === 'ev_charging' ? '#FFFBEB' : 'white',
+                  color: formData.type === 'ev_charging' ? '#F59E0B' : '#6B7280',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                ⚡ Ładowarka EV
+              </button>
+            </div>
           </div>
 
           {/* Liczba miejsc */}
