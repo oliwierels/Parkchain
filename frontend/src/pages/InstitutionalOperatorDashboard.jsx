@@ -26,6 +26,8 @@ const InstitutionalOperatorDashboard = () => {
 
   // Modal states
   const [showTokenizeModal, setShowTokenizeModal] = useState(false);
+  const [showAssetDetailsModal, setShowAssetDetailsModal] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
   const [selectedParkingLot, setSelectedParkingLot] = useState(null);
 
   // Form state for tokenization
@@ -319,7 +321,13 @@ const InstitutionalOperatorDashboard = () => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-white/10">
-                  <button className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm font-semibold py-2 rounded transition-all">
+                  <button
+                    onClick={() => {
+                      setSelectedAsset(asset);
+                      setShowAssetDetailsModal(true);
+                    }}
+                    className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm font-semibold py-2 rounded transition-all"
+                  >
                     <FiEdit className="inline mr-1" />
                     Manage Asset
                   </button>
@@ -387,6 +395,223 @@ const InstitutionalOperatorDashboard = () => {
             </div>
           )}
         </motion.div>
+
+        {/* Asset Details Modal */}
+        {showAssetDetailsModal && selectedAsset && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-gray-900 rounded-xl p-8 max-w-3xl w-full border border-white/20 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-white text-3xl font-bold">Asset Details</h2>
+                <button
+                  onClick={() => setShowAssetDetailsModal(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Asset Header */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-6 border border-blue-400/30">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-white text-2xl font-bold mb-2">
+                        {selectedAsset.parking_lot_name || 'Parking Asset'}
+                      </h3>
+                      <p className="text-gray-300 mb-1">
+                        {selectedAsset.spot_number ? `Spot #${selectedAsset.spot_number}` : 'Bundle Asset'}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {selectedAsset.city || 'N/A'} • {selectedAsset.address || 'No address'}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                      selectedAsset.compliance_status === 'compliant'
+                        ? 'bg-green-500/20 text-green-300'
+                        : 'bg-yellow-500/20 text-yellow-300'
+                    }`}>
+                      {selectedAsset.compliance_status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Token Information */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiPackage />
+                    Token Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Asset Token Address</p>
+                      <p className="text-white font-mono text-sm break-all">
+                        {selectedAsset.asset_token_address || 'Not minted'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Asset Type</p>
+                      <p className="text-white">
+                        {selectedAsset.asset_type?.replace('_', ' ').toUpperCase() || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Total Supply</p>
+                      <p className="text-white font-semibold">{selectedAsset.total_supply} tokens</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Circulating Supply</p>
+                      <p className="text-white font-semibold">{selectedAsset.circulating_supply || 0} tokens</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Information */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiDollarSign />
+                    Financial Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Estimated Value</p>
+                      <p className="text-green-400 text-2xl font-bold">
+                        ${parseFloat(selectedAsset.estimated_value_usdc || 0).toLocaleString()} USDC
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Annual Revenue</p>
+                      <p className="text-blue-400 text-2xl font-bold">
+                        ${parseFloat(selectedAsset.annual_revenue_usdc || 0).toLocaleString()} USDC
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Revenue Share</p>
+                      <p className="text-purple-400 text-xl font-bold">
+                        {selectedAsset.revenue_share_percentage}% for token holders
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Expected Yield</p>
+                      <p className="text-yellow-400 text-xl font-bold">
+                        {selectedAsset.annual_revenue_usdc && selectedAsset.estimated_value_usdc
+                          ? ((parseFloat(selectedAsset.annual_revenue_usdc) / parseFloat(selectedAsset.estimated_value_usdc)) * 100).toFixed(2)
+                          : '0.00'}% APY
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Asset Status */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <h4 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+                    <FiBarChart2 />
+                    Asset Status
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Active</p>
+                      <p className={`text-2xl font-bold ${selectedAsset.is_active ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedAsset.is_active ? '✓' : '✗'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Tradeable</p>
+                      <p className={`text-2xl font-bold ${selectedAsset.is_tradeable ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedAsset.is_tradeable ? '✓' : '✗'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-2">Compliance</p>
+                      <p className={`text-sm font-bold ${selectedAsset.compliance_status === 'compliant' ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {selectedAsset.compliance_status?.toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operational Information */}
+                {(selectedAsset.operational_hours || selectedAsset.spot_features || selectedAsset.access_restrictions) && (
+                  <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                    <h4 className="text-white text-xl font-semibold mb-4">Operational Information</h4>
+                    <div className="space-y-3">
+                      {selectedAsset.operational_hours && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Operational Hours</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.operational_hours === 'object'
+                              ? JSON.stringify(selectedAsset.operational_hours)
+                              : selectedAsset.operational_hours}
+                          </p>
+                        </div>
+                      )}
+                      {selectedAsset.spot_features && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Spot Features</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.spot_features === 'object'
+                              ? JSON.stringify(selectedAsset.spot_features)
+                              : selectedAsset.spot_features}
+                          </p>
+                        </div>
+                      )}
+                      {selectedAsset.access_restrictions && (
+                        <div>
+                          <p className="text-gray-400 text-sm mb-1">Access Restrictions</p>
+                          <p className="text-white">
+                            {typeof selectedAsset.access_restrictions === 'object'
+                              ? JSON.stringify(selectedAsset.access_restrictions)
+                              : selectedAsset.access_restrictions}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Timestamps */}
+                <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400 mb-1">Created</p>
+                      <p className="text-white">
+                        {selectedAsset.created_at ? new Date(selectedAsset.created_at).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-1">Last Updated</p>
+                      <p className="text-white">
+                        {selectedAsset.updated_at ? new Date(selectedAsset.updated_at).toLocaleString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <button
+                  onClick={() => setShowAssetDetailsModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    // Future: Add edit functionality
+                    alert('Edit functionality coming soon!');
+                  }}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <FiEdit />
+                  Edit Asset
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Tokenize Asset Modal */}
         {showTokenizeModal && (
