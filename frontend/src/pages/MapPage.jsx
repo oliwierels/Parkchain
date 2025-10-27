@@ -329,9 +329,17 @@ function MapPage() {
     }
   }, []);
 
+  const [isModalOpening, setIsModalOpening] = useState(false);
+
   const handleReserveClick = (parking) => {
+    setIsModalOpening(true);
     setSelectedParking(parking);
-    setShowReservationModal(true);
+
+    // Dodaj małe opóźnienie dla płynnej animacji
+    setTimeout(() => {
+      setShowReservationModal(true);
+      setIsModalOpening(false);
+    }, 300);
   };
 
   const handleReservationSuccess = (reservation) => {
@@ -514,6 +522,71 @@ function MapPage() {
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      {/* Animacje CSS dla efektów UX */}
+      <style>{`
+        @keyframes ripple {
+          0% {
+            transform: scale(0);
+            opacity: 0.6;
+          }
+          100% {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes modalSlideIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes backdropBlur {
+          0% {
+            backdrop-filter: blur(0px);
+            background: rgba(0, 0, 0, 0);
+          }
+          100% {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.5);
+          }
+        }
+
+        @keyframes popupFloat {
+          0% {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        /* Stylizacja Leaflet Popup dla lepszego UX */
+        .leaflet-popup {
+          animation: popupFloat 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .leaflet-popup-content-wrapper {
+          border-radius: 16px !important;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .leaflet-popup-tip {
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+        }
+      `}</style>
       {/* Minimal Floating Controls */}
       <div style={{
         position: 'fixed',
@@ -1379,36 +1452,90 @@ function MapPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {parking.available_spots > 0 && (
             <button
-              onClick={() => handleReserveClick(parking)}
+              onClick={(e) => {
+                // Efekt ripple
+                const button = e.currentTarget;
+                const ripple = document.createElement('span');
+                const rect = button.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s ease-out';
+                ripple.style.pointerEvents = 'none';
+
+                button.style.position = 'relative';
+                button.style.overflow = 'hidden';
+                button.appendChild(ripple);
+
+                setTimeout(() => ripple.remove(), 600);
+
+                handleReserveClick(parking);
+              }}
+              disabled={isModalOpening}
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                background: isModalOpening
+                  ? 'linear-gradient(135deg, #9333EA 0%, #C026D3 100%)'
+                  : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                 color: 'white',
-                padding: '12px 20px',
+                padding: '14px 24px',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 fontWeight: '700',
-                cursor: 'pointer',
+                cursor: isModalOpening ? 'wait' : 'pointer',
                 fontSize: '15px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-                letterSpacing: '0.3px'
+                gap: '10px',
+                transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                boxShadow: isModalOpening
+                  ? '0 8px 32px rgba(147, 51, 234, 0.5)'
+                  : '0 4px 16px rgba(99, 102, 241, 0.4)',
+                letterSpacing: '0.5px',
+                position: 'relative',
+                overflow: 'hidden',
+                transform: isModalOpening ? 'scale(0.98)' : 'scale(1)'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4)';
+                if (!isModalOpening) {
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 8px 28px rgba(99, 102, 241, 0.5)';
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3)';
+                if (!isModalOpening) {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(99, 102, 241, 0.4)';
+                }
               }}
             >
-              <FaTicketAlt style={{ fontSize: '16px' }} />
-              <span>Zarezerwuj teraz</span>
+              {isModalOpening ? (
+                <>
+                  <div style={{
+                    width: '18px',
+                    height: '18px',
+                    border: '3px solid rgba(255, 255, 255, 0.3)',
+                    borderTop: '3px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  <span>Przygotowuję rezerwację...</span>
+                </>
+              ) : (
+                <>
+                  <FaTicketAlt style={{ fontSize: '18px' }} />
+                  <span>Zarezerwuj teraz</span>
+                </>
+              )}
             </button>
           )}
 
