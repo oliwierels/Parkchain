@@ -6,6 +6,7 @@ import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana
 import { reservationAPI } from '../services/api';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
   const wallet = useWallet();
@@ -331,78 +332,219 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   // Dzisiejsza data w formacie YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
 
+  // Step progress calculation
+  const getStepNumber = () => {
+    if (step === 'details') return 1;
+    if (step === 'payment') return 2;
+    if (step === 'processing') return 3;
+    return 1;
+  };
+
+  const progress = (getStepNumber() / 3) * 100;
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '15px',
-        padding: '30px',
-        maxWidth: step === 'payment' ? '900px' : '500px',
-        width: '90%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-      }}>
-        {/* Header */}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: step === 'payment' ? '900px' : '550px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.05)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+        {/* Header with close button */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
+          alignItems: 'flex-start',
+          marginBottom: '25px'
         }}>
-          <div>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>
-              {step === 'details' && 'Rezerwacja parkingu'}
-              {step === 'payment' && 'Wybierz metodę płatności'}
-              {step === 'processing' && 'Przetwarzanie płatności...'}
-            </h2>
-            {/* Step indicator */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <span style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: step === 'details' ? '#6366F1' : '#10B981'
+          <div style={{ flex: 1 }}>
+            <motion.h2
+              key={step}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              style={{ fontSize: '26px', fontWeight: '700', margin: '0 0 8px 0', color: '#1f2937' }}
+            >
+              {step === 'details' && '📝 Szczegóły rezerwacji'}
+              {step === 'payment' && '💳 Wybierz płatność'}
+              {step === 'processing' && '⏳ Przetwarzanie...'}
+            </motion.h2>
+
+            {/* Progress bar */}
+            <div style={{
+              width: '100%',
+              height: '8px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '999px',
+              overflow: 'hidden',
+              marginBottom: '15px'
+            }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                style={{
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%)',
+                  borderRadius: '999px'
+                }}
+              />
+            </div>
+
+            {/* Step indicators */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {/* Step 1 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                {step === 'details' ? '1. Szczegóły' : '✓ Szczegóły'}
-              </span>
-              <span style={{ color: '#d1d5db' }}>→</span>
-              <span style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: step === 'payment' ? '#6366F1' : step === 'processing' ? '#10B981' : '#9ca3af'
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  backgroundColor: getStepNumber() >= 1 ? '#6366F1' : '#E5E7EB',
+                  color: 'white',
+                  transition: 'all 0.3s'
+                }}>
+                  {getStepNumber() > 1 ? '✓' : '1'}
+                </div>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: getStepNumber() >= 1 ? '#6366F1' : '#9CA3AF'
+                }}>
+                  Szczegóły
+                </span>
+              </div>
+
+              <div style={{ width: '30px', height: '2px', backgroundColor: '#E5E7EB' }} />
+
+              {/* Step 2 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                {step === 'processing' ? '✓ Płatność' : step === 'payment' ? '2. Płatność' : '2. Płatność'}
-              </span>
-              <span style={{ color: '#d1d5db' }}>→</span>
-              <span style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: step === 'processing' ? '#6366F1' : '#9ca3af'
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB',
+                  color: 'white',
+                  transition: 'all 0.3s'
+                }}>
+                  {getStepNumber() > 2 ? '✓' : '2'}
+                </div>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: getStepNumber() >= 2 ? '#6366F1' : '#9CA3AF'
+                }}>
+                  Płatność
+                </span>
+              </div>
+
+              <div style={{ width: '30px', height: '2px', backgroundColor: '#E5E7EB' }} />
+
+              {/* Step 3 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
-                3. Potwierdzenie
-              </span>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB',
+                  color: 'white',
+                  transition: 'all 0.3s'
+                }}>
+                  {getStepNumber() > 3 ? '✓' : '3'}
+                </div>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: getStepNumber() >= 3 ? '#6366F1' : '#9CA3AF'
+                }}>
+                  Potwierdzenie
+                </span>
+              </div>
             </div>
           </div>
+
           <button
             onClick={onClose}
             disabled={loading}
             style={{
-              background: 'none',
+              background: '#F3F4F6',
               border: 'none',
-              fontSize: '24px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              color: '#6b7280'
+              color: '#6B7280',
+              transition: 'all 0.2s',
+              marginLeft: '15px'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = '#E5E7EB';
+                e.target.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#F3F4F6';
+              e.target.style.transform = 'scale(1)';
             }}
           >
             ×
@@ -891,16 +1033,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             )}
           </div>
         )}
-      </div>
+        </motion.div>
 
-      {/* CSS Animation */}
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
+        {/* CSS Animation */}
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
