@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { reservationAPI } from '../services/api';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -202,8 +202,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       const result = await reservationAPI.createReservation(reservationData);
       console.log('✅ Rezerwacja utworzona:', result);
 
-      onSuccess();
-      setTimeout(() => onClose(), 2000); // Close after showing success
+      // Pass reservation data to success callback
+      onSuccess(result);
+      onClose(); // Close immediately, success modal will show
     } catch (err) {
       console.error('❌ Błąd płatności/rezerwacji:', err);
       setError(err.message || 'Nie udało się przetworzyć płatności');
