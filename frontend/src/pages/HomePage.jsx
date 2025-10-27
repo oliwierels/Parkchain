@@ -138,7 +138,7 @@ function HomePage() {
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-gray-50 via-white to-gray-100">
       {/* Floating Minimal Navbar */}
       <motion.nav
-        className="fixed top-0 left-0 right-0 z-40 px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-40 px-6 py-2"
         style={{ opacity: navbarOpacity }}
       >
         <motion.div
@@ -266,7 +266,7 @@ function HomePage() {
             damping: 20,
             delay: 0
           }}
-          className="mb-8 inline-block w-28 h-28" // Nadajemy rozmiar tutaj, aby hover działał
+          className="mb-8 inline-block w-46 h-36" // Nadajemy rozmiar tutaj, aby hover działał
         >
           {/* Ten div jest teraz tylko kontenerem bez stylu */}
           <motion.div 
@@ -275,17 +275,7 @@ function HomePage() {
             // Usunięto: whileHover i transition (przeniesione do img)
           >
             {/* Animacje whileHover i transition są teraz na tagu img */}
-            <motion.img 
-              src="/Projekt bez nazwy.png" 
-              alt="Parkchain Logo" 
-              className="w-full h-full object-contain" // Usunięto padding, bo nie ma tła
-              whileHover={{
-                scale: 1.1,
-                rotate: 12,
-                // Usunięto boxShadow, bo nie pasuje do samego logo
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            />
+            
           </motion.div>
         </motion.div>
 
