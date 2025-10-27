@@ -263,7 +263,6 @@ router.post('/purchase', authenticateToken, [
         buyer_id: buyerId,
         seller_id: listing.seller_id,
         token_amount,
-        price_per_token_usdc: listing.price_per_token_usdc,
         total_amount_usdc: total_amount_usdc || totalAmount,
         payment_method,
         solana_tx_signature: solana_tx_signature || `DEMO_${Date.now()}`,
