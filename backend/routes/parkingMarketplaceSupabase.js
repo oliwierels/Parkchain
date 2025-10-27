@@ -481,8 +481,9 @@ router.get('/my-holdings', authenticateToken, async (req, res) => {
     // Get all purchases by this user (removed payment_status filter as column doesn't exist)
     const { data: purchases, error: purchasesError } = await supabase
       .from('parking_asset_transactions')
-      .select('asset_id, token_amount, listing_id, asset:parking_assets(*), listing:parking_marketplace_listings(listing_metadata)')
-      .eq('buyer_id', userId);
+      .select('asset_id, token_amount, asset:parking_assets(*)')
+      .eq('buyer_id', userId)
+      .eq('settlement_status', 'settled');
 
     if (purchasesError) {
       console.error('Error fetching purchases:', purchasesError);
