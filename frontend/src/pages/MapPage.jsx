@@ -1065,7 +1065,7 @@ function MapPage() {
         <div style={{
           fontSize: '13px',
           color: '#6b7280',
-          margin: '0 0 16px 0',
+          margin: '0 0 12px 0',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -1076,6 +1076,48 @@ function MapPage() {
           <FaMapMarkerAlt style={{ fontSize: '14px', color: '#6366F1', flexShrink: 0 }} />
           <span>{parking.address}</span>
         </div>
+
+        {/* Typ parkingu / Amenities Badge */}
+        {parking.type && (
+          <div style={{
+            marginBottom: '16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            fontSize: '12px',
+            fontWeight: '600',
+            background: parking.type === 'covered'
+              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)'
+              : parking.type === 'ev_charging'
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)'
+              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
+            border: `2px solid ${
+              parking.type === 'covered'
+                ? 'rgba(59, 130, 246, 0.3)'
+                : parking.type === 'ev_charging'
+                ? 'rgba(245, 158, 11, 0.3)'
+                : 'rgba(16, 185, 129, 0.3)'
+            }`,
+            color: parking.type === 'covered'
+              ? '#1e40af'
+              : parking.type === 'ev_charging'
+              ? '#92400e'
+              : '#065f46'
+          }}>
+            <span style={{ fontSize: '14px' }}>
+              {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
+            </span>
+            <span>
+              {parking.type === 'covered'
+                ? 'Zadaszony'
+                : parking.type === 'ev_charging'
+                ? 'Z ładowarką EV'
+                : 'Odkryty'}
+            </span>
+          </div>
+        )}
 
         {/* Status dostępności z wizualnym wskaźnikiem */}
         <div style={{

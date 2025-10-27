@@ -285,26 +285,35 @@ app.post('/api/parking-lots', authenticateToken, [
   }
 
   try {
-    const { name, address, price_per_hour, total_spots, latitude, longitude } = req.body;
+    const { name, address, price_per_hour, total_spots, latitude, longitude, type, price_per_day, price_per_week, price_per_month, city } = req.body;
     const owner_id = req.user.id;
-    
+
+    const insertData = {
+      name,
+      address,
+      price_per_hour,
+      total_spots,
+      available_spots: total_spots,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      owner_id,
+      type: type || 'outdoor'
+    };
+
+    // Add optional fields if provided
+    if (city) insertData.city = city;
+    if (price_per_day) insertData.price_per_day = price_per_day;
+    if (price_per_week) insertData.price_per_week = price_per_week;
+    if (price_per_month) insertData.price_per_month = price_per_month;
+
     const { data, error } = await supabase
       .from('parking_lots')
-      .insert([{
-        name,
-        address,
-        price_per_hour,
-        total_spots,
-        available_spots: total_spots,
-        latitude: latitude || null,
-        longitude: longitude || null,
-        owner_id
-      }])
+      .insert([insertData])
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     res.status(201).json(data);
   } catch (error) {
     console.error('Error creating parking lot:', error);
