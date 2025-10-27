@@ -280,28 +280,36 @@ function HomePage() {
         <div className="max-w-7xl mx-auto text-center">
           {/* Logo */}
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
-              delay: 0
-            }}
-            className="mb-8"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+            delay: 0
+          }}
+          className="mb-8 inline-block w-28 h-28" // Nadajemy rozmiar tutaj, aby hover działał
+        >
+          {/* Ten div jest teraz tylko kontenerem bez stylu */}
+          <motion.div 
+            className="inline-block w-full h-full" // Dopasuj do rodzica
+            // Usunięto: bg-gradient..., rounded..., shadow..., overflow...
+            // Usunięto: whileHover i transition (przeniesione do img)
           >
-            <motion.div
-              className="inline-block w-28 h-28 bg-gradient-to-br from-parkchain-400 to-parkchain-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-parkchain-500/50"
+            {/* Animacje whileHover i transition są teraz na tagu img */}
+            <motion.img 
+              src="/Projekt bez nazwy.png" 
+              alt="Parkchain Logo" 
+              className="w-full h-full object-contain" // Usunięto padding, bo nie ma tła
               whileHover={{
                 scale: 1.1,
                 rotate: 12,
-                boxShadow: "0 25px 50px -12px rgba(99, 102, 241, 0.8)"
+                // Usunięto boxShadow, bo nie pasuje do samego logo
               }}
               transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            >
-              <FaParking className="text-6xl text-white" />
-            </motion.div>
+            />
           </motion.div>
+        </motion.div>
 
           {/* Title */}
           <motion.h1
