@@ -60,3 +60,9 @@ body {
 .leaflet-popup-tip {
   background: white;
 }
+/* ... Twoje istniejące style ... */
+
+@keyframes gradient-animation {
+  0% { background-position: 0% 50%; }     /* Start z lewej */
+  100% { background-position: 200% 50%; } /* Przesuń daleko w prawo */
+}

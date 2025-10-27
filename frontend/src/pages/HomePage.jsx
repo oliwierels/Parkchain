@@ -138,20 +138,23 @@ function HomePage() {
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Floating Minimal Navbar */}
       <motion.nav
-        className="fixed top-0 left-0 right-0 z-40 px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-40 px-6 py-2"
         style={{ opacity: navbarOpacity }}
       >
         <motion.div
-          className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10"
+          className="max-w-7xl mx-auto flex items-center justify-between px-6 h-24 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10"
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
         >
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-parkchain-400 to-parkchain-600 rounded-xl flex items-center justify-center">
-              <FaParking className="text-white text-xl" />
-            </div>
-            <span className="text-white font-bold text-lg">Parkchain</span>
+            {/* Nowe logo */}
+            <img 
+              src="/Parkchain.png" 
+              alt="Parkchain Logo" 
+              className="w-40 h-40 rounded-lg" // Rozmiar i zaokrąglenie takie jak poprzednio
+            />
+            
           </Link>
 
           <div className="flex items-center gap-4">
@@ -288,7 +291,7 @@ function HomePage() {
             damping: 20,
             delay: 0
           }}
-          className="mb-8 inline-block w-28 h-28" // Nadajemy rozmiar tutaj, aby hover działał
+          className="mb-8 inline-block w-46 h-36" // Nadajemy rozmiar tutaj, aby hover działał
         >
           {/* Ten div jest teraz tylko kontenerem bez stylu */}
           <motion.div 
@@ -297,17 +300,7 @@ function HomePage() {
             // Usunięto: whileHover i transition (przeniesione do img)
           >
             {/* Animacje whileHover i transition są teraz na tagu img */}
-            <motion.img 
-              src="/Projekt bez nazwy.png" 
-              alt="Parkchain Logo" 
-              className="w-full h-full object-contain" // Usunięto padding, bo nie ma tła
-              whileHover={{
-                scale: 1.1,
-                rotate: 12,
-                // Usunięto boxShadow, bo nie pasuje do samego logo
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            />
+            
           </motion.div>
         </motion.div>
 
@@ -321,7 +314,7 @@ function HomePage() {
           >
             Przyszłość
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 via-purple-400 to-pink-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-600 to-pink-400 animate-gradient-text bg-[length:300%_auto]"> 
               Parkowania
             </span>
           </motion.h1>
