@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
 
 function EndChargingSessionModal({ session, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const wallet = useWallet();
   const { connection } = useConnection();
 
@@ -39,7 +41,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
     setError(null);
 
     if (!formData.energy_delivered_kwh) {
-      setError('Podaj ilość dostarczonej energii');
+      setError(t('messages.provideEnergyAmount'));
       return;
     }
 
@@ -49,7 +51,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
 
   const handlePayment = async () => {
     if (!paymentMethod) {
-      setError('Wybierz metodę płatności');
+      setError(t('messages.selectPaymentMethod'));
       return;
     }
 
@@ -89,17 +91,17 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się zakończyć sesji');
+        throw new Error(errorData.error || t('messages.sessionEndError'));
       }
 
       const data = await response.json();
-      console.log('✅ Sesja zakończona i opłacona:', data);
+      console.log(t('messages.sessionPaidSuccess'), data);
 
       onSuccess();
       setTimeout(() => onClose(), 2000);
     } catch (err) {
-      console.error('❌ Błąd płatności/zakończenia sesji:', err);
-      setError(err.message || 'Nie udało się przetworzyć płatności');
+      console.error(t('messages.sessionPaymentError'), err);
+      setError(err.message || t('messages.sessionEndError'));
       setStep('payment');
     } finally {
       setLoading(false);

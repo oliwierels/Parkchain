@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { parkingAPI } from '../services/api';
 
 function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -39,7 +41,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
     try {
       // Walidacja
       if (!formData.name || !formData.address || !formData.price_per_hour || !formData.total_spots) {
-        throw new Error('Wypełnij wszystkie wymagane pola');
+        throw new Error(t('validation.fillAllFields'));
       }
 
       // Przygotuj dane
@@ -71,7 +73,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się dodać parkingu');
+        throw new Error(errorData.error || t('errors.addParkingError'));
       }
 
       // Success!
@@ -82,8 +84,8 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
         onSuccess();
       }, 1500);
     } catch (err) {
-      console.error('❌ Błąd przy dodawaniu parkingu:', err);
-      setError(err.response?.data?.error || err.message || 'Nie udało się dodać parkingu');
+      console.error(t('messages.addingParkingError'), err);
+      setError(err.response?.data?.error || err.message || t('errors.addParkingError'));
       setStage('form');
     } finally {
       setLoading(false);
@@ -140,7 +142,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
             fontWeight: 'bold',
             color: '#1F2937'
           }}>
-            Dodaj nowy parking
+            {t('modals.addNewParking')}
           </h2>
           <button
             onClick={onClose}
@@ -183,7 +185,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#6B7280',
               marginBottom: '4px'
             }}>
-              📍 Lokalizacja
+              {t('modals.locationLabel')}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
               Szerokość: {latitude.toFixed(6)}
@@ -546,7 +548,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 opacity: loading ? 0.5 : 1
               }}
             >
-              Anuluj
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -563,7 +565,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Dodawanie...' : 'Dodaj parking'}
+              {loading ? t('common.loading') : t('parking.addParking')}
             </button>
           </div>
         </form>

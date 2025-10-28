@@ -1,6 +1,7 @@
 // frontend/src/components/ReservationModal.jsx
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { reservationAPI } from '../services/api';
@@ -9,6 +10,7 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const wallet = useWallet();
   const { connection } = useConnection();
 
@@ -109,7 +111,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
       // Znajdź najtańszą opcję
       if (allOptions.length === 0) {
-        console.error('❌ Brak dostępnych opcji cenowych dla parkingu');
+        console.error(t('messages.noPricingOptions'));
         setPriceCalculation(null);
         setCalculatingPrice(false);
         return;
@@ -128,10 +130,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         allOptions: allOptions
       };
 
-      console.log('💰 Obliczona cena:', calculation);
       setPriceCalculation(calculation);
     } catch (err) {
-      console.error('Błąd obliczania ceny:', err);
+      console.error(t('messages.pricingCalculationError'), err);
       setPriceCalculation(null);
     } finally {
       setCalculatingPrice(false);
@@ -146,12 +147,12 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     const end = new Date(`${formData.endDate}T${formData.endTime}`);
 
     if (end <= start) {
-      setError('Data zakończenia musi być późniejsza niż data rozpoczęcia');
+      setError(t('messages.endDateMustBeAfterStart'));
       return;
     }
 
     if (!priceCalculation) {
-      setError('Nie udało się obliczyć ceny');
+      setError(t('messages.pricingCalculationFailed'));
       return;
     }
 
@@ -161,7 +162,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
   const handlePayment = async () => {
     if (!paymentMethod) {
-      setError('Wybierz metodę płatności');
+      setError(t('messages.selectPaymentMethod'));
       return;
     }
 

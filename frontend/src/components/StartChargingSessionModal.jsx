@@ -1,11 +1,13 @@
 // frontend/src/components/StartChargingSessionModal.jsx
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaBolt, FaCar, FaBatteryHalf, FaPercent, FaClock, FaSearch } from 'react-icons/fa';
 import { EV_MODELS, searchModels, getModelById, calculateChargingTime } from '../data/evModels';
 
 function StartChargingSessionModal({ station, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -66,7 +68,7 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
         estimated_kwh: chargingDetails?.kWhNeeded || null
       } : null;
 
-      console.log('🔌 Rozpoczynam sesję ładowania...', {
+      console.log(t('messages.startingChargingSession'), {
         station_id: station.id,
         station_name: station.name,
         vehicle: selectedModel?.fullName
@@ -86,26 +88,19 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ Błąd API:', errorData);
-        throw new Error(errorData.error || errorData.details || 'Nie udało się rozpocząć sesji');
+        console.error(t('messages.apiError'), errorData);
+        throw new Error(errorData.error || errorData.details || t('messages.sessionStartError'));
       }
 
       const data = await response.json();
-      console.log('✅ Sesja rozpoczęta pomyślnie:', data);
-      console.log('📍 ID sesji:', data.id);
-      console.log('⚡ Stacja:', data.charging_stations?.name);
+      console.log(t('messages.sessionStartedSuccessfully'), data);
 
-      alert(`⚡ Sesja ładowania rozpoczęta!
-
-Stacja: ${data.charging_stations?.name || station.name}
-ID sesji: ${data.id}
-
-Możesz ją zakończyć w swoim profilu lub na mapie ładowania.`);
+      alert(t('messages.sessionStartedSuccess'));
 
       onSuccess();
     } catch (err) {
-      console.error('❌ Błąd rozpoczynania sesji:', err);
-      setError(err.message || 'Nie udało się rozpocząć sesji');
+      console.error(t('messages.startingSessionError'), err);
+      setError(err.message || t('messages.sessionStartError'));
     } finally {
       setLoading(false);
     }

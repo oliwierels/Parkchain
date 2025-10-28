@@ -1,9 +1,11 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -24,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     const response = await axios.get('http://localhost:3000/api/auth/me');
     setUser(response.data); // ZMIANA: usuń .user
   } catch (error) {
-    console.error('Błąd pobierania użytkownika:', error);
+    console.error(t('console.fetchUserError'), error);
     logout();
   } finally {
     setLoading(false);
@@ -39,18 +41,18 @@ export const AuthProvider = ({ children }) => {
       full_name
       // Usuń phone - backend go nie przyjmuje
     });
-    
+
     const { token, user } = response.data;
     localStorage.setItem('token', token);
     setToken(token);
     setUser(user);
-    
+
     return { success: true };
   } catch (error) {
     console.error('Register error:', error); // Dodaj console.log
-    return { 
-      success: false, 
-      message: error.response?.data?.error || 'Błąd rejestracji' // ZMIANA: .error zamiast .message
+    return {
+      success: false,
+      message: error.response?.data?.error || t('messages.registrationError') // ZMIANA: .error zamiast .message
     };
   }
 };
@@ -61,18 +63,18 @@ const login = async (email, password) => {
       email,
       password
     });
-    
+
     const { token, user } = response.data;
     localStorage.setItem('token', token);
     setToken(token);
     setUser(user);
-    
+
     return { success: true };
   } catch (error) {
     console.error('Login error:', error); // Dodaj console.log
-    return { 
-      success: false, 
-      message: error.response?.data?.error || 'Błąd logowania' // ZMIANA: .error
+    return {
+      success: false,
+      message: error.response?.data?.error || t('messages.loginError') // ZMIANA: .error
     };
   }
 };
@@ -98,8 +100,9 @@ const login = async (email, password) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  const { t } = useTranslation();
   if (!context) {
-    throw new Error('useAuth musi być używany wewnątrz AuthProvider');
+    throw new Error(t('errors.useAuthContextError'));
   }
   return context;
 };
