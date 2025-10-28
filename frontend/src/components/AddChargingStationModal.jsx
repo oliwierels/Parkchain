@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,8 +84,14 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
         throw new Error(errorData.error || t('errors.addParkingError'));
       }
 
-      alert(t('messages.chargerAddedSuccess'));
-      onSuccess();
+      // Show success animation
+      setSuccess(true);
+
+      // Close after 2 seconds
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 2000);
     } catch (err) {
       console.error(t('messages.addingChargerError'), err);
       setError(err.response?.data?.error || err.message || t('errors.addParkingError'));
@@ -93,74 +101,122 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 2000,
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        maxWidth: '550px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
-      }}>
-        <div style={{
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#1F2937',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            {t('modals.addChargingStation')}
-          </h2>
-          <button
-            onClick={onClose}
+          zIndex: 2000,
+          padding: '20px'
+        }}
+        onClick={success ? undefined : onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '550px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+        {/* Success State */}
+        {success ? (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#6B7280'
+              textAlign: 'center',
+              padding: '60px 20px'
             }}
           >
-            ✕
-          </button>
-        </div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring' }}
+              style={{ fontSize: '72px', marginBottom: '20px' }}
+            >
+              ⚡
+            </motion.div>
+            <h3 style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: '#10B981',
+              margin: '0 0 12px 0'
+            }}>
+              Ładowarka dodana!
+            </h3>
+            <p style={{ fontSize: '16px', color: '#6B7280', margin: '0 0 8px 0' }}>
+              Twoja stacja ładowania jest już dostępna na mapie
+            </p>
+            <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>
+              Zamykanie...
+            </p>
+          </motion.div>
+        ) : (
+          <>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#1F2937',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                {t('modals.addChargingStation')}
+              </h2>
+              <button
+                onClick={onClose}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6B7280'
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
-        {error && (
-          <div style={{
-            backgroundColor: '#FEE2E2',
-            color: '#991B1B',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
-            {error}
-          </div>
-        )}
+            {error && (
+              <div style={{
+                backgroundColor: '#FEE2E2',
+                color: '#991B1B',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
 
-        <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
           {/* Lokalizacja */}
           <div style={{
             marginBottom: '16px',
@@ -560,8 +616,11 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+          </>
+        )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
