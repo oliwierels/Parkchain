@@ -387,13 +387,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           }}
           style={{
             backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '28px',
-            maxWidth: step === 'payment' ? '900px' : '500px',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: step === 'payment' ? '900px' : '480px',
             width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
             border: 'none',
             position: 'relative'
           }}
@@ -403,191 +403,20 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '25px',
-          position: 'relative',
-          zIndex: 1
+          alignItems: 'center',
+          marginBottom: '20px'
         }}>
           <div style={{ flex: 1 }}>
             <motion.h2
               key={step}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              style={{ fontSize: '20px', fontWeight: '600', margin: '0 0 12px 0', color: '#111827', letterSpacing: '-0.3px' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ fontSize: '18px', fontWeight: '600', margin: '0', color: '#111827', letterSpacing: '-0.3px' }}
             >
               {step === 'details' && t('reservations.modal.title')}
               {step === 'payment' && t('reservations.modal.selectPayment')}
               {step === 'processing' && t('reservations.modal.processing')}
             </motion.h2>
-
-            {/* Progress bar */}
-            <div style={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: '#F3F4F6',
-              borderRadius: '999px',
-              overflow: 'hidden',
-              marginBottom: '20px'
-            }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{
-                  duration: 0.3,
-                  ease: [0.4, 0, 0.2, 1]
-                }}
-                style={{
-                  height: '100%',
-                  background: '#111827',
-                  borderRadius: '999px'
-                }}
-              />
-            </div>
-
-            {/* Step indicators */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {/* Step 1 */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <motion.div
-                  animate={{
-                    backgroundColor: getStepNumber() >= 1 ? '#111827' : '#E5E7EB'
-                  }}
-                  transition={{
-                    duration: 0.2
-                  }}
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: 'white'
-                  }}
-                >
-                  {getStepNumber() > 1 ? '✓' : '1'}
-                </motion.div>
-                <motion.span
-                  animate={{
-                    color: getStepNumber() >= 1 ? '#111827' : '#9CA3AF'
-                  }}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {t('reservations.modal.details')}
-                </motion.span>
-              </div>
-
-              <motion.div
-                animate={{
-                  backgroundColor: getStepNumber() >= 2 ? '#111827' : '#E5E7EB'
-                }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  width: '24px',
-                  height: '2px'
-                }}
-              />
-
-              {/* Step 2 */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <motion.div
-                  animate={{
-                    backgroundColor: getStepNumber() >= 2 ? '#111827' : '#E5E7EB'
-                  }}
-                  transition={{
-                    duration: 0.2
-                  }}
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: 'white'
-                  }}
-                >
-                  {getStepNumber() > 2 ? '✓' : '2'}
-                </motion.div>
-                <motion.span
-                  animate={{
-                    color: getStepNumber() >= 2 ? '#111827' : '#9CA3AF'
-                  }}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {t('reservations.modal.payment')}
-                </motion.span>
-              </div>
-
-              <motion.div
-                animate={{
-                  backgroundColor: getStepNumber() >= 3 ? '#111827' : '#E5E7EB'
-                }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  width: '24px',
-                  height: '2px'
-                }}
-              />
-
-              {/* Step 3 */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <motion.div
-                  animate={{
-                    backgroundColor: getStepNumber() >= 3 ? '#111827' : '#E5E7EB'
-                  }}
-                  transition={{
-                    duration: 0.2
-                  }}
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: 'white'
-                  }}
-                >
-                  {getStepNumber() > 3 ? '✓' : '3'}
-                </motion.div>
-                <motion.span
-                  animate={{
-                    color: getStepNumber() >= 3 ? '#111827' : '#9CA3AF'
-                  }}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {t('reservations.modal.confirmation')}
-                </motion.span>
-              </div>
-            </div>
           </div>
 
           <motion.button
@@ -620,32 +449,30 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           style={{
-            background: '#F9FAFB',
-            padding: '16px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            border: '1px solid #E5E7EB',
-            position: 'relative',
-            zIndex: 1
+            background: '#FAFAFA',
+            padding: '14px',
+            borderRadius: '10px',
+            marginBottom: '18px',
+            border: '1px solid #F0F0F0'
           }}
         >
           <h3 style={{
-            fontSize: '16px',
+            fontSize: '15px',
             fontWeight: '600',
             margin: '0 0 4px 0',
             color: '#111827',
-            letterSpacing: '-0.3px'
+            letterSpacing: '-0.2px'
           }}>
             {parking.name}
           </h3>
           <p style={{
-            fontSize: '13px',
+            fontSize: '12px',
             color: '#6B7280',
-            margin: '0 0 12px 0'
+            margin: '0 0 10px 0'
           }}>
             {parking.address}
           </p>
@@ -754,13 +581,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 min={today}
                 required
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
                   color: '#111827',
                   backgroundColor: 'white',
-                  transition: 'border 0.2s ease'
+                  transition: 'border 0.15s ease'
                 }}
                 onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
                 onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
@@ -772,13 +599,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 onChange={handleChange}
                 required
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
                   color: '#111827',
                   backgroundColor: 'white',
-                  transition: 'border 0.2s ease'
+                  transition: 'border 0.15s ease'
                 }}
                 onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
                 onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
@@ -806,13 +633,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 min={formData.startDate || today}
                 required
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
                   color: '#111827',
                   backgroundColor: 'white',
-                  transition: 'border 0.2s ease'
+                  transition: 'border 0.15s ease'
                 }}
                 onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
                 onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
@@ -824,13 +651,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 onChange={handleChange}
                 required
                 style={{
-                  padding: '12px',
+                  padding: '10px 12px',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
                   color: '#111827',
                   backgroundColor: 'white',
-                  transition: 'border 0.2s ease'
+                  transition: 'border 0.15s ease'
                 }}
                 onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
                 onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
@@ -961,19 +788,19 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               onClick={onClose}
               style={{
                 flex: 1,
-                padding: '14px',
+                padding: '12px',
                 border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                fontSize: '15px',
+                borderRadius: '8px',
+                fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 backgroundColor: 'white',
                 color: '#6B7280',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.15s ease',
                 letterSpacing: '-0.2px'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = '#F9FAFB';
+                e.currentTarget.style.background = '#FAFAFA';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.background = 'white';
@@ -986,28 +813,26 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               disabled={loading || !priceCalculation}
               style={{
                 flex: 2,
-                padding: '14px',
+                padding: '12px',
                 border: 'none',
-                borderRadius: '10px',
-                fontSize: '15px',
+                borderRadius: '8px',
+                fontSize: '14px',
                 fontWeight: '600',
                 cursor: loading || !priceCalculation ? 'not-allowed' : 'pointer',
-                backgroundColor: loading || !priceCalculation ? '#9CA3AF' : '#111827',
+                backgroundColor: loading || !priceCalculation ? '#D1D5DB' : '#111827',
                 color: 'white',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.15s ease',
                 letterSpacing: '-0.2px',
-                opacity: loading || !priceCalculation ? 0.6 : 1
+                opacity: loading || !priceCalculation ? 0.5 : 1
               }}
               onMouseOver={(e) => {
                 if (!loading && priceCalculation) {
                   e.currentTarget.style.background = '#1F2937';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!loading && priceCalculation) {
                   e.currentTarget.style.background = '#111827';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >
