@@ -332,14 +332,9 @@ function MapPage() {
   const [isModalOpening, setIsModalOpening] = useState(false);
 
   const handleReserveClick = (parking) => {
-    setIsModalOpening(true);
+    console.log('🎯 Kliknięto rezerwuj dla:', parking.name);
     setSelectedParking(parking);
-
-    // Dodaj małe opóźnienie dla płynnej animacji
-    setTimeout(() => {
-      setShowReservationModal(true);
-      setIsModalOpening(false);
-    }, 300);
+    setShowReservationModal(true);
   };
 
   const handleReservationSuccess = (reservation) => {
@@ -1522,54 +1517,64 @@ function MapPage() {
           {parking.available_spots > 0 && (
             <button
               onClick={(e) => {
-                const button = e.currentTarget;
-
-                // 💥 MEGA EFEKT RIPPLE
-                const ripple = document.createElement('span');
-                const rect = button.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height) * 2;
-                const x = e.clientX - rect.left - size / 2;
-                const y = e.clientY - rect.top - size / 2;
-
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = x + 'px';
-                ripple.style.top = y + 'px';
-                ripple.style.position = 'absolute';
-                ripple.style.borderRadius = '50%';
-                ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
-                ripple.style.transform = 'scale(0)';
-                ripple.style.animation = 'ripple 1s ease-out';
-                ripple.style.pointerEvents = 'none';
-                ripple.style.zIndex = '10';
-
-                button.style.position = 'relative';
-                button.style.overflow = 'hidden';
-                button.appendChild(ripple);
-
-                // ✨ DODAJ SPARKLES - PARTICLE EFFECTS!
-                for (let i = 0; i < 12; i++) {
-                  const sparkle = document.createElement('div');
-                  sparkle.className = 'sparkle';
-                  const angle = (Math.PI * 2 * i) / 12;
-                  const distance = 50 + Math.random() * 30;
-                  sparkle.style.left = (e.clientX - rect.left) + 'px';
-                  sparkle.style.top = (e.clientY - rect.top) + 'px';
-                  sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                  sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                  sparkle.style.animation = `sparkle 0.8s ease-out ${i * 0.05}s`;
-
-                  button.appendChild(sparkle);
-                  setTimeout(() => sparkle.remove(), 1000);
-                }
-
-                // 🎯 SHAKE + BOUNCE ANIMATION
-                button.style.animation = 'shake 0.5s, superBounce 0.6s';
-                setTimeout(() => {
-                  button.style.animation = '';
-                  ripple.remove();
-                }, 600);
-
+                // 🎯 NAJPIERW otwórz modal - to najważniejsze!
                 handleReserveClick(parking);
+
+                // 💥 POTEM animacje - jeśli się wywali, modal już jest otwarty
+                try {
+                  const button = e.currentTarget;
+
+                  // 💥 MEGA EFEKT RIPPLE
+                  const ripple = document.createElement('span');
+                  const rect = button.getBoundingClientRect();
+                  const size = Math.max(rect.width, rect.height) * 2;
+                  const x = e.clientX - rect.left - size / 2;
+                  const y = e.clientY - rect.top - size / 2;
+
+                  ripple.style.width = ripple.style.height = size + 'px';
+                  ripple.style.left = x + 'px';
+                  ripple.style.top = y + 'px';
+                  ripple.style.position = 'absolute';
+                  ripple.style.borderRadius = '50%';
+                  ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
+                  ripple.style.transform = 'scale(0)';
+                  ripple.style.animation = 'ripple 1s ease-out';
+                  ripple.style.pointerEvents = 'none';
+                  ripple.style.zIndex = '10';
+
+                  button.style.position = 'relative';
+                  button.style.overflow = 'hidden';
+                  button.appendChild(ripple);
+
+                  // ✨ DODAJ SPARKLES - PARTICLE EFFECTS!
+                  for (let i = 0; i < 12; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    const angle = (Math.PI * 2 * i) / 12;
+                    const distance = 50 + Math.random() * 30;
+                    sparkle.style.left = (e.clientX - rect.left) + 'px';
+                    sparkle.style.top = (e.clientY - rect.top) + 'px';
+                    sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                    sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                    sparkle.style.animation = `sparkle 0.8s ease-out ${i * 0.05}s`;
+
+                    button.appendChild(sparkle);
+                    setTimeout(() => {
+                      try { sparkle.remove(); } catch(e) {}
+                    }, 1000);
+                  }
+
+                  // 🎯 SHAKE + BOUNCE ANIMATION
+                  button.style.animation = 'shake 0.5s, superBounce 0.6s';
+                  setTimeout(() => {
+                    try {
+                      button.style.animation = '';
+                      ripple.remove();
+                    } catch(e) {}
+                  }, 600);
+                } catch (error) {
+                  console.log('⚠️ Animacja error (nie blokuje):', error);
+                }
               }}
               disabled={isModalOpening}
               style={{
