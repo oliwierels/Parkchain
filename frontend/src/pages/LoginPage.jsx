@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Button, Input, Card } from '../components/ui';
 
@@ -15,20 +16,21 @@ function LoginPage() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email jest wymagany';
+      newErrors.email = t('validation.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Podaj prawidłowy adres email';
+      newErrors.email = t('validation.emailInvalid');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Hasło jest wymagane';
+      newErrors.password = t('validation.passwordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Hasło musi mieć minimum 6 znaków';
+      newErrors.password = t('validation.passwordMinLength');
     }
 
     setErrors(newErrors);
@@ -60,7 +62,7 @@ function LoginPage() {
     if (result.success) {
       navigate('/map');
     } else {
-      setGeneralError(result.message || 'Błąd logowania. Sprawdź swoje dane.');
+      setGeneralError(result.message || t('errors.loginError'));
     }
 
     setLoading(false);
@@ -82,9 +84,9 @@ function LoginPage() {
               transition={{ delay: 0.2 }}
               className="text-3xl font-bold text-white mb-2"
             >
-              Witaj ponownie!
+              {t('auth.welcomeBack')}
             </motion.h1>
-            <p className="text-slate-400">Zaloguj się do swojego konta</p>
+            <p className="text-slate-400">{t('auth.loginToAccount')}</p>
           </div>
 
           {generalError && (
@@ -102,12 +104,12 @@ function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
-              label="Email"
+              label={t('auth.email')}
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="twoj@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               error={errors.email}
               required
               fullWidth
@@ -119,12 +121,12 @@ function LoginPage() {
             />
 
             <Input
-              label="Hasło"
+              label={t('auth.password')}
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="••••••••"
+              placeholder={t('auth.passwordPlaceholder')}
               error={errors.password}
               required
               fullWidth
@@ -143,17 +145,17 @@ function LoginPage() {
               loading={loading}
               disabled={loading}
             >
-              {loading ? 'Logowanie...' : 'Zaloguj się'}
+              {loading ? t('auth.loggingIn') : t('auth.loginButton')}
             </Button>
 
             <div className="text-center pt-4 border-t border-slate-700">
               <p className="text-slate-400 text-sm">
-                Nie masz konta?{' '}
+                {t('auth.noAccount')}{' '}
                 <Link
                   to="/register"
                   className="text-parkchain-500 hover:text-parkchain-400 font-semibold transition-colors"
                 >
-                  Zarejestruj się
+                  {t('auth.registerLink')}
                 </Link>
               </p>
             </div>

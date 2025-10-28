@@ -1,0 +1,316 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "submit": "Wyślij",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "confirm": "Potwierdź",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
+    "more": "Więcej",
+    "less": "Mniej",
+    "all": "Wszystko",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "nav": {
+    "home": "Główna",
+    "map": "Mapa",
+    "liveFeed": "Live Feed",
+    "dcpTokens": "DCP Tokens",
+    "parkFi": "🅿️ ParkFi",
+    "operator": "Operator",
+    "badges": "Badges",
+    "achievements": "Achievements",
+    "myReservations": "Moje Rezerwacje",
+    "myParkings": "Moje Parkingi",
+    "myChargers": "Moje ładowarki",
+    "analytics": "Analytics",
+    "gatewayPro": "Gateway Pro",
+    "addParking": "Dodaj parking",
+    "profile": "Mój Profil",
+    "favorites": "Ulubione",
+    "activity": "Aktywność",
+    "support": "Wsparcie",
+    "login": "Zaloguj",
+    "logout": "Wyloguj",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "mainSection": "Główne",
+    "featuredSection": "Wyróżnione",
+    "managementSection": "Zarządzanie"
+  },
+  "auth": {
+    "welcomeBack": "Witaj ponownie!",
+    "loginToAccount": "Zaloguj się do swojego konta",
+    "joinParkchain": "Dołącz do Parkchain",
+    "createAccount": "Stwórz konto i zacznij korzystać",
+    "email": "Email",
+    "password": "Hasło",
+    "confirmPassword": "Potwierdź hasło",
+    "fullName": "Imię i nazwisko",
+    "loginButton": "Zaloguj się",
+    "registerButton": "Zarejestruj się",
+    "loggingIn": "Logowanie...",
+    "registering": "Rejestracja...",
+    "noAccount": "Nie masz konta?",
+    "haveAccount": "Masz już konto?",
+    "loginLink": "Zaloguj się",
+    "registerLink": "Zarejestruj się",
+    "emailPlaceholder": "twoj@email.com",
+    "passwordPlaceholder": "••••••••"
+  },
+  "validation": {
+    "emailRequired": "Email jest wymagany",
+    "emailInvalid": "Podaj prawidłowy adres email",
+    "passwordRequired": "Hasło jest wymagane",
+    "passwordMinLength": "Hasło musi mieć minimum 6 znaków",
+    "fullNameRequired": "Imię i nazwisko jest wymagane",
+    "passwordsNotMatch": "Hasła nie pasują do siebie",
+    "fillAllFields": "Wypełnij wszystkie wymagane pola"
+  },
+  "errors": {
+    "loginError": "Błąd logowania. Sprawdź swoje dane.",
+    "registerError": "Błąd rejestracji. Spróbuj ponownie.",
+    "addParkingError": "Nie udało się dodać parkingu",
+    "fetchParkingsError": "Nie udało się pobrać parkingów",
+    "loadDataError": "Nie udało się załadować danych",
+    "reservationFetchError": "Błąd przy pobieraniu rezerwacji",
+    "reservationCancelError": "Błąd przy anulowaniu rezerwacji",
+    "generalError": "Wystąpił błąd. Spróbuj ponownie."
+  },
+  "home": {
+    "futureOf": "Przyszłość",
+    "parking": "Parkowania",
+    "subtitle": "Inteligentna platforma łącząca parkingi, ładowarki EV i społeczność.",
+    "subtitleHighlight": "Wszystko w jednym miejscu.",
+    "autoStartIn": "Auto-start za",
+    "scrollToExplore": "Scrolluj aby eksplorować",
+    "exploreAtYourPace": "Eksploruj w swoim tempie",
+    "features": {
+      "map": {
+        "title": "Mapa Parkingów",
+        "description": "Znajdź idealne miejsce w czasie rzeczywistym",
+        "stats": "Real-time",
+        "badge": "Popularne"
+      },
+      "charging": {
+        "title": "Ładowarki EV",
+        "description": "Naładuj swój elektryczny pojazd",
+        "stats": "Ekologiczne",
+        "badge": "Nowość"
+      },
+      "reservations": {
+        "title": "Moje Rezerwacje",
+        "description": "Zarządzaj swoimi rezerwacjami",
+        "stats": "Fast"
+      },
+      "community": {
+        "title": "CrowdScan",
+        "description": "Społeczność raportuje dostępność",
+        "stats": "Społeczność",
+        "badge": "Beta"
+      }
+    },
+    "quickStats": {
+      "fastReservation": "Rezerwacja w 30s",
+      "secure": "100% Bezpieczne",
+      "available": "Dostępne 24/7"
+    },
+    "whyParkchain": "Dlaczego",
+    "whyParkchainHighlight": "Parkchain?",
+    "whySubtitle": "Łączymy technologię blockchain z inteligentną infrastrukturą parkingową",
+    "benefits": {
+      "realtime": {
+        "title": "Real-time Mapa",
+        "description": "Śledź dostępność parkingów i ładowarek w czasie rzeczywistym dzięki danym z społeczności"
+      },
+      "blockchain": {
+        "title": "Blockchain Security",
+        "description": "Wszystkie transakcje zabezpieczone przez blockchain. Twoje dane są w 100% bezpieczne."
+      },
+      "crowdscan": {
+        "title": "CrowdScan Network",
+        "description": "Społeczność zgłasza dostępność miejsc parkingowych w czasie rzeczywistym"
+      }
+    }
+  },
+  "reservations": {
+    "title": "Moje Rezerwacje",
+    "active": "Aktywne",
+    "completed": "Zakończone",
+    "cancelled": "Anulowane",
+    "pending": "Oczekująca",
+    "reserved": "Zarezerwowane",
+    "inProgress": "W trakcie",
+    "noReservations": "Brak rezerwacji",
+    "cancelReservation": "Anuluj rezerwację",
+    "viewDetails": "Zobacz szczegóły",
+    "confirmCancel": "Czy na pewno chcesz anulować rezerwację?",
+    "reservationFrom": "Rezerwacja od",
+    "reservationTo": "do",
+    "totalCost": "Całkowity koszt",
+    "parkingSpot": "Miejsce parkingowe",
+    "reservationNumber": "Numer rezerwacji"
+  },
+  "parking": {
+    "addParking": "Dodaj parking",
+    "myParkings": "Moje Parkingi",
+    "availableSpots": "Dostępne miejsca",
+    "totalSpots": "Wszystkie miejsca",
+    "hourlyRate": "Stawka godzinowa",
+    "dailyRate": "Stawka dzienna",
+    "weeklyRate": "Stawka tygodniowa",
+    "monthlyRate": "Stawka miesięczna",
+    "location": "Lokalizacja",
+    "address": "Adres",
+    "description": "Opis",
+    "facilities": "Udogodnienia",
+    "covered": "Zadaszony",
+    "security": "Ochrona",
+    "evCharging": "Ładowanie EV",
+    "accessible": "Dostępny dla niepełnosprawnych",
+    "parkingType": "Typ parkingu",
+    "public": "Publiczny",
+    "private": "Prywatny"
+  },
+  "charging": {
+    "title": "Ładowarki EV",
+    "addStation": "Dodaj stację ładowania",
+    "myChargers": "Moje ładowarki",
+    "startCharging": "Rozpocznij ładowanie",
+    "endCharging": "Zakończ ładowanie",
+    "chargingStatus": "Status ładowania",
+    "available": "Dostępna",
+    "inUse": "W użyciu",
+    "outOfOrder": "Nieczynna",
+    "powerOutput": "Moc wyjściowa",
+    "connectorType": "Typ złącza",
+    "pricePerKwh": "Cena za kWh",
+    "chargingHistory": "Historia ładowania",
+    "totalEnergy": "Całkowita energia",
+    "duration": "Czas trwania",
+    "cost": "Koszt"
+  },
+  "badges": {
+    "title": "Twoje Odznaki",
+    "earned": "Zdobyte",
+    "locked": "Zablokowane",
+    "progress": "Postęp",
+    "unlock": "Odblokuj",
+    "unlocked": "Odblokowano",
+    "description": "Opis odznaki",
+    "earnedDate": "Data zdobycia",
+    "requirements": "Wymagania"
+  },
+  "profile": {
+    "title": "Mój Profil",
+    "editProfile": "Edytuj profil",
+    "personalInfo": "Informacje osobiste",
+    "statistics": "Statystyki",
+    "totalReservations": "Łączna liczba rezerwacji",
+    "totalSpent": "Całkowity wydatek",
+    "memberSince": "Członek od",
+    "level": "Poziom",
+    "points": "Punkty",
+    "changePassword": "Zmień hasło",
+    "currentPassword": "Obecne hasło",
+    "newPassword": "Nowe hasło",
+    "saveChanges": "Zapisz zmiany"
+  },
+  "activity": {
+    "title": "Moja Aktywność",
+    "recent": "Ostatnia aktywność",
+    "today": "Dziś",
+    "yesterday": "Wczoraj",
+    "thisWeek": "W tym tygodniu",
+    "thisMonth": "W tym miesiącu",
+    "types": {
+      "reservationCreated": "Utworzono rezerwację",
+      "reservationCancelled": "Anulowano rezerwację",
+      "chargingStarted": "Rozpoczęto ładowanie",
+      "chargingEnded": "Zakończono ładowanie",
+      "reviewPosted": "Dodano recenzję",
+      "badgeUnlocked": "Odblokowano odznakę"
+    }
+  },
+  "reviews": {
+    "title": "Recenzje",
+    "addReview": "Dodaj recenzję",
+    "yourReview": "Twoja recenzja",
+    "rating": "Ocena",
+    "comment": "Komentarz",
+    "submit": "Wyślij recenzję",
+    "noReviews": "Brak recenzji",
+    "helpful": "Pomocne",
+    "reportReview": "Zgłoś recenzję"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "markAsRead": "Oznacz jako przeczytane",
+    "markAllAsRead": "Oznacz wszystkie jako przeczytane",
+    "noNotifications": "Brak powiadomień",
+    "new": "Nowe",
+    "settings": "Ustawienia powiadomień"
+  },
+  "favorites": {
+    "title": "Ulubione",
+    "addToFavorites": "Dodaj do ulubionych",
+    "removeFromFavorites": "Usuń z ulubionych",
+    "noFavorites": "Brak ulubionych miejsc"
+  },
+  "support": {
+    "title": "Wsparcie",
+    "contactUs": "Skontaktuj się z nami",
+    "faq": "FAQ",
+    "submitTicket": "Wyślij zgłoszenie",
+    "ticketSubject": "Temat",
+    "ticketDescription": "Opis problemu",
+    "attachments": "Załączniki",
+    "send": "Wyślij"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "buyTokens": "Kup tokeny",
+    "sellTokens": "Sprzedaj tokeny",
+    "balance": "Saldo",
+    "price": "Cena",
+    "amount": "Ilość",
+    "total": "Suma",
+    "buy": "Kup",
+    "sell": "Sprzedaj"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "overview": "Przegląd",
+    "revenue": "Przychód",
+    "usage": "Wykorzystanie",
+    "trends": "Trendy",
+    "period": "Okres",
+    "daily": "Dzienne",
+    "weekly": "Tygodniowe",
+    "monthly": "Miesięczne",
+    "yearly": "Roczne"
+  },
+  "gateway": {
+    "title": "Gateway Dashboard",
+    "premiumFeatures": "Funkcje Premium",
+    "advancedAnalytics": "Zaawansowana analityka",
+    "reports": "Raporty",
+    "insights": "Wnioski"
+  },
+  "language": {
+    "current": "Język",
+    "polish": "Polski",
+    "english": "English",
+    "change": "Zmień język"
+  }
+}
