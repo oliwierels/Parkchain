@@ -2,7 +2,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import NotificationCenter from './NotificationCenter';
+import LanguageSwitcher from './LanguageSwitcher';
 import {
   FaHome,
   FaMap,
@@ -27,6 +29,7 @@ import {
 function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMyMenuOpen, setIsMyMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -95,13 +98,13 @@ function Navbar() {
 
               {/* Main Links Group */}
               <div className="flex items-center gap-1 mr-2">
-                <NavLink to="/" className={getLinkClasses} end title="Strona główna">
+                <NavLink to="/" className={getLinkClasses} end title={t('nav.home')}>
                   <FaHome />
-                  <span>Główna</span>
+                  <span>{t('nav.home')}</span>
                 </NavLink>
-                <NavLink to="/map" className={getLinkClasses} title="Mapa parkingów">
+                <NavLink to="/map" className={getLinkClasses} title={t('nav.map')}>
                   <FaMap />
-                  <span>Mapa</span>
+                  <span>{t('nav.map')}</span>
                 </NavLink>
               </div>
 
@@ -209,6 +212,9 @@ function Navbar() {
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-4">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {/* Notification Center */}
               <NotificationCenter />
 
@@ -237,7 +243,7 @@ function Navbar() {
                   >
                     <div className="py-2">
                       <NavLink
-                          to="/profile" // Ścieżka do strony profilu
+                          to="/profile"
                           onClick={() => setIsUserMenuOpen(false)}
                           className={({ isActive }) =>
                             isActive
@@ -245,13 +251,12 @@ function Navbar() {
                               : 'text-gray-300 hover:bg-gray-700 hover:text-indigo-400 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
                           }
                         >
-                          <FaUser className="text-base" /> {/* Możesz użyć innej ikony, np. FaIdCard */}
-                          <span>Mój Profil</span>
+                          <FaUser className="text-base" />
+                          <span>{t('nav.profile')}</span>
                         </NavLink>
-                      {/* Linki skopiowane z menu "Moje" */}
                       <NavLink
                         to="/my-reservations"
-                        onClick={() => setIsUserMenuOpen(false)} // Zamykaj menu użytkownika
+                        onClick={() => setIsUserMenuOpen(false)}
                         className={({ isActive }) =>
                           isActive
                             ? 'bg-indigo-600 text-white px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors'
@@ -259,10 +264,10 @@ function Navbar() {
                         }
                       >
                         <FaCalendarAlt className="text-base" />
-                        <span>Moje Rezerwacje</span>
+                        <span>{t('nav.myReservations')}</span>
                       </NavLink>
                       <NavLink
-                        to="/my-parkings" // Zmień ścieżkę na poprawną dla parkingów
+                        to="/my-parkings"
                         onClick={() => setIsUserMenuOpen(false)}
                         className={({ isActive }) =>
                           isActive
@@ -271,10 +276,10 @@ function Navbar() {
                         }
                       >
                         <FaParking className="text-base" />
-                        <span>Moje Parkingi</span>
+                        <span>{t('nav.myParkings')}</span>
                       </NavLink>
                       <NavLink
-                        to="/my-chargers" // Zmień ścieżkę na poprawną dla ładowarek
+                        to="/my-chargers"
                         onClick={() => setIsUserMenuOpen(false)}
                         className={({ isActive }) =>
                           isActive
@@ -283,7 +288,7 @@ function Navbar() {
                         }
                       >
                         <FaChargingStation className="text-base" />
-                        <span>Moje ładowarki</span>
+                        <span>{t('nav.myChargers')}</span>
                       </NavLink>
 
                       {/* New Features */}
@@ -298,7 +303,7 @@ function Navbar() {
                         }
                       >
                         <FaHeart className="text-base text-red-400" />
-                        <span>Ulubione</span>
+                        <span>{t('nav.favorites')}</span>
                       </NavLink>
                       <NavLink
                         to="/activity"
@@ -310,7 +315,7 @@ function Navbar() {
                         }
                       >
                         <FaHistory className="text-base" />
-                        <span>Aktywność</span>
+                        <span>{t('nav.activity')}</span>
                       </NavLink>
                       <NavLink
                         to="/support"
@@ -322,17 +327,17 @@ function Navbar() {
                         }
                       >
                         <FaTicketAlt className="text-base" />
-                        <span>Wsparcie</span>
+                        <span>{t('nav.support')}</span>
                       </NavLink>
 
                       {/* Separator i przycisk wylogowania */}
-                      <div className="border-t border-gray-700 my-2"></div> 
+                      <div className="border-t border-gray-700 my-2"></div>
                       <button
                         onClick={handleLogout}
                         className="w-full text-left text-red-400 hover:bg-red-900/50 hover:text-red-300 px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        <span>Wyloguj</span>
+                        <span>{t('nav.logout')}</span>
                       </button>
                     </div>
                   </motion.div>
@@ -341,13 +346,17 @@ function Navbar() {
               </div>
             </div>
           ) : (
-            // Przycisk "Zaloguj" (pozostaje bez zmian)
-            <NavLink
-              to="/login"
-              className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105"
-            >
-              Zaloguj
-            </NavLink>
+            <div className="flex items-center gap-4">
+              {/* Language Switcher for non-authenticated users */}
+              <LanguageSwitcher />
+
+              <NavLink
+                to="/login"
+                className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:scale-105"
+              >
+                {t('nav.login')}
+              </NavLink>
+            </div>
           )}
 
           {/* Mobile Menu Button */}
@@ -357,7 +366,7 @@ function Navbar() {
               className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             >
               <span className="sr-only">
-                {isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+                {isMobileMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
               </span>
               {isMobileMenuOpen ? (
                 <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -387,7 +396,7 @@ function Navbar() {
               {/* Main Section */}
               <div className="mb-3">
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">
-                  Główne
+                  {t('nav.mainSection')}
                 </div>
                 <NavLink
                   to="/"
@@ -400,7 +409,7 @@ function Navbar() {
                   end
                 >
                   <FaHome />
-                  <span>Strona Główna</span>
+                  <span>{t('nav.home')}</span>
                 </NavLink>
                 <NavLink
                   to="/map"
@@ -412,14 +421,14 @@ function Navbar() {
                   }
                 >
                   <FaMap />
-                  <span>Mapa</span>
+                  <span>{t('nav.map')}</span>
                 </NavLink>
               </div>
 
               {/* Featured Section */}
               <div className="mb-3">
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">
-                  Wyróżnione
+                  {t('nav.featuredSection')}
                 </div>
                 <NavLink
                   to="/live-feed"
@@ -498,7 +507,7 @@ function Navbar() {
               {/* Management Section */}
               <div className="mb-3">
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">
-                  Zarządzanie
+                  {t('nav.managementSection')}
                 </div>
                 <NavLink
                   to="/add-parking"
@@ -510,7 +519,7 @@ function Navbar() {
                   }
                 >
                   <FaParking />
-                  <span>Dodaj parking</span>
+                  <span>{t('nav.addParking')}</span>
                 </NavLink>
                 <NavLink
                   to="/my-reservations"
@@ -522,7 +531,7 @@ function Navbar() {
                   }
                 >
                   <FaCalendarAlt />
-                  <span>Moje Rezerwacje</span>
+                  <span>{t('nav.myReservations')}</span>
                 </NavLink>
                 <NavLink
                   to="/my-parkings"
@@ -534,7 +543,7 @@ function Navbar() {
                   }
                 >
                   <FaParking />
-                  <span>Moje Parkingi</span>
+                  <span>{t('nav.myParkings')}</span>
                 </NavLink>
                 <NavLink
                   to="/my-chargers"
@@ -546,7 +555,7 @@ function Navbar() {
                   }
                 >
                   <FaChargingStation />
-                  <span>Moje ładowarki</span>
+                  <span>{t('nav.myChargers')}</span>
                 </NavLink>
                 <NavLink
                   to="/analytics"
@@ -558,7 +567,7 @@ function Navbar() {
                   }
                 >
                   <FaChartLine />
-                  <span>Analytics</span>
+                  <span>{t('nav.analytics')}</span>
                 </NavLink>
                 <NavLink
                   to="/advanced-gateway"
@@ -589,7 +598,7 @@ function Navbar() {
                     onClick={handleLogout}
                     className="w-full bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                   >
-                    Wyloguj
+                    {t('nav.logout')}
                   </button>
                 </div>
               ) : (
@@ -598,7 +607,7 @@ function Navbar() {
                   onClick={closeMobileMenu}
                   className="block w-full bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2.5 rounded-lg text-sm font-medium text-center transition-colors"
                 >
-                  Zaloguj
+                  {t('nav.login')}
                 </NavLink>
               )}
             </div>

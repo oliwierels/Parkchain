@@ -1,0 +1,316 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "more": "More",
+    "less": "Less",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "home": "Home",
+    "map": "Map",
+    "liveFeed": "Live Feed",
+    "dcpTokens": "DCP Tokens",
+    "parkFi": "🅿️ ParkFi",
+    "operator": "Operator",
+    "badges": "Badges",
+    "achievements": "Achievements",
+    "myReservations": "My Reservations",
+    "myParkings": "My Parkings",
+    "myChargers": "My Chargers",
+    "analytics": "Analytics",
+    "gatewayPro": "Gateway Pro",
+    "addParking": "Add Parking",
+    "profile": "My Profile",
+    "favorites": "Favorites",
+    "activity": "Activity",
+    "support": "Support",
+    "login": "Login",
+    "logout": "Logout",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "mainSection": "Main",
+    "featuredSection": "Featured",
+    "managementSection": "Management"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back!",
+    "loginToAccount": "Sign in to your account",
+    "joinParkchain": "Join Parkchain",
+    "createAccount": "Create an account and start using",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "loginButton": "Sign In",
+    "registerButton": "Sign Up",
+    "loggingIn": "Logging in...",
+    "registering": "Registering...",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Sign in",
+    "registerLink": "Sign up",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••"
+  },
+  "validation": {
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please provide a valid email address",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "fullNameRequired": "Full name is required",
+    "passwordsNotMatch": "Passwords do not match",
+    "fillAllFields": "Please fill in all required fields"
+  },
+  "errors": {
+    "loginError": "Login error. Check your credentials.",
+    "registerError": "Registration error. Please try again.",
+    "addParkingError": "Failed to add parking",
+    "fetchParkingsError": "Failed to fetch parkings",
+    "loadDataError": "Failed to load data",
+    "reservationFetchError": "Error fetching reservations",
+    "reservationCancelError": "Error canceling reservation",
+    "generalError": "An error occurred. Please try again."
+  },
+  "home": {
+    "futureOf": "The Future of",
+    "parking": "Parking",
+    "subtitle": "Smart platform connecting parking lots, EV chargers and community.",
+    "subtitleHighlight": "All in one place.",
+    "autoStartIn": "Auto-start in",
+    "scrollToExplore": "Scroll to explore",
+    "exploreAtYourPace": "Explore at your own pace",
+    "features": {
+      "map": {
+        "title": "Parking Map",
+        "description": "Find the perfect spot in real-time",
+        "stats": "Real-time",
+        "badge": "Popular"
+      },
+      "charging": {
+        "title": "EV Chargers",
+        "description": "Charge your electric vehicle",
+        "stats": "Eco-friendly",
+        "badge": "New"
+      },
+      "reservations": {
+        "title": "My Reservations",
+        "description": "Manage your reservations",
+        "stats": "Fast"
+      },
+      "community": {
+        "title": "CrowdScan",
+        "description": "Community reports availability",
+        "stats": "Community",
+        "badge": "Beta"
+      }
+    },
+    "quickStats": {
+      "fastReservation": "Reservation in 30s",
+      "secure": "100% Secure",
+      "available": "Available 24/7"
+    },
+    "whyParkchain": "Why",
+    "whyParkchainHighlight": "Parkchain?",
+    "whySubtitle": "We combine blockchain technology with intelligent parking infrastructure",
+    "benefits": {
+      "realtime": {
+        "title": "Real-time Map",
+        "description": "Track parking and charging availability in real-time with community data"
+      },
+      "blockchain": {
+        "title": "Blockchain Security",
+        "description": "All transactions secured by blockchain. Your data is 100% safe."
+      },
+      "crowdscan": {
+        "title": "CrowdScan Network",
+        "description": "Community reports parking spot availability in real-time"
+      }
+    }
+  },
+  "reservations": {
+    "title": "My Reservations",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "pending": "Pending",
+    "reserved": "Reserved",
+    "inProgress": "In Progress",
+    "noReservations": "No reservations",
+    "cancelReservation": "Cancel reservation",
+    "viewDetails": "View details",
+    "confirmCancel": "Are you sure you want to cancel this reservation?",
+    "reservationFrom": "Reservation from",
+    "reservationTo": "to",
+    "totalCost": "Total cost",
+    "parkingSpot": "Parking spot",
+    "reservationNumber": "Reservation number"
+  },
+  "parking": {
+    "addParking": "Add Parking",
+    "myParkings": "My Parkings",
+    "availableSpots": "Available spots",
+    "totalSpots": "Total spots",
+    "hourlyRate": "Hourly rate",
+    "dailyRate": "Daily rate",
+    "weeklyRate": "Weekly rate",
+    "monthlyRate": "Monthly rate",
+    "location": "Location",
+    "address": "Address",
+    "description": "Description",
+    "facilities": "Facilities",
+    "covered": "Covered",
+    "security": "Security",
+    "evCharging": "EV Charging",
+    "accessible": "Accessible",
+    "parkingType": "Parking type",
+    "public": "Public",
+    "private": "Private"
+  },
+  "charging": {
+    "title": "EV Chargers",
+    "addStation": "Add charging station",
+    "myChargers": "My chargers",
+    "startCharging": "Start charging",
+    "endCharging": "End charging",
+    "chargingStatus": "Charging status",
+    "available": "Available",
+    "inUse": "In use",
+    "outOfOrder": "Out of order",
+    "powerOutput": "Power output",
+    "connectorType": "Connector type",
+    "pricePerKwh": "Price per kWh",
+    "chargingHistory": "Charging history",
+    "totalEnergy": "Total energy",
+    "duration": "Duration",
+    "cost": "Cost"
+  },
+  "badges": {
+    "title": "Your Badges",
+    "earned": "Earned",
+    "locked": "Locked",
+    "progress": "Progress",
+    "unlock": "Unlock",
+    "unlocked": "Unlocked",
+    "description": "Badge description",
+    "earnedDate": "Earned date",
+    "requirements": "Requirements"
+  },
+  "profile": {
+    "title": "My Profile",
+    "editProfile": "Edit profile",
+    "personalInfo": "Personal information",
+    "statistics": "Statistics",
+    "totalReservations": "Total reservations",
+    "totalSpent": "Total spent",
+    "memberSince": "Member since",
+    "level": "Level",
+    "points": "Points",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "saveChanges": "Save changes"
+  },
+  "activity": {
+    "title": "My Activity",
+    "recent": "Recent activity",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "types": {
+      "reservationCreated": "Reservation created",
+      "reservationCancelled": "Reservation cancelled",
+      "chargingStarted": "Charging started",
+      "chargingEnded": "Charging ended",
+      "reviewPosted": "Review posted",
+      "badgeUnlocked": "Badge unlocked"
+    }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "addReview": "Add review",
+    "yourReview": "Your review",
+    "rating": "Rating",
+    "comment": "Comment",
+    "submit": "Submit review",
+    "noReviews": "No reviews",
+    "helpful": "Helpful",
+    "reportReview": "Report review"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "new": "New",
+    "settings": "Notification settings"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "noFavorites": "No favorite places"
+  },
+  "support": {
+    "title": "Support",
+    "contactUs": "Contact us",
+    "faq": "FAQ",
+    "submitTicket": "Submit ticket",
+    "ticketSubject": "Subject",
+    "ticketDescription": "Problem description",
+    "attachments": "Attachments",
+    "send": "Send"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "buyTokens": "Buy tokens",
+    "sellTokens": "Sell tokens",
+    "balance": "Balance",
+    "price": "Price",
+    "amount": "Amount",
+    "total": "Total",
+    "buy": "Buy",
+    "sell": "Sell"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "overview": "Overview",
+    "revenue": "Revenue",
+    "usage": "Usage",
+    "trends": "Trends",
+    "period": "Period",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "gateway": {
+    "title": "Gateway Dashboard",
+    "premiumFeatures": "Premium Features",
+    "advancedAnalytics": "Advanced Analytics",
+    "reports": "Reports",
+    "insights": "Insights"
+  },
+  "language": {
+    "current": "Language",
+    "polish": "Polski",
+    "english": "English",
+    "change": "Change language"
+  }
+}

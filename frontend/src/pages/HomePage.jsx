@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { useTranslation } from 'react-i18next';
 import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown, FaChargingStation, FaUsers, FaClock } from "react-icons/fa";
 import { useAuth } from '../context/AuthContext';
 
 function HomePage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(15);
   const [autoRedirectCancelled, setAutoRedirectCancelled] = useState(false);
@@ -95,42 +97,42 @@ function HomePage() {
     {
       id: 'map',
       icon: FaMapMarkedAlt,
-      title: 'Mapa Parkingów',
-      description: 'Znajdź idealne miejsce w czasie rzeczywistym',
+      title: t('home.features.map.title'),
+      description: t('home.features.map.description'),
       gradient: 'from-blue-500 to-cyan-500',
       path: '/map',
-      stats: 'Real-time',
-      badge: 'Popularne'
+      stats: t('home.features.map.stats'),
+      badge: t('home.features.map.badge')
     },
     {
       id: 'charging',
       icon: FaChargingStation,
-      title: 'Ładowarki EV',
-      description: 'Naładuj swój elektryczny pojazd',
+      title: t('home.features.charging.title'),
+      description: t('home.features.charging.description'),
       gradient: 'from-green-500 to-emerald-500',
       path: '/map',
-      stats: 'Ekologiczne',
-      badge: 'Nowość'
+      stats: t('home.features.charging.stats'),
+      badge: t('home.features.charging.badge')
     },
     {
       id: 'reservations',
       icon: FaClock,
-      title: 'Moje Rezerwacje',
-      description: 'Zarządzaj swoimi rezerwacjami',
+      title: t('home.features.reservations.title'),
+      description: t('home.features.reservations.description'),
       gradient: 'from-purple-500 to-pink-500',
       path: '/my-reservations',
-      stats: 'Fast',
+      stats: t('home.features.reservations.stats'),
       badge: null
     },
     {
       id: 'community',
       icon: FaUsers,
-      title: 'CrowdScan',
-      description: 'Społeczność raportuje dostępność',
+      title: t('home.features.community.title'),
+      description: t('home.features.community.description'),
       gradient: 'from-orange-500 to-red-500',
       path: '/map',
-      stats: 'Społeczność',
-      badge: 'Beta'
+      stats: t('home.features.community.stats'),
+      badge: t('home.features.community.badge')
     }
   ];
 
@@ -163,7 +165,7 @@ function HomePage() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  Zaloguj się
+                  {t('nav.login')}
                 </motion.button>
               </Link>
             ) : (
@@ -174,7 +176,7 @@ function HomePage() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  Dashboard
+                  {t('nav.map')}
                 </motion.button>
               </Link>
             )}
@@ -265,7 +267,7 @@ function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Ładowanie...
+                {t('common.loading')}
               </motion.span>
             </motion.div>
           </motion.div>
@@ -309,10 +311,10 @@ function HomePage() {
             className="text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight"
             style={{ y: y2 }}
           >
-            Przyszłość
+            {t('home.futureOf')}
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 via-purple-400 to-pink-400">
-              Parkowania
+              {t('home.parking')}
             </span>
           </motion.h1>
 
@@ -323,9 +325,9 @@ function HomePage() {
             transition={{ delay: 0.25, duration: 0.6 }}
             className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed"
           >
-            Inteligentna platforma łącząca parkingi, ładowarki EV i społeczność.
+            {t('home.subtitle')}
             <span className="block mt-2 text-parkchain-400 font-semibold">
-              Wszystko w jednym miejscu.
+              {t('home.subtitleHighlight')}
             </span>
           </motion.p>
 
@@ -347,7 +349,7 @@ function HomePage() {
                 >
                   <div className="w-2 h-2 bg-parkchain-400 rounded-full animate-pulse"></div>
                   <span className="text-gray-300 text-sm">
-                    Auto-start za{' '}
+                    {t('home.autoStartIn')}{' '}
                     <motion.span
                       key={autoRedirectCountdown}
                       initial={{ scale: 1.3, color: '#ffffff' }}
@@ -357,7 +359,7 @@ function HomePage() {
                     >
                       {autoRedirectCountdown}s
                     </motion.span>
-                    {' • Scrolluj aby eksplorować'}
+                    {' • '}{t('home.scrollToExplore')}
                   </span>
                 </motion.div>
               ) : autoRedirectCancelled ? (
@@ -370,7 +372,7 @@ function HomePage() {
                 >
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   <span className="text-green-400 text-sm font-medium">
-                    Eksploruj w swoim tempie
+                    {t('home.exploreAtYourPace')}
                   </span>
                 </motion.div>
               ) : null}
@@ -477,21 +479,21 @@ function HomePage() {
               whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
               <FaBolt className="text-yellow-400 text-xl" />
-              <span className="text-sm font-medium">Rezerwacja w 30s</span>
+              <span className="text-sm font-medium">{t('home.quickStats.fastReservation')}</span>
             </motion.div>
             <motion.div
               className="flex items-center gap-3"
               whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
               <FaLock className="text-parkchain-400 text-xl" />
-              <span className="text-sm font-medium">100% Bezpieczne</span>
+              <span className="text-sm font-medium">{t('home.quickStats.secure')}</span>
             </motion.div>
             <motion.div
               className="flex items-center gap-3"
               whileHover={{ scale: 1.05, color: "#ffffff" }}
             >
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium">Dostępne 24/7</span>
+              <span className="text-sm font-medium">{t('home.quickStats.available')}</span>
             </motion.div>
           </motion.div>
 
@@ -511,7 +513,7 @@ function HomePage() {
                 window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
               }}
             >
-              <span className="text-xs font-medium uppercase tracking-wider">Więcej</span>
+              <span className="text-xs font-medium uppercase tracking-wider">{t('common.more')}</span>
               <FaChevronDown className="text-xl" />
             </motion.div>
           </motion.div>
@@ -529,10 +531,10 @@ function HomePage() {
             className="text-center mb-20"
           >
             <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
-              Dlaczego <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 to-purple-400">Parkchain?</span>
+              {t('home.whyParkchain')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-parkchain-400 to-purple-400">{t('home.whyParkchainHighlight')}</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Łączymy technologię blockchain z inteligentną infrastrukturą parkingową
+              {t('home.whySubtitle')}
             </p>
           </motion.div>
 
@@ -540,20 +542,20 @@ function HomePage() {
             {[
               {
                 icon: FaMapMarkedAlt,
-                title: "Real-time Mapa",
-                description: "Śledź dostępność parkingów i ładowarek w czasie rzeczywistym dzięki danym z społeczności",
+                title: t('home.benefits.realtime.title'),
+                description: t('home.benefits.realtime.description'),
                 color: "from-blue-500 to-cyan-500"
               },
               {
                 icon: FaLock,
-                title: "Blockchain Security",
-                description: "Wszystkie transakcje zabezpieczone przez blockchain. Twoje dane są w 100% bezpieczne.",
+                title: t('home.benefits.blockchain.title'),
+                description: t('home.benefits.blockchain.description'),
                 color: "from-purple-500 to-pink-500"
               },
               {
                 icon: FaUsers,
-                title: "CrowdScan Network",
-                description: "Społeczność zgłasza dostępność miejsc parkingowych w czasie rzeczywistym",
+                title: t('home.benefits.crowdscan.title'),
+                description: t('home.benefits.crowdscan.description'),
                 color: "from-orange-500 to-red-500"
               }
             ].map((item, index) => (

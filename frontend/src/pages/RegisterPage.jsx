@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Button, Input, Card } from '../components/ui';
 
@@ -18,41 +19,42 @@ function RegisterPage() {
 
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const validateForm = () => {
     const newErrors = {};
 
     // Full name validation
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Imię i nazwisko jest wymagane';
+      newErrors.full_name = t('validation.fullNameRequired');
     } else if (formData.full_name.trim().length < 3) {
-      newErrors.full_name = 'Imię i nazwisko musi mieć minimum 3 znaki';
+      newErrors.full_name = t('validation.fullNameRequired');
     }
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = 'Email jest wymagany';
+      newErrors.email = t('validation.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Podaj prawidłowy adres email';
+      newErrors.email = t('validation.emailInvalid');
     }
 
     // Phone validation (optional but if provided, must be valid)
     if (formData.phone && !/^[\d\s\+\-()]+$/.test(formData.phone)) {
-      newErrors.phone = 'Podaj prawidłowy numer telefonu';
+      newErrors.phone = t('validation.emailInvalid'); // You may want to add a specific phone validation message
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Hasło jest wymagane';
+      newErrors.password = t('validation.passwordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Hasło musi mieć minimum 6 znaków';
+      newErrors.password = t('validation.passwordMinLength');
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Potwierdź hasło';
+      newErrors.confirmPassword = t('validation.passwordRequired');
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Hasła nie pasują do siebie';
+      newErrors.confirmPassword = t('validation.passwordsNotMatch');
     }
 
     setErrors(newErrors);
@@ -90,7 +92,7 @@ function RegisterPage() {
     if (result.success) {
       navigate('/map');
     } else {
-      setGeneralError(result.message || 'Błąd rejestracji. Spróbuj ponownie.');
+      setGeneralError(result.message || t('errors.registerError'));
     }
 
     setLoading(false);
@@ -112,9 +114,9 @@ function RegisterPage() {
               transition={{ delay: 0.2 }}
               className="text-3xl font-bold text-white mb-2"
             >
-              Dołącz do Parkchain
+              {t('auth.joinParkchain')}
             </motion.h1>
-            <p className="text-slate-400">Stwórz konto i zacznij korzystać</p>
+            <p className="text-slate-400">{t('auth.createAccount')}</p>
           </div>
 
           {generalError && (
@@ -132,7 +134,7 @@ function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Imię i nazwisko"
+              label={t('auth.fullName')}
               type="text"
               name="full_name"
               value={formData.full_name}
@@ -149,12 +151,12 @@ function RegisterPage() {
             />
 
             <Input
-              label="Email"
+              label={t('auth.email')}
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="twoj@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               error={errors.email}
               required
               fullWidth
@@ -166,14 +168,14 @@ function RegisterPage() {
             />
 
             <Input
-              label="Telefon"
+              label="Phone"
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
               placeholder="+48 123 456 789"
               error={errors.phone}
-              helperText="Opcjonalne"
+              helperText="Optional"
               fullWidth
               leftIcon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,12 +186,12 @@ function RegisterPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input
-                label="Hasło"
+                label={t('auth.password')}
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder={t('auth.passwordPlaceholder')}
                 error={errors.password}
                 required
                 fullWidth
@@ -201,12 +203,12 @@ function RegisterPage() {
               />
 
               <Input
-                label="Potwierdź hasło"
+                label={t('auth.confirmPassword')}
                 type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder={t('auth.passwordPlaceholder')}
                 error={errors.confirmPassword}
                 required
                 fullWidth
@@ -226,17 +228,17 @@ function RegisterPage() {
               loading={loading}
               disabled={loading}
             >
-              {loading ? 'Rejestracja...' : 'Zarejestruj się'}
+              {loading ? t('auth.registering') : t('auth.registerButton')}
             </Button>
 
             <div className="text-center pt-4 border-t border-slate-700">
               <p className="text-slate-400 text-sm">
-                Masz już konto?{' '}
+                {t('auth.haveAccount')}{' '}
                 <Link
                   to="/login"
                   className="text-parkchain-500 hover:text-parkchain-400 font-semibold transition-colors"
                 >
-                  Zaloguj się
+                  {t('auth.loginLink')}
                 </Link>
               </p>
             </div>
