@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
@@ -166,21 +167,21 @@ function AutoCenter({ parkings }) {
       const validParkings = parkings.filter(p => p.latitude && p.longitude);
 
       if (validParkings.length === 0) {
-        console.log('⚠️ Brak parkingów z poprawnymi współrzędnymi');
+        console.log(t('messages.noParkingsWithCoordinates'));
         return;
       }
 
       if (validParkings.length === 1) {
         // Pojedynczy parking - wycentruj na nim
         const parking = validParkings[0];
-        console.log('🎯 Centruję mapę na parkingu:', parking.name, [parking.latitude, parking.longitude]);
+        console.log(t('messages.centeringOnParking'), parking.name, [parking.latitude, parking.longitude]);
         map.setView([parking.latitude, parking.longitude], 15);
       } else {
         // Wiele parkingów - pokaż wszystkie
         const bounds = L.latLngBounds(
           validParkings.map(p => [p.latitude, p.longitude])
         );
-        console.log('🎯 Centruję mapę na wszystkich parkingach:', validParkings.length);
+        console.log(t('messages.centeringOnAllParkings'), validParkings.length);
         map.fitBounds(bounds, { padding: [50, 50] });
       }
     }
@@ -201,6 +202,7 @@ function MapClickHandler({ onMapClick }) {
 }
 
 function MapPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const mapRef = useRef(null);
   const [parkings, setParkings] = useState([]);
@@ -246,24 +248,24 @@ function MapPage() {
 
         // Pobierz parkingi
         const parkingsData = await parkingAPI.getAllParkings();
-        console.log('✅ Pobrano parkingi:', parkingsData?.length, 'sztuk');
+        console.log(t('messages.chargersLoaded'), parkingsData?.length, 'sztuk');
         setParkings(parkingsData);
 
         // Pobierz ładowarki
         try {
           const response = await fetch('http://localhost:3000/api/charging-stations');
           const chargingData = await response.json();
-          console.log('✅ Pobrano ładowarki:', chargingData?.stations?.length, 'sztuk');
+          console.log(t('messages.chargersLoaded'), chargingData?.stations?.length, 'sztuk');
           setChargingStations(chargingData.stations || []);
         } catch (err) {
-          console.error('⚠️ Nie udało się pobrać ładowarek:', err);
+          console.error(t('messages.chargersLoadFailed'), err);
           setChargingStations([]);
         }
 
         setError(null);
       } catch (err) {
-        console.error('❌ Nie udało się pobrać danych:', err);
-        setError('Nie udało się załadować danych.');
+        console.error(t('messages.dataLoadFailed'), err);
+        setError(t('errors.loadDataError'));
       } finally {
         setLoading(false);
       }
@@ -393,11 +395,11 @@ function MapPage() {
       setRecommendedParkings(result.parkings);
 
       if (result.parkings.length === 0) {
-        alert('Nie znaleziono parkingów w pobliżu (promień 5km)');
+        alert(t('messages.noParkingsInRadius'));
       }
     } catch (err) {
-      console.error('❌ Błąd przy szukaniu parkingów:', err);
-      alert('Nie udało się znaleźć parkingów w pobliżu');
+      console.error(t('messages.searchingForParkings'), err);
+      alert(t('messages.searchParkingsError'));
     } finally {
       setLoadingRecommendations(false);
       setSearchMode(false);
@@ -424,13 +426,13 @@ function MapPage() {
       handleDestinationSet(lat, lng);
     } else if (addParkingMode) {
       // Tryb dodawania parkingu
-      console.log(`📍 Wybrano lokalizację dla nowego parkingu: [${lat}, ${lng}]`);
+      console.log(t('messages.selectedLocationForParking'), `[${lat}, ${lng}]`);
       setNewParkingLocation({ lat, lng });
       setShowAddParkingModal(true);
       setAddParkingMode(false);
     } else if (addChargingMode) {
       // Tryb dodawania ładowarki
-      console.log(`⚡ Wybrano lokalizację dla nowej ładowarki: [${lat}, ${lng}]`);
+      console.log(t('messages.selectedLocationForCharger'), `[${lat}, ${lng}]`);
       setNewChargingLocation({ lat, lng });
       setShowAddChargingModal(true);
       setAddChargingMode(false);
@@ -439,7 +441,7 @@ function MapPage() {
 
   const handleToggleAddParkingMode = () => {
     if (!user) {
-      alert('Musisz być zalogowany aby dodać parking');
+      alert(t('messages.mustBeLoggedInToAddParking'));
       return;
     }
 
@@ -469,7 +471,7 @@ function MapPage() {
 
   const handleToggleAddChargingMode = () => {
     if (!user) {
-      alert('Musisz być zalogowany aby dodać ładowarkę');
+      alert(t('messages.mustBeLoggedInToAddCharger'));
       return;
     }
 
@@ -510,7 +512,7 @@ function MapPage() {
         fontSize: '20px',
         color: '#6366F1'
       }}>
-        Ładowanie parkingów...
+        {t('common.loading')}
       </div>
     );
   }
@@ -694,7 +696,7 @@ function MapPage() {
                 fontWeight: '600',
                 color: '#1F2937'
               }}>
-                Powrót
+                {t('common.back')}
               </span>
             </motion.div>
           </Link>
@@ -836,7 +838,7 @@ function MapPage() {
                 WebkitTextFillColor: 'transparent',
                 letterSpacing: '-0.5px'
               }}>
-                Najlepsze parkingi
+                {t('favorites.title')}
               </h3>
             </div>
             <button
@@ -923,7 +925,7 @@ function MapPage() {
                     letterSpacing: '0.5px'
                   }}>
                     <FaTrophy style={{ fontSize: '10px' }} />
-                    NAJLEPSZY WYBÓR
+                    {t('common.yes').toUpperCase()}
                   </div>
                 )}
 
@@ -987,7 +989,7 @@ function MapPage() {
                     borderRadius: '6px'
                   }}>
                     <FaRoad style={{ fontSize: '11px' }} />
-                    {parking.distance} km
+                    {parking.distance} {t('common.km')}
                   </div>
                   <div style={{
                     display: 'flex',
@@ -1062,7 +1064,7 @@ function MapPage() {
                     }}
                   >
                     <FaTicketAlt style={{ fontSize: '13px' }} />
-                    Zarezerwuj teraz
+                    {t('reservations.reserveNow')}
                   </button>
                 )}
               </div>
@@ -1126,7 +1128,7 @@ function MapPage() {
                     color: '#1f2937',
                     letterSpacing: '-0.3px'
                   }}>
-                    Twoja destynacja
+                    {t('common.destination')}
                   </h3>
                 </div>
                 <p style={{
@@ -1402,9 +1404,9 @@ function MapPage() {
               }}>
                 {parking.available_spots > 0
                   ? (parking.available_spots / parking.total_spots > 0.5
-                    ? 'Dużo wolnych miejsc'
-                    : 'Mało wolnych miejsc')
-                  : 'Brak wolnych miejsc'}
+                    ? t('parking.manyAvailableSpots')
+                    : t('parking.fewAvailableSpots'))
+                  : t('parking.noAvailableSpots')}
               </span>
             </div>
             <div style={{
@@ -1636,12 +1638,12 @@ function MapPage() {
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite'
                   }} />
-                  <span>Przygotowuję rezerwację...</span>
+                  <span>{t('common.loading')}...</span>
                 </>
               ) : (
                 <>
                   <FaTicketAlt style={{ fontSize: '18px' }} />
-                  <span>Zarezerwuj teraz</span>
+                  <span>{t('reservations.reserveNow')}</span>
                 </>
               )}
             </button>
@@ -1677,7 +1679,7 @@ function MapPage() {
             }}
           >
             <FaMapMarkerAlt style={{ fontSize: '14px' }} />
-            <span>Zgłoś zajętość (CrowdScan)</span>
+            <span>{t('crowdscan.reportOccupancy')}</span>
           </button>
         </div>
       </div>
@@ -1800,9 +1802,9 @@ function MapPage() {
               }}>
                 {station.available_connectors > 0
                   ? (station.available_connectors / station.total_connectors > 0.5
-                    ? 'Dużo wolnych złączy'
-                    : 'Mało wolnych złączy')
-                  : 'Brak wolnych złączy'}
+                    ? t('charging.manyAvailableConnectors')
+                    : t('charging.fewAvailableConnectors'))
+                  : t('charging.noAvailableConnectors')}
               </span>
             </div>
             <div style={{
@@ -1960,7 +1962,7 @@ function MapPage() {
               }}
             >
               <FaBolt style={{ fontSize: '16px' }} />
-              <span>Rozpocznij ładowanie</span>
+              <span>{t('charging.startCharging')}</span>
             </button>
           )}
         </div>
@@ -2008,7 +2010,7 @@ function MapPage() {
           }}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          title={addParkingMode ? "Anuluj dodawanie parkingu" : "Dodaj parking"}
+          title={addParkingMode ? t('modals.cancelAddParking') : t('parking.addParking')}
         >
           <FaParking />
           {addParkingMode && (
@@ -2058,7 +2060,7 @@ function MapPage() {
           }}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          title={addChargingMode ? "Anuluj dodawanie ładowarki" : "Dodaj ładowarkę EV"}
+          title={addChargingMode ? t('modals.cancelAddCharger') : t('modals.addChargingStation')}
         >
           <FaChargingStation />
           {addChargingMode && (
@@ -2104,7 +2106,7 @@ function MapPage() {
               pointerEvents: 'none'
             }}
           >
-            {addParkingMode ? '📍 Kliknij na mapie aby dodać parking' : '⚡ Kliknij na mapie aby dodać ładowarkę'}
+            {addParkingMode ? t('modals.clickMapToAddParking') : t('modals.clickMapToAddCharger')}
           </motion.div>
         )}
       </div>

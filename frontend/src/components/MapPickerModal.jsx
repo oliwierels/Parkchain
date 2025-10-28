@@ -1,6 +1,7 @@
 // Plik: frontend/src/components/MapPickerModal.jsx
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -38,6 +39,7 @@ function ChangeView({ center, zoom }) {
 }
 
 function MapPickerModal({ onClose, onSelect }) {
+  const { t } = useTranslation();
   const [position, setPosition] = useState(null); // Pozycja pinezki
   const [loading, setLoading] = useState(false);
   const warsawCenter = [52.2297, 21.0118]; // Domyślne centrum mapy
@@ -48,7 +50,7 @@ function MapPickerModal({ onClose, onSelect }) {
 
   const handleConfirm = async () => {
     if (!position) {
-      alert('Wybierz lokalizację na mapie, klikając na nią.');
+      alert(t('messages.selectLocationOnMap'));
       return;
     }
 
@@ -82,8 +84,8 @@ function MapPickerModal({ onClose, onSelect }) {
       onClose(); // Zamknij modal
 
     } catch (error) {
-      console.error("Błąd reverse geocoding:", error);
-      alert("Nie udało się pobrać adresu dla tej lokalizacji.");
+      console.error(t('console.fetchDataError'), error);
+      alert(t('messages.reverseGeocodingError'));
     } finally {
       setLoading(false);
     }
@@ -154,7 +156,7 @@ function MapPickerModal({ onClose, onSelect }) {
               cursor: 'pointer'
             }}
           >
-            Anuluj
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -170,7 +172,7 @@ function MapPickerModal({ onClose, onSelect }) {
               cursor: loading || !position ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Pobieranie adresu...' : 'Zatwierdź lokalizację'}
+            {loading ? t('common.loading') : t('common.confirm')}
           </button>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaTimes } from 'react-icons/fa';
 import RatingStars from './RatingStars';
 import axios from 'axios';
 
 const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existingReview, onSuccess }) => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [title, setTitle] = useState(existingReview?.title || '');
   const [comment, setComment] = useState(existingReview?.comment || '');
@@ -25,7 +27,7 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
     e.preventDefault();
 
     if (rating === 0) {
-      alert('Proszę wybrać ocenę');
+      alert(t('modals.selectRating'));
       return;
     }
 
@@ -56,7 +58,7 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
       setComment('');
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert(error.response?.data?.error || 'Nie udało się zapisać recenzji');
+      alert(error.response?.data?.error || t('messages.reviewSaveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +72,7 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
-              {existingReview ? 'Edytuj recenzję' : 'Dodaj recenzję'}
+              {existingReview ? t('modals.editReview') : t('modals.addReview')}
             </h2>
             <button
               onClick={onClose}
@@ -82,7 +84,7 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
 
           {targetName && (
             <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-              <p className="text-sm text-gray-600">Recenzja dla:</p>
+              <p className="text-sm text-gray-600">{t('modals.reviewFor')}</p>
               <p className="font-semibold">{targetName}</p>
             </div>
           )}
@@ -90,7 +92,7 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label className="block text-sm font-semibold mb-2">
-                Twoja ocena *
+                {t('modals.yourRating')}
               </label>
               <RatingStars
                 rating={rating}
@@ -136,14 +138,14 @@ const ReviewModal = ({ isOpen, onClose, targetType, targetId, targetName, existi
                 disabled={isSubmitting || rating === 0}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold"
               >
-                {isSubmitting ? 'Wysyłanie...' : (existingReview ? 'Zaktualizuj' : 'Opublikuj recenzję')}
+                {isSubmitting ? t('common.loading') : (existingReview ? t('common.save') : t('reviews.submit'))}
               </button>
               <button
                 type="button"
                 onClick={onClose}
                 className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-semibold"
               >
-                Anuluj
+                {t('common.cancel')}
               </button>
             </div>
           </form>

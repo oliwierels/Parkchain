@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaHeart, FaParking, FaBolt, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import RatingStars from '../components/RatingStars';
 
 const FavoritesPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ const FavoritesPage = () => {
   };
 
   const handleRemove = async (favoriteId) => {
-    if (!confirm('Czy na pewno chcesz usunąć z ulubionych?')) return;
+    if (!confirm(t('messages.confirmRemoveFavorite'))) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -59,7 +61,7 @@ const FavoritesPage = () => {
       setFavorites(favorites.filter(f => f.id !== favoriteId));
     } catch (error) {
       console.error('Error removing favorite:', error);
-      alert('Nie udało się usunąć z ulubionych');
+      alert(t('messages.favoriteRemoveError'));
     }
   };
 
@@ -90,10 +92,10 @@ const FavoritesPage = () => {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <FaHeart className="text-4xl text-red-500" />
-              <h1 className="text-4xl font-bold">Moje Ulubione</h1>
+              <h1 className="text-4xl font-bold">{t('favorites.myFavorites')}</h1>
             </div>
             <p className="text-gray-600">
-              Zapisane miejsca parkingowe i stacje ładowania
+              {t('favorites.subtitle')}
             </p>
           </div>
 
@@ -108,7 +110,7 @@ const FavoritesPage = () => {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                Wszystkie ({favorites.length})
+                {t('common.all')} ({favorites.length})
               </button>
               <button
                 onClick={() => setFilter('parking_lot')}
@@ -119,7 +121,7 @@ const FavoritesPage = () => {
                 }`}
               >
                 <FaParking />
-                Parkingi
+                {t('favorites.parkings')}
               </button>
               <button
                 onClick={() => setFilter('ev_charger')}
@@ -130,7 +132,7 @@ const FavoritesPage = () => {
                 }`}
               >
                 <FaBolt />
-                Ładowarki
+                {t('favorites.chargers')}
               </button>
             </div>
           </div>
@@ -139,7 +141,7 @@ const FavoritesPage = () => {
           {loading && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Ładowanie ulubionych...</p>
+              <p className="mt-4 text-gray-600">{t('favorites.loading')}</p>
             </div>
           )}
 
@@ -147,13 +149,13 @@ const FavoritesPage = () => {
           {!loading && favorites.length === 0 && (
             <div className="bg-white rounded-lg shadow-md p-12 text-center">
               <FaHeart className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-2xl font-semibold mb-2">Brak ulubionych</h3>
+              <h3 className="text-2xl font-semibold mb-2">{t('favorites.noFavorites')}</h3>
               <p className="text-gray-600 mb-6">
                 {filter === 'all'
-                  ? 'Nie masz jeszcze żadnych ulubionych miejsc'
+                  ? t('favorites.noFavoritesDescription')
                   : filter === 'parking_lot'
-                  ? 'Nie masz ulubionych parkingów'
-                  : 'Nie masz ulubionych ładowarek'}
+                  ? t('favorites.noParkings')
+                  : t('favorites.noChargers')}
               </p>
               <div className="flex gap-4 justify-center">
                 <button
@@ -161,14 +163,14 @@ const FavoritesPage = () => {
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center gap-2"
                 >
                   <FaParking />
-                  Znajdź parking
+                  {t('favorites.findParking')}
                 </button>
                 <button
                   onClick={() => navigate('/charging-map')}
                   className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold flex items-center gap-2"
                 >
                   <FaBolt />
-                  Znajdź ładowarkę
+                  {t('favorites.findCharger')}
                 </button>
               </div>
             </div>
@@ -196,7 +198,7 @@ const FavoritesPage = () => {
                             <FaBolt className="text-2xl" />
                           )}
                           <span className="font-semibold">
-                            {isParkingLot ? 'Parking' : 'Ładowarka'}
+                            {isParkingLot ? t('parking.parking') : t('charging.charger')}
                           </span>
                         </div>
                         <button
@@ -233,11 +235,11 @@ const FavoritesPage = () => {
                       <div className="flex items-center justify-between text-sm mb-3">
                         {isParkingLot ? (
                           <span className="text-gray-600">
-                            Cena: <span className="font-semibold">{target?.price_per_hour || 0} PLN/h</span>
+                            {t('parking.price')}: <span className="font-semibold">{target?.price_per_hour || 0} PLN/h</span>
                           </span>
                         ) : (
                           <span className="text-gray-600">
-                            Moc: <span className="font-semibold">{target?.power_kw || 0} kW</span>
+                            {t('charging.power')}: <span className="font-semibold">{target?.power_kw || 0} kW</span>
                           </span>
                         )}
                       </div>
@@ -249,7 +251,7 @@ const FavoritesPage = () => {
                       )}
 
                       <div className="text-xs text-gray-500 pt-3 border-t">
-                        Dodano: {formatDate(favorite.created_at)}
+                        {t('favorites.addedOn')}: {formatDate(favorite.created_at)}
                       </div>
                     </div>
                   </div>

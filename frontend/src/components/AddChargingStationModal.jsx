@@ -1,8 +1,10 @@
 // frontend/src/components/AddChargingStationModal.jsx
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -45,7 +47,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
     try {
       // Walidacja
       if (!formData.name || !formData.address || !formData.max_power_kw || !formData.total_connectors || !formData.price_per_kwh) {
-        throw new Error('Wypełnij wszystkie wymagane pola');
+        throw new Error(t('validation.fillAllFields'));
       }
 
       // Przygotuj dane
@@ -77,14 +79,14 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się dodać ładowarki');
+        throw new Error(errorData.error || t('errors.addParkingError'));
       }
 
-      alert('⚡ Ładowarka dodana pomyślnie!');
+      alert(t('messages.chargerAddedSuccess'));
       onSuccess();
     } catch (err) {
-      console.error('❌ Błąd przy dodawaniu ładowarki:', err);
-      setError(err.response?.data?.error || err.message || 'Nie udało się dodać ładowarki');
+      console.error(t('messages.addingChargerError'), err);
+      setError(err.response?.data?.error || err.message || t('errors.addParkingError'));
     } finally {
       setLoading(false);
     }
@@ -129,7 +131,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
             alignItems: 'center',
             gap: '8px'
           }}>
-            ⚡ Dodaj ładowarkę EV
+            {t('modals.addChargingStation')}
           </h2>
           <button
             onClick={onClose}
@@ -172,7 +174,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#6B7280',
               marginBottom: '4px'
             }}>
-              📍 Lokalizacja
+              {t('modals.locationLabel')}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
               Szerokość: {latitude.toFixed(6)}
@@ -191,7 +193,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Nazwa ładowarki <span style={{ color: '#EF4444' }}>*</span>
+              {t('modals.chargerName')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -537,7 +539,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 opacity: loading ? 0.5 : 1
               }}
             >
-              Anuluj
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -554,7 +556,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Dodawanie...' : '⚡ Dodaj ładowarkę'}
+              {loading ? t('common.loading') : t('modals.addChargingStation')}
             </button>
           </div>
         </form>

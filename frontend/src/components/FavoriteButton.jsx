@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const FavoriteButton = ({ targetType, targetId, size = 'md', showText = false }) => {
+  const { t } = useTranslation();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +44,7 @@ const FavoriteButton = ({ targetType, targetId, size = 'md', showText = false })
 
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Musisz być zalogowany, aby dodać do ulubionych');
+      alert(t('messages.mustBeLoggedInToAddFavorite'));
       return;
     }
 
@@ -73,7 +75,7 @@ const FavoriteButton = ({ targetType, targetId, size = 'md', showText = false })
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      alert(error.response?.data?.error || 'Nie udało się zmienić statusu ulubionych');
+      alert(error.response?.data?.error || t('messages.favoriteStatusChangeError'));
     } finally {
       setIsLoading(false);
     }
@@ -90,12 +92,12 @@ const FavoriteButton = ({ targetType, targetId, size = 'md', showText = false })
         disabled:opacity-50 disabled:cursor-not-allowed
         flex items-center gap-2
       `}
-      title={isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+      title={isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
     >
       {isFavorite ? <FaHeart /> : <FaRegHeart />}
       {showText && (
         <span className="text-sm font-medium">
-          {isFavorite ? 'Ulubione' : 'Dodaj do ulubionych'}
+          {isFavorite ? t('favorites.title') : t('favorites.addToFavorites')}
         </span>
       )}
     </button>

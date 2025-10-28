@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { inspectionAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function ReportOccupancyModal({ parking, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [occupancy, setOccupancy] = useState(parking.total_spots - parking.available_spots);
   const [loading, setLoading] = useState(false);
@@ -12,7 +14,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
     e.preventDefault();
 
     if (!isAuthenticated) {
-      setError('Musisz być zalogowany, aby zgłosić inspekcję');
+      setError(t('messages.mustBeLoggedInToReport'));
       return;
     }
 
@@ -25,12 +27,12 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
         reported_occupancy: parseInt(occupancy)
       });
 
-      alert('Zgłoszenie wysłane! Dzięki za pomoc w aktualizacji danych.');
+      alert(t('messages.reportSentSuccess'));
       onSuccess && onSuccess();
       onClose();
     } catch (err) {
-      console.error('Błąd zgłaszania:', err);
-      setError(err.response?.data?.error || 'Nie udało się wysłać zgłoszenia');
+      console.error(t('console.reportingError'), err);
+      setError(err.response?.data?.error || t('messages.reportSendError'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
           marginBottom: '20px'
         }}>
           <h2 style={{ margin: 0, fontSize: '24px', color: '#1f2937' }}>
-            Zgłoś zajętość parkingu
+            {t('crowdscan.reportOccupancy')}
           </h2>
           <button
             onClick={onClose}
@@ -94,7 +96,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
             {parking.address}
           </p>
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-            Dostępność w systemie: <strong>{parking.available_spots}/{parking.total_spots}</strong> miejsc
+            {t('crowdscan.systemAvailability')}: <strong>{parking.available_spots}/{parking.total_spots}</strong> {t('parking.availableSpots').toLowerCase()}
           </p>
         </div>
 
@@ -120,7 +122,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
               fontWeight: 'bold',
               color: '#374151'
             }}>
-              Ile miejsc jest ZAJĘTYCH? *
+              {t('crowdscan.howManyOccupied')} *
             </label>
             <input
               type="number"
@@ -144,7 +146,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
               marginTop: '8px',
               fontStyle: 'italic'
             }}>
-              Wolnych miejsc: {parking.total_spots - occupancy}
+              {t('crowdscan.availableSpots')}: {parking.total_spots - occupancy}
             </p>
           </div>
 
@@ -156,7 +158,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
             fontSize: '13px',
             color: '#1e40af'
           }}>
-            <strong>CrowdScan:</strong> Pomóż innym kierowcom! Twoje zgłoszenie zostanie zweryfikowane przez inspektora. Za potwierdzone zgłoszenia otrzymasz punkty reputacji i nagrody.
+            <strong>CrowdScan:</strong> {t('crowdscan.helpOthers')}
           </div>
 
           <div style={{
@@ -177,7 +179,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
                 cursor: 'pointer'
               }}
             >
-              Anuluj
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -192,7 +194,7 @@ function ReportOccupancyModal({ parking, onClose, onSuccess }) {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Wysyłanie...' : 'Wyślij zgłoszenie'}
+              {loading ? t('common.loading') : t('crowdscan.sendReport')}
             </button>
           </div>
         </form>

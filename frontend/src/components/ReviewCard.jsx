@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { FaThumbsUp, FaReply, FaEdit, FaTrash } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import RatingStars from './RatingStars';
 import axios from 'axios';
 
 const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
+  const { t } = useTranslation();
   const [showResponse, setShowResponse] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,7 +57,7 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error('Error adding response:', error);
-      alert(error.response?.data?.error || 'Nie udało się dodać odpowiedzi');
+      alert(error.response?.data?.error || t('messages.replyAddError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -106,7 +108,7 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
               }`}
             >
               <FaThumbsUp />
-              Pomocne ({helpfulCount})
+              {t('reviews.helpful')} ({helpfulCount})
             </button>
 
             {isOwner && !review.review_responses?.length && (
@@ -115,7 +117,7 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
                 className="flex items-center gap-1 hover:text-blue-600 transition"
               >
                 <FaReply />
-                Odpowiedz
+                {t('reviews.reply')}
               </button>
             )}
 
@@ -126,14 +128,14 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
                   className="flex items-center gap-1 hover:text-blue-600 transition"
                 >
                   <FaEdit />
-                  Edytuj
+                  {t('common.edit')}
                 </button>
                 <button
                   onClick={() => onDelete && onDelete(review.id)}
                   className="flex items-center gap-1 hover:text-red-600 transition"
                 >
                   <FaTrash />
-                  Usuń
+                  {t('common.delete')}
                 </button>
               </>
             )}
@@ -144,7 +146,7 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
               <textarea
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
-                placeholder="Napisz odpowiedź na tę recenzję..."
+                placeholder={t('reviews.writeReply')}
                 className="w-full p-2 border rounded-lg resize-none"
                 rows="3"
               />
@@ -154,13 +156,13 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
                   disabled={isSubmitting || !responseText.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
                 >
-                  {isSubmitting ? 'Wysyłanie...' : 'Wyślij odpowiedź'}
+                  {isSubmitting ? t('common.loading') : t('reviews.sendReply')}
                 </button>
                 <button
                   onClick={() => setShowResponse(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                 >
-                  Anuluj
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -169,7 +171,7 @@ const ReviewCard = ({ review, onDelete, onUpdate, currentUserId, isOwner }) => {
           {review.review_responses && review.review_responses.length > 0 && (
             <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
               <p className="font-semibold text-blue-900 mb-2">
-                Odpowiedź właściciela
+                {t('reviews.ownerResponse')}
               </p>
               <p className="text-gray-700">{review.review_responses[0].response_text}</p>
               <p className="text-sm text-gray-500 mt-2">

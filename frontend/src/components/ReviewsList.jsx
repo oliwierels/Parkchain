@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlus, FaStar } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import ReviewCard from './ReviewCard';
 import ReviewModal from './ReviewModal';
 import RatingStars from './RatingStars';
 import axios from 'axios';
 
 const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
   };
 
   const handleDelete = async (reviewId) => {
-    if (!confirm('Czy na pewno chcesz usunąć tę recenzję?')) return;
+    if (!confirm(t('messages.confirmDeleteReview'))) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -78,7 +80,7 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
       fetchStatistics();
     } catch (error) {
       console.error('Error deleting review:', error);
-      alert('Nie udało się usunąć recenzji');
+      alert(t('messages.reviewDeleteError'));
     }
   };
 
@@ -105,7 +107,7 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
   return (
     <div className="mt-8">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-2xl font-bold mb-4">Recenzje i Oceny</h3>
+        <h3 className="text-2xl font-bold mb-4">{t('reviews.title')}</h3>
 
         {statistics && statistics.total_reviews > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -115,7 +117,7 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
                 <div>
                   <RatingStars rating={parseFloat(statistics.average_rating)} size="lg" />
                   <p className="text-sm text-gray-600 mt-1">
-                    {statistics.total_reviews} {statistics.total_reviews === 1 ? 'recenzja' : 'recenzji'}
+                    {statistics.total_reviews} {statistics.total_reviews === 1 ? t('reviews.reviewSingular') : t('reviews.reviewPlural')}
                   </p>
                 </div>
               </div>
@@ -145,7 +147,7 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
           </div>
         ) : (
           <p className="text-gray-600 text-center py-4">
-            Brak recenzji. Bądź pierwszy, który wystawi opinię!
+            {t('reviews.noReviews')}
           </p>
         )}
 
@@ -157,11 +159,11 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
                 className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 font-semibold"
               >
                 <FaPlus />
-                Dodaj recenzję
+                {t('reviews.addReview')}
               </button>
             ) : (
               <p className="text-sm text-gray-600">
-                Już dodałeś recenzję tego miejsca
+                {t('reviews.alreadyReviewed')}
               </p>
             )}
           </div>
@@ -171,16 +173,16 @@ const ReviewsList = ({ targetType, targetId, targetName, ownerId }) => {
       {reviews.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xl font-semibold">Wszystkie recenzje ({reviews.length})</h4>
+            <h4 className="text-xl font-semibold">{t('reviews.allReviews')} ({reviews.length})</h4>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-2 border rounded-lg"
             >
-              <option value="recent">Najnowsze</option>
-              <option value="highest">Najwyższe oceny</option>
-              <option value="lowest">Najniższe oceny</option>
-              <option value="helpful">Najbardziej pomocne</option>
+              <option value="recent">{t('reviews.sortRecent')}</option>
+              <option value="highest">{t('reviews.sortHighest')}</option>
+              <option value="lowest">{t('reviews.sortLowest')}</option>
+              <option value="helpful">{t('reviews.sortHelpful')}</option>
             </select>
           </div>
 
