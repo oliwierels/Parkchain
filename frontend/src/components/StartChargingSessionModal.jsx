@@ -112,68 +112,199 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 flex justify-center items-center z-[2000] p-4 backdrop-blur-sm"
+        transition={{ duration: 0.2 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: 'spring', damping: 20 }}
-          className="bg-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-auto shadow-2xl border border-gray-700"
+          initial={{
+            scale: 0.95,
+            opacity: 0,
+            y: 20
+          }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+            y: 0
+          }}
+          exit={{
+            scale: 0.95,
+            opacity: 0,
+            y: 20
+          }}
+          transition={{
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1]
+          }}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            border: 'none',
+            position: 'relative'
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <FaBolt className="text-yellow-400" />
-              Rozpocznij sesję ładowania
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ fontSize: '18px', fontWeight: '600', margin: '0', color: '#111827', letterSpacing: '-0.3px' }}
             >
-              <FaTimes size={20} />
-            </button>
+              Rozpocznij ładowanie
+            </motion.h2>
+
+            <motion.button
+              onClick={onClose}
+              disabled={loading}
+              whileHover={!loading ? { backgroundColor: '#F3F4F6' } : {}}
+              whileTap={!loading ? { scale: 0.95 } : {}}
+              transition={{ duration: 0.2 }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                color: '#9CA3AF',
+                marginLeft: '12px',
+                fontWeight: '300',
+                lineHeight: '1'
+              }}
+            >
+              ×
+            </motion.button>
           </div>
 
           {/* Error */}
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-900/30 border border-red-600 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm"
-            >
+            <div style={{
+              backgroundColor: '#FEF2F2',
+              color: '#991B1B',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              fontSize: '13px',
+              border: '1px solid #FCA5A5',
+              fontWeight: '500'
+            }}>
               {error}
-            </motion.div>
+            </div>
           )}
 
           {/* Station Info */}
-          <div className="bg-gray-700/50 rounded-xl p-5 mb-6 border border-gray-600">
-            <h3 className="text-lg font-bold text-white mb-3">{station.name}</h3>
-            <p className="text-gray-300 text-sm mb-4">{station.address}</p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              background: '#FAFAFA',
+              padding: '14px',
+              borderRadius: '10px',
+              marginBottom: '18px',
+              border: '1px solid #F0F0F0'
+            }}
+          >
+            <h3 style={{
+              fontSize: '15px',
+              fontWeight: '600',
+              margin: '0 0 4px 0',
+              color: '#111827',
+              letterSpacing: '-0.2px'
+            }}>
+              {station.name}
+            </h3>
+            <p style={{
+              fontSize: '12px',
+              color: '#6B7280',
+              margin: '0 0 10px 0'
+            }}>
+              {station.address}
+            </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Typ</p>
-                <p className="text-sm font-bold text-white">{station.charger_type}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+              <div style={{
+                padding: '10px 14px',
+                background: 'white',
+                borderRadius: '8px',
+                border: '1px solid #E5E7EB'
+              }}>
+                <span style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  Typ
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                  {station.charger_type}
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Moc</p>
-                <p className="text-sm font-bold text-green-400">{station.max_power_kw} kW</p>
+              <div style={{
+                padding: '10px 14px',
+                background: 'white',
+                borderRadius: '8px',
+                border: '1px solid #E5E7EB'
+              }}>
+                <span style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  Moc
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                  {station.max_power_kw} kW
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Cena/kWh</p>
-                <p className="text-sm font-bold text-blue-400">{station.price_per_kwh} zł</p>
+              <div style={{
+                padding: '10px 14px',
+                background: 'white',
+                borderRadius: '8px',
+                border: '1px solid #E5E7EB'
+              }}>
+                <span style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  Cena/kWh
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                  {station.price_per_kwh} zł
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Dostępne</p>
-                <p className="text-sm font-bold text-white">
+              <div style={{
+                padding: '10px 14px',
+                background: 'white',
+                borderRadius: '8px',
+                border: '1px solid #E5E7EB'
+              }}>
+                <span style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  Dostępne
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                   {station.available_connectors}/{station.total_connectors}
-                </p>
+                </span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Vehicle Model Search */}
@@ -350,35 +481,97 @@ function StartChargingSessionModal({ station, onClose, onSuccess }) {
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3 pt-4">
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '16px' }}>
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  backgroundColor: 'white',
+                  color: '#6B7280',
+                  transition: 'all 0.15s ease',
+                  letterSpacing: '-0.2px',
+                  opacity: loading ? 0.5 : 1
+                }}
+                onMouseOver={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.background = '#FAFAFA';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.background = 'white';
+                  }
+                }}
               >
                 Anuluj
               </button>
               <button
                 type="submit"
                 disabled={loading || station.available_connectors <= 0}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                style={{
+                  flex: 2,
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: loading || station.available_connectors <= 0 ? 'not-allowed' : 'pointer',
+                  backgroundColor: loading || station.available_connectors <= 0 ? '#D1D5DB' : '#111827',
+                  color: 'white',
+                  transition: 'all 0.15s ease',
+                  letterSpacing: '-0.2px',
+                  opacity: loading || station.available_connectors <= 0 ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseOver={(e) => {
+                  if (!loading && station.available_connectors > 0) {
+                    e.currentTarget.style.background = '#1F2937';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!loading && station.available_connectors > 0) {
+                    e.currentTarget.style.background = '#111827';
+                  }
+                }}
               >
                 {loading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid white',
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
                     Rozpoczynanie...
                   </>
                 ) : station.available_connectors <= 0 ? (
                   'Brak złączy'
                 ) : (
-                  <>
-                    <FaBolt />
-                    Rozpocznij ładowanie
-                  </>
+                  'Rozpocznij ładowanie'
                 )}
               </button>
             </div>
+
+            {/* CSS Animation */}
+            <style>{`
+              @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
           </form>
         </motion.div>
       </motion.div>
