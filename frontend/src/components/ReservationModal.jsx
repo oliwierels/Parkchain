@@ -346,17 +346,18 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-        animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
-        exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -366,75 +367,38 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       >
         <motion.div
           initial={{
-            scale: 0.6,
+            scale: 0.95,
             opacity: 0,
-            y: 100,
-            rotateX: 25,
-            rotateZ: -10
+            y: 20
           }}
           animate={{
-            scale: [0.6, 1.15, 0.95, 1],
+            scale: 1,
             opacity: 1,
-            y: 0,
-            rotateX: 0,
-            rotateZ: 0
+            y: 0
           }}
           exit={{
-            scale: 0.8,
+            scale: 0.95,
             opacity: 0,
-            y: 50,
-            rotateX: 15
+            y: 20
           }}
           transition={{
-            scale: {
-              type: 'tween',
-              ease: [0.34, 1.56, 0.64, 1],
-              duration: 0.7,
-              times: [0, 0.4, 0.7, 1]
-            },
-            opacity: { duration: 0.3 },
-            y: {
-              type: 'spring',
-              stiffness: 200,
-              damping: 25
-            },
-            rotateX: {
-              type: 'spring',
-              stiffness: 150,
-              damping: 20
-            },
-            rotateZ: {
-              type: 'spring',
-              stiffness: 150,
-              damping: 20
-            }
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1]
           }}
           style={{
             backgroundColor: 'white',
-            borderRadius: '28px',
-            padding: '36px',
-            maxWidth: step === 'payment' ? '900px' : '550px',
+            borderRadius: '20px',
+            padding: '28px',
+            maxWidth: step === 'payment' ? '900px' : '500px',
             width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
-            boxShadow: '0 40px 120px rgba(0,0,0,0.4), 0 0 0 3px rgba(99, 102, 241, 0.3), 0 0 100px rgba(99, 102, 241, 0.15)',
-            border: '2px solid rgba(255, 255, 255, 0.9)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+            border: 'none',
             position: 'relative'
           }}
           onClick={(e) => e.stopPropagation()}
         >
-        {/* Dekoracyjny gradient na górze modalu */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '200px',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%)',
-          borderRadius: '24px 24px 0 0',
-          pointerEvents: 'none',
-          zIndex: 0
-        }} />
         {/* Header with close button */}
         <div style={{
           display: 'flex',
@@ -449,63 +413,35 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               key={step}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              style={{ fontSize: '26px', fontWeight: '700', margin: '0 0 8px 0', color: '#1f2937' }}
+              style={{ fontSize: '20px', fontWeight: '600', margin: '0 0 12px 0', color: '#111827', letterSpacing: '-0.3px' }}
             >
-              {step === 'details' && '📝 Szczegóły rezerwacji'}
-              {step === 'payment' && '💳 Wybierz płatność'}
-              {step === 'processing' && '⏳ Przetwarzanie...'}
+              {step === 'details' && 'Szczegóły rezerwacji'}
+              {step === 'payment' && 'Wybierz płatność'}
+              {step === 'processing' && 'Przetwarzanie...'}
             </motion.h2>
 
             {/* Progress bar */}
             <div style={{
               width: '100%',
-              height: '10px',
-              backgroundColor: 'rgba(99, 102, 241, 0.08)',
+              height: '4px',
+              backgroundColor: '#F3F4F6',
               borderRadius: '999px',
               overflow: 'hidden',
-              marginBottom: '15px',
-              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
-              position: 'relative'
+              marginBottom: '20px'
             }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{
-                  type: 'spring',
-                  stiffness: 100,
-                  damping: 20,
-                  mass: 0.5
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1]
                 }}
                 style={{
                   height: '100%',
-                  background: 'linear-gradient(90deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)',
-                  borderRadius: '999px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)'
+                  background: '#111827',
+                  borderRadius: '999px'
                 }}
-              >
-                {/* Shimmer effect */}
-                <motion.div
-                  animate={{
-                    x: ['-200%', '200%']
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                    ease: 'linear'
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)',
-                    width: '50%'
-                  }}
-                />
-              </motion.div>
+              />
             </div>
 
             {/* Step indicators */}
@@ -518,35 +454,32 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               }}>
                 <motion.div
                   animate={{
-                    scale: getStepNumber() >= 1 ? [1, 1.15, 1] : 1,
-                    backgroundColor: getStepNumber() >= 1 ? '#6366F1' : '#E5E7EB'
+                    backgroundColor: getStepNumber() >= 1 ? '#111827' : '#E5E7EB'
                   }}
                   transition={{
-                    scale: { duration: 0.4, times: [0, 0.5, 1] },
-                    backgroundColor: { duration: 0.3 }
+                    duration: 0.2
                   }}
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    boxShadow: getStepNumber() >= 1 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: 'white'
                   }}
                 >
                   {getStepNumber() > 1 ? '✓' : '1'}
                 </motion.div>
                 <motion.span
                   animate={{
-                    color: getStepNumber() >= 1 ? '#6366F1' : '#9CA3AF'
+                    color: getStepNumber() >= 1 ? '#111827' : '#9CA3AF'
                   }}
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '600'
+                    fontSize: '12px',
+                    fontWeight: '500'
                   }}
                 >
                   Szczegóły
@@ -555,14 +488,12 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
               <motion.div
                 animate={{
-                  backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB',
-                  scaleX: getStepNumber() >= 2 ? [0, 1] : 1
+                  backgroundColor: getStepNumber() >= 2 ? '#111827' : '#E5E7EB'
                 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.2 }}
                 style={{
-                  width: '30px',
-                  height: '2px',
-                  transformOrigin: 'left'
+                  width: '24px',
+                  height: '2px'
                 }}
               />
 
@@ -574,35 +505,32 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               }}>
                 <motion.div
                   animate={{
-                    scale: getStepNumber() >= 2 ? [1, 1.15, 1] : 1,
-                    backgroundColor: getStepNumber() >= 2 ? '#6366F1' : '#E5E7EB'
+                    backgroundColor: getStepNumber() >= 2 ? '#111827' : '#E5E7EB'
                   }}
                   transition={{
-                    scale: { duration: 0.4, times: [0, 0.5, 1] },
-                    backgroundColor: { duration: 0.3 }
+                    duration: 0.2
                   }}
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    boxShadow: getStepNumber() >= 2 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: 'white'
                   }}
                 >
                   {getStepNumber() > 2 ? '✓' : '2'}
                 </motion.div>
                 <motion.span
                   animate={{
-                    color: getStepNumber() >= 2 ? '#6366F1' : '#9CA3AF'
+                    color: getStepNumber() >= 2 ? '#111827' : '#9CA3AF'
                   }}
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '600'
+                    fontSize: '12px',
+                    fontWeight: '500'
                   }}
                 >
                   Płatność
@@ -611,14 +539,12 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
               <motion.div
                 animate={{
-                  backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB',
-                  scaleX: getStepNumber() >= 3 ? [0, 1] : 1
+                  backgroundColor: getStepNumber() >= 3 ? '#111827' : '#E5E7EB'
                 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.2 }}
                 style={{
-                  width: '30px',
-                  height: '2px',
-                  transformOrigin: 'left'
+                  width: '24px',
+                  height: '2px'
                 }}
               />
 
@@ -630,35 +556,32 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               }}>
                 <motion.div
                   animate={{
-                    scale: getStepNumber() >= 3 ? [1, 1.15, 1] : 1,
-                    backgroundColor: getStepNumber() >= 3 ? '#6366F1' : '#E5E7EB'
+                    backgroundColor: getStepNumber() >= 3 ? '#111827' : '#E5E7EB'
                   }}
                   transition={{
-                    scale: { duration: 0.4, times: [0, 0.5, 1] },
-                    backgroundColor: { duration: 0.3 }
+                    duration: 0.2
                   }}
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    boxShadow: getStepNumber() >= 3 ? '0 4px 12px rgba(99, 102, 241, 0.4)' : 'none'
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: 'white'
                   }}
                 >
                   {getStepNumber() > 3 ? '✓' : '3'}
                 </motion.div>
                 <motion.span
                   animate={{
-                    color: getStepNumber() >= 3 ? '#6366F1' : '#9CA3AF'
+                    color: getStepNumber() >= 3 ? '#111827' : '#9CA3AF'
                   }}
                   style={{
-                    fontSize: '13px',
-                    fontWeight: '600'
+                    fontSize: '12px',
+                    fontWeight: '500'
                   }}
                 >
                   Potwierdzenie
@@ -671,26 +594,23 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             onClick={onClose}
             disabled={loading}
             whileHover={!loading ? {
-              scale: 1.1,
-              backgroundColor: '#FEE2E2',
-              color: '#DC2626',
-              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
+              backgroundColor: '#F3F4F6'
             } : {}}
             whileTap={!loading ? { scale: 0.95 } : {}}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            transition={{ duration: 0.2 }}
             style={{
-              background: '#F3F4F6',
+              background: 'transparent',
               border: 'none',
-              width: '42px',
-              height: '42px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '22px',
+              fontSize: '20px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              color: '#6B7280',
-              marginLeft: '15px',
+              color: '#9CA3AF',
+              marginLeft: '12px',
               fontWeight: '300',
               lineHeight: '1'
             }}
@@ -704,43 +624,30 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
           style={{
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%)',
-            padding: '18px',
-            borderRadius: '16px',
+            background: '#F9FAFB',
+            padding: '16px',
+            borderRadius: '12px',
             marginBottom: '20px',
-            border: '2px solid rgba(99, 102, 241, 0.15)',
+            border: '1px solid #E5E7EB',
             position: 'relative',
             zIndex: 1
           }}
         >
           <h3 style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            margin: '0 0 6px 0',
-            color: '#1f2937',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            fontSize: '16px',
+            fontWeight: '600',
+            margin: '0 0 4px 0',
+            color: '#111827',
+            letterSpacing: '-0.3px'
           }}>
-            <span style={{
-              fontSize: '16px',
-              width: '28px',
-              height: '28px',
-              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>🅿️</span>
             {parking.name}
           </h3>
           <p style={{
-            fontSize: '14px',
-            color: '#6b7280',
-            margin: '0 0 12px 0',
-            paddingLeft: '36px'
+            fontSize: '13px',
+            color: '#6B7280',
+            margin: '0 0 12px 0'
           }}>
-            📍 {parking.address}
+            {parking.address}
           </p>
           {/* Parking Type Badge */}
           {parking.type && (
@@ -751,27 +658,20 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               padding: '4px 10px',
               borderRadius: '6px',
               fontSize: '12px',
-              fontWeight: '600',
+              fontWeight: '500',
               marginBottom: '10px',
               background: parking.type === 'covered'
                 ? '#EFF6FF'
                 : parking.type === 'ev_charging'
-                ? '#FFFBEB'
-                : '#ECFDF5',
-              border: `2px solid ${
-                parking.type === 'covered'
-                  ? '#3B82F6'
-                  : parking.type === 'ev_charging'
-                  ? '#F59E0B'
-                  : '#10B981'
-              }`,
+                ? '#FEF3C7'
+                : '#F0FDF4',
               color: parking.type === 'covered'
                 ? '#1E40AF'
                 : parking.type === 'ev_charging'
                 ? '#92400E'
                 : '#065F46'
             }}>
-              <span>
+              <span style={{ fontSize: '13px' }}>
                 {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
               </span>
               <span>
@@ -787,19 +687,23 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             marginTop: '10px',
             padding: '10px 14px',
             background: 'white',
-            borderRadius: '10px',
-            border: '2px solid rgba(99, 102, 241, 0.2)',
+            borderRadius: '8px',
+            border: '1px solid #E5E7EB',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            justifyContent: 'space-between'
           }}>
-            <span style={{ fontSize: '18px' }}>💰</span>
             <span style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
+              fontSize: '13px',
+              color: '#6B7280',
+              fontWeight: '500'
+            }}>
+              Cena
+            </span>
+            <span style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#111827'
             }}>
               {parking.price_per_hour || parking.hourly_rate} zł/godz
             </span>
@@ -808,14 +712,16 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
         {error && (
           <div style={{
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px'
+            backgroundColor: '#FEF2F2',
+            color: '#991B1B',
+            padding: '12px 14px',
+            borderRadius: '10px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            border: '1px solid #FCA5A5',
+            fontWeight: '500'
           }}>
-            ❌ {error}
+            {error}
           </div>
         )}
 
@@ -829,14 +735,15 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             onSubmit={handleDetailsSubmit}
           >
           {/* Data i godzina rozpoczęcia */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '18px' }}>
             <label style={{
               display: 'block',
               marginBottom: '8px',
-              fontWeight: 'bold',
-              fontSize: '14px'
+              fontWeight: '500',
+              fontSize: '13px',
+              color: '#374151'
             }}>
-              Początek rezerwacji *
+              Początek rezerwacji
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <input
@@ -847,11 +754,16 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 min={today}
                 required
                 style={{
-                  padding: '10px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px'
+                  padding: '12px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: '#111827',
+                  backgroundColor: 'white',
+                  transition: 'border 0.2s ease'
                 }}
+                onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
+                onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
               />
               <input
                 type="time"
@@ -860,24 +772,30 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 onChange={handleChange}
                 required
                 style={{
-                  padding: '10px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px'
+                  padding: '12px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: '#111827',
+                  backgroundColor: 'white',
+                  transition: 'border 0.2s ease'
                 }}
+                onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
+                onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
               />
             </div>
           </div>
 
           {/* Data i godzina zakończenia */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '18px' }}>
             <label style={{
               display: 'block',
               marginBottom: '8px',
-              fontWeight: 'bold',
-              fontSize: '14px'
+              fontWeight: '500',
+              fontSize: '13px',
+              color: '#374151'
             }}>
-              Koniec rezerwacji *
+              Koniec rezerwacji
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <input
@@ -888,11 +806,16 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 min={formData.startDate || today}
                 required
                 style={{
-                  padding: '10px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px'
+                  padding: '12px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: '#111827',
+                  backgroundColor: 'white',
+                  transition: 'border 0.2s ease'
                 }}
+                onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
+                onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
               />
               <input
                 type="time"
@@ -901,11 +824,16 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 onChange={handleChange}
                 required
                 style={{
-                  padding: '10px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px'
+                  padding: '12px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  color: '#111827',
+                  backgroundColor: 'white',
+                  transition: 'border 0.2s ease'
                 }}
+                onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
+                onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
               />
             </div>
           </div>
@@ -915,10 +843,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             <label style={{
               display: 'block',
               marginBottom: '8px',
-              fontWeight: 'bold',
-              fontSize: '14px'
+              fontWeight: '500',
+              fontSize: '13px',
+              color: '#374151'
             }}>
-              Numer rejestracyjny *
+              Numer rejestracyjny
             </label>
             <input
               type="text"
@@ -929,12 +858,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               placeholder="np. WA 12345"
               style={{
                 width: '100%',
-                padding: '10px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
+                padding: '12px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
                 fontSize: '14px',
-                textTransform: 'uppercase'
+                color: '#111827',
+                textTransform: 'uppercase',
+                backgroundColor: 'white',
+                transition: 'border 0.2s ease'
               }}
+              onFocus={(e) => e.currentTarget.style.border = '1px solid #111827'}
+              onBlur={(e) => e.currentTarget.style.border = '1px solid #E5E7EB'}
             />
           </div>
 
@@ -954,71 +888,66 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
           {priceCalculation && !calculatingPrice && (
             <div style={{ marginBottom: '20px' }}>
-              {/* Najlepsza cena (główna) */}
+              {/* Cena */}
               <div style={{
-                backgroundColor: '#dcfce7',
-                padding: '20px',
+                backgroundColor: '#F0FDF4',
+                padding: '16px',
                 borderRadius: '12px',
-                marginBottom: '15px',
-                border: '2px solid #16a34a'
+                marginBottom: '12px',
+                border: '1px solid #10B981'
               }}>
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '5px'
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#065F46',
+                  marginBottom: '8px'
                 }}>
-                  <span style={{
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#16a34a',
-                    textTransform: 'uppercase'
-                  }}>
-                    ✓ Najlepsza opcja: {priceCalculation.pricingLabel}
-                  </span>
+                  {priceCalculation.pricingLabel}
                 </div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a' }}>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  letterSpacing: '-0.5px'
+                }}>
                   {priceCalculation.price} zł
                 </div>
-                <div style={{ fontSize: '13px', color: '#15803d', marginTop: '8px' }}>
-                  {priceCalculation.hours.toFixed(1)} godz ({priceCalculation.days.toFixed(1)} dni)
+                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px' }}>
+                  {priceCalculation.hours.toFixed(1)} godz • {priceCalculation.days.toFixed(1)} dni
                 </div>
               </div>
 
               {/* Wszystkie opcje cenowe */}
               {priceCalculation.allOptions && priceCalculation.allOptions.length > 1 && (
                 <div style={{
-                  backgroundColor: '#f9fafb',
-                  padding: '15px',
-                  borderRadius: '8px',
-                  fontSize: '13px'
+                  backgroundColor: '#F9FAFB',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  fontSize: '12px',
+                  border: '1px solid #E5E7EB'
                 }}>
                   <div style={{
-                    fontWeight: 'bold',
-                    marginBottom: '10px',
-                    color: '#374151'
+                    fontWeight: '500',
+                    marginBottom: '8px',
+                    color: '#6B7280'
                   }}>
-                    Porównanie taryf:
+                    Inne opcje:
                   </div>
                   {priceCalculation.allOptions.map((option, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: index < priceCalculation.allOptions.length - 1 ? '1px solid #e5e7eb' : 'none'
-                      }}
-                    >
-                      <span style={{ color: '#6b7280' }}>{option.label}:</span>
-                      <span style={{
-                        fontWeight: option.type === priceCalculation.pricingType ? 'bold' : 'normal',
-                        color: option.type === priceCalculation.pricingType ? '#16a34a' : '#374151'
-                      }}>
-                        {option.price} zł
-                        {option.type === priceCalculation.pricingType && ' ✓'}
-                      </span>
-                    </div>
+                    option.type !== priceCalculation.pricingType && (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          padding: '6px 0',
+                          color: '#9CA3AF'
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        <span>{option.price} zł</span>
+                      </div>
+                    )
                   ))}
                 </div>
               )}
@@ -1032,14 +961,22 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               onClick={onClose}
               style={{
                 flex: 1,
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: 'bold',
+                padding: '14px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: '600',
                 cursor: 'pointer',
                 backgroundColor: 'white',
-                color: '#6b7280'
+                color: '#6B7280',
+                transition: 'all 0.2s ease',
+                letterSpacing: '-0.2px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#F9FAFB';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'white';
               }}
             >
               Anuluj
@@ -1048,18 +985,33 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               type="submit"
               disabled={loading || !priceCalculation}
               style={{
-                flex: 1,
-                padding: '12px',
+                flex: 2,
+                padding: '14px',
                 border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: 'bold',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: '600',
                 cursor: loading || !priceCalculation ? 'not-allowed' : 'pointer',
-                backgroundColor: loading || !priceCalculation ? '#9ca3af' : '#6366F1',
-                color: 'white'
+                backgroundColor: loading || !priceCalculation ? '#9CA3AF' : '#111827',
+                color: 'white',
+                transition: 'all 0.2s ease',
+                letterSpacing: '-0.2px',
+                opacity: loading || !priceCalculation ? 0.6 : 1
+              }}
+              onMouseOver={(e) => {
+                if (!loading && priceCalculation) {
+                  e.currentTarget.style.background = '#1F2937';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!loading && priceCalculation) {
+                  e.currentTarget.style.background = '#111827';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
               }}
             >
-              {loading ? 'Ładowanie...' : 'Dalej: Wybierz płatność →'}
+              {loading ? 'Ładowanie...' : 'Dalej'}
             </button>
           </div>
         </motion.form>
@@ -1090,17 +1042,25 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 }}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
+                  padding: '14px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: '600',
                   cursor: 'pointer',
                   backgroundColor: 'white',
-                  color: '#6b7280'
+                  color: '#6B7280',
+                  transition: 'all 0.2s ease',
+                  letterSpacing: '-0.2px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#F9FAFB';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'white';
                 }}
               >
-                ← Wróć
+                Wróć
               </button>
               <button
                 type="button"
@@ -1108,17 +1068,32 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 disabled={!paymentMethod || loading}
                 style={{
                   flex: 2,
-                  padding: '12px',
+                  padding: '14px',
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: '600',
                   cursor: !paymentMethod || loading ? 'not-allowed' : 'pointer',
-                  backgroundColor: !paymentMethod || loading ? '#9ca3af' : '#10B981',
-                  color: 'white'
+                  backgroundColor: !paymentMethod || loading ? '#9CA3AF' : '#111827',
+                  color: 'white',
+                  transition: 'all 0.2s ease',
+                  letterSpacing: '-0.2px',
+                  opacity: !paymentMethod || loading ? 0.6 : 1
+                }}
+                onMouseOver={(e) => {
+                  if (paymentMethod && !loading) {
+                    e.currentTarget.style.background = '#1F2937';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (paymentMethod && !loading) {
+                    e.currentTarget.style.background = '#111827';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
                 }}
               >
-                {loading ? 'Przetwarzanie...' : 'Zapłać i zarezerwuj →'}
+                {loading ? 'Przetwarzanie...' : 'Potwierdź'}
               </button>
             </div>
           </div>

@@ -1248,401 +1248,179 @@ function MapPage() {
   >
     <Popup>
       <div style={{
-        minWidth: '300px',
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '20px',
-        padding: '20px',
-        boxShadow: '0 25px 70px rgba(0, 0, 0, 0.2), 0 10px 25px rgba(99, 102, 241, 0.15)',
-        border: '2px solid rgba(255, 255, 255, 0.9)'
+        minWidth: '280px',
+        maxWidth: '320px',
+        background: '#FFFFFF',
+        borderRadius: '16px',
+        padding: '0',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+        border: 'none',
+        overflow: 'hidden'
       }}>
-        {/* Nagłówek z gradientem */}
+        {/* Minimalist Header */}
         <div style={{
-          marginBottom: '18px',
-          position: 'relative',
-          overflow: 'hidden'
+          padding: '16px',
+          borderBottom: '1px solid #F3F4F6'
         }}>
+          <h3 style={{
+            margin: '0 0 4px 0',
+            fontSize: '17px',
+            fontWeight: '600',
+            color: '#111827',
+            letterSpacing: '-0.3px',
+            lineHeight: '1.3'
+          }}>
+            {parking.name}
+          </h3>
           <div style={{
+            fontSize: '13px',
+            color: '#6B7280',
             display: 'flex',
             alignItems: 'center',
-            gap: '14px',
-            position: 'relative',
-            zIndex: 1
+            gap: '4px'
           }}>
-            <div style={{
-              width: '52px',
-              height: '52px',
-              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
-              transform: 'rotate(-5deg)',
-              transition: 'transform 0.3s ease'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(-5deg) scale(1)'}
-            >
-              <FaParking style={{ fontSize: '26px', color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{
-                margin: '0 0 6px 0',
-                fontSize: '20px',
-                fontWeight: '800',
-                background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                letterSpacing: '-0.5px'
-              }}>
-                {parking.name}
-              </h3>
-              <div style={{
-                fontSize: '13px',
-                color: '#6b7280',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <FaMapMarkerAlt style={{ fontSize: '12px', color: '#6366F1' }} />
-                <span style={{ fontWeight: '500' }}>{parking.address}</span>
-              </div>
-            </div>
+            <FaMapMarkerAlt style={{ fontSize: '11px', color: '#9CA3AF' }} />
+            <span>{parking.address}</span>
           </div>
-          {/* Gradient overlay */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '100px',
-            height: '100px',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
-            borderRadius: '50%',
-            pointerEvents: 'none'
-          }}></div>
         </div>
 
-        {/* Typ parkingu / Amenities Badge */}
-        {parking.type && (
+        {/* Content */}
+        <div style={{ padding: '16px' }}>
+          {/* Availability - Clean Design */}
           <div style={{
-            marginBottom: '16px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontSize: '12px',
-            fontWeight: '600',
-            background: parking.type === 'covered'
-              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)'
-              : parking.type === 'ev_charging'
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)'
-              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
-            border: `2px solid ${
-              parking.type === 'covered'
-                ? 'rgba(59, 130, 246, 0.3)'
-                : parking.type === 'ev_charging'
-                ? 'rgba(245, 158, 11, 0.3)'
-                : 'rgba(16, 185, 129, 0.3)'
-            }`,
-            color: parking.type === 'covered'
-              ? '#1e40af'
-              : parking.type === 'ev_charging'
-              ? '#92400e'
-              : '#065f46'
-          }}>
-            <span style={{ fontSize: '14px' }}>
-              {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
-            </span>
-            <span>
-              {parking.type === 'covered'
-                ? 'Zadaszony'
-                : parking.type === 'ev_charging'
-                ? 'Z ładowarką EV'
-                : 'Odkryty'}
-            </span>
-          </div>
-        )}
-
-        {/* Status dostępności z wizualnym wskaźnikiem */}
-        <div style={{
-          marginBottom: '16px',
-          padding: '14px',
-          borderRadius: '12px',
-          background: parking.available_spots > 0
-            ? (parking.available_spots / parking.total_spots > 0.5
-              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)'
-              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)')
-            : 'linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)',
-          border: `2px solid ${parking.available_spots > 0
-            ? (parking.available_spots / parking.total_spots > 0.5 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)')
-            : 'rgba(220, 38, 38, 0.3)'}`,
-          boxShadow: parking.available_spots > 0
-            ? (parking.available_spots / parking.total_spots > 0.5
-              ? '0 4px 12px rgba(16, 185, 129, 0.1)'
-              : '0 4px 12px rgba(245, 158, 11, 0.1)')
-            : '0 4px 12px rgba(220, 38, 38, 0.1)'
-        }}>
-          <div style={{
+            marginBottom: '12px',
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '10px'
+            justifyContent: 'space-between',
+            padding: '12px',
+            background: parking.available_spots > 0 ? '#F0FDF4' : '#FEF2F2',
+            borderRadius: '10px'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
-              {parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5
-                  ? <FaCheckCircle style={{ fontSize: '16px', color: '#10B981' }} />
-                  : <FaExclamationTriangle style={{ fontSize: '16px', color: '#F59E0B' }} />)
-                : <FaTimesCircle style={{ fontSize: '16px', color: '#DC2626' }} />}
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: parking.available_spots > 0 ? '#10B981' : '#EF4444'
+              }}></div>
               <span style={{
                 fontSize: '14px',
-                fontWeight: '700',
-                color: parking.available_spots > 0
-                  ? (parking.available_spots / parking.total_spots > 0.5 ? '#065f46' : '#92400E')
-                  : '#991b1b'
+                fontWeight: '500',
+                color: parking.available_spots > 0 ? '#065F46' : '#991B1B'
               }}>
-                {parking.available_spots > 0
-                  ? (parking.available_spots / parking.total_spots > 0.5
-                    ? t('parking.manyAvailableSpots')
-                    : t('parking.fewAvailableSpots'))
-                  : t('parking.noAvailableSpots')}
+                {parking.available_spots > 0 ? 'Dostępne' : 'Brak miejsc'}
               </span>
             </div>
-            <div style={{
-              background: parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5 ? '#10B981' : '#F59E0B')
-                : '#DC2626',
-              color: 'white',
-              padding: '4px 12px',
-              borderRadius: '8px',
-              fontSize: '15px',
-              fontWeight: '700',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+            <span style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: parking.available_spots > 0 ? '#059669' : '#DC2626'
             }}>
               {parking.available_spots}/{parking.total_spots}
-            </div>
+            </span>
           </div>
 
-          {/* Pasek progresu */}
+          {/* Price - Minimalist */}
           <div style={{
-            height: '8px',
-            background: 'rgba(0, 0, 0, 0.08)',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)'
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${(parking.available_spots / parking.total_spots) * 100}%`,
-              background: parking.available_spots > 0
-                ? (parking.available_spots / parking.total_spots > 0.5
-                  ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)'
-                  : 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)')
-                : 'linear-gradient(90deg, #DC2626 0%, #B91C1C 100%)',
-              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
-            }}></div>
-          </div>
-        </div>
-
-        {/* Cennik z ikonami */}
-        <div style={{
-          margin: '0 0 16px 0',
-          padding: '14px',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
-          borderRadius: '12px',
-          border: '2px solid rgba(99, 102, 241, 0.2)',
-          boxShadow: '0 4px 12px rgba(99, 102, 241, 0.08)'
-        }}>
-          <div style={{
-            fontSize: '20px',
-            fontWeight: '800',
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '10px',
+            marginBottom: '12px',
+            padding: '12px',
+            background: '#F9FAFB',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            justifyContent: 'space-between'
           }}>
-            <FaCreditCard style={{ fontSize: '18px', color: '#6366F1' }} />
-            <span>{parking.price_per_hour} zł/godz</span>
-          </div>
-          {(parking.price_per_day || parking.price_per_week || parking.price_per_month) && (
-            <div style={{
+            <span style={{
               fontSize: '13px',
-              color: '#6b7280',
-              lineHeight: '1.8',
-              marginTop: '8px',
-              paddingTop: '8px',
-              borderTop: '1px solid rgba(99, 102, 241, 0.1)'
+              color: '#6B7280',
+              fontWeight: '500'
             }}>
-              {parking.price_per_day && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '4px'
-                }}>
-                  <FaCalendarAlt style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
-                  <span>Dzień: <strong style={{ color: '#1F2937' }}>{parking.price_per_day} zł</strong></span>
-                </div>
-              )}
-              {parking.price_per_week && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '4px'
-                }}>
-                  <FaCalendarWeek style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
-                  <span>Tydzień: <strong style={{ color: '#1F2937' }}>{parking.price_per_week} zł</strong></span>
-                </div>
-              )}
-              {parking.price_per_month && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <FaCalendar style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }} />
-                  <span>Miesiąc: <strong style={{ color: '#1F2937' }}>{parking.price_per_month} zł</strong></span>
-                </div>
-              )}
+              Cena
+            </span>
+            <span style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#111827'
+            }}>
+              {parking.price_per_hour} zł/godz
+            </span>
+          </div>
+
+          {/* Type Badge - Optional, only if exists */}
+          {parking.type && (
+            <div style={{
+              marginBottom: '14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '500',
+              background: parking.type === 'covered'
+                ? '#EFF6FF'
+                : parking.type === 'ev_charging'
+                ? '#FEF3C7'
+                : '#F0FDF4',
+              color: parking.type === 'covered'
+                ? '#1E40AF'
+                : parking.type === 'ev_charging'
+                ? '#92400E'
+                : '#065F46'
+            }}>
+              <span style={{ fontSize: '13px' }}>
+                {parking.type === 'covered' ? '☂️' : parking.type === 'ev_charging' ? '⚡' : '☀️'}
+              </span>
+              <span>
+                {parking.type === 'covered'
+                  ? 'Zadaszony'
+                  : parking.type === 'ev_charging'
+                  ? 'Z ładowarką'
+                  : 'Odkryty'}
+              </span>
             </div>
           )}
-        </div>
 
-        {/* Przyciski akcji */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Reserve Button - Bolt Style */}
           {parking.available_spots > 0 && (
             <button
               onClick={(e) => {
-                // 🎯 NAJPIERW otwórz modal - to najważniejsze!
+                e.stopPropagation();
                 handleReserveClick(parking);
-
-                // 💥 POTEM animacje - jeśli się wywali, modal już jest otwarty
-                try {
-                  const button = e.currentTarget;
-
-                  // 💥 MEGA EFEKT RIPPLE
-                  const ripple = document.createElement('span');
-                  const rect = button.getBoundingClientRect();
-                  const size = Math.max(rect.width, rect.height) * 2;
-                  const x = e.clientX - rect.left - size / 2;
-                  const y = e.clientY - rect.top - size / 2;
-
-                  ripple.style.width = ripple.style.height = size + 'px';
-                  ripple.style.left = x + 'px';
-                  ripple.style.top = y + 'px';
-                  ripple.style.position = 'absolute';
-                  ripple.style.borderRadius = '50%';
-                  ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
-                  ripple.style.transform = 'scale(0)';
-                  ripple.style.animation = 'ripple 1s ease-out';
-                  ripple.style.pointerEvents = 'none';
-                  ripple.style.zIndex = '10';
-
-                  button.style.position = 'relative';
-                  button.style.overflow = 'hidden';
-                  button.appendChild(ripple);
-
-                  // ✨ DODAJ SPARKLES - PARTICLE EFFECTS!
-                  for (let i = 0; i < 12; i++) {
-                    const sparkle = document.createElement('div');
-                    sparkle.className = 'sparkle';
-                    const angle = (Math.PI * 2 * i) / 12;
-                    const distance = 50 + Math.random() * 30;
-                    sparkle.style.left = (e.clientX - rect.left) + 'px';
-                    sparkle.style.top = (e.clientY - rect.top) + 'px';
-                    sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                    sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                    sparkle.style.animation = `sparkle 0.8s ease-out ${i * 0.05}s`;
-
-                    button.appendChild(sparkle);
-                    setTimeout(() => {
-                      try { sparkle.remove(); } catch(e) {}
-                    }, 1000);
-                  }
-
-                  // 🎯 SHAKE + BOUNCE ANIMATION
-                  button.style.animation = 'shake 0.5s, superBounce 0.6s';
-                  setTimeout(() => {
-                    try {
-                      button.style.animation = '';
-                      ripple.remove();
-                    } catch(e) {}
-                  }, 600);
-                } catch (error) {
-                  console.log('⚠️ Animacja error (nie blokuje):', error);
-                }
               }}
               disabled={isModalOpening}
               style={{
                 width: '100%',
-                background: isModalOpening
-                  ? 'linear-gradient(135deg, #9333EA 0%, #C026D3 100%)'
-                  : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                background: '#111827',
                 color: 'white',
-                padding: '16px 28px',
+                padding: '14px',
                 border: 'none',
-                borderRadius: '16px',
-                fontWeight: '800',
+                borderRadius: '10px',
+                fontWeight: '600',
                 cursor: isModalOpening ? 'wait' : 'pointer',
-                fontSize: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: isModalOpening
-                  ? '0 12px 40px rgba(147, 51, 234, 0.5), inset 0 1px 0 rgba(255,255,255,0.2)'
-                  : '0 6px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-                letterSpacing: '0.3px',
-                position: 'relative',
-                overflow: 'hidden',
-                transform: isModalOpening ? 'scale(0.98)' : 'scale(1)',
-                textTransform: 'uppercase'
+                fontSize: '15px',
+                transition: 'all 0.2s ease',
+                opacity: isModalOpening ? 0.7 : 1,
+                letterSpacing: '-0.2px'
               }}
               onMouseOver={(e) => {
                 if (!isModalOpening) {
-                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255,255,255,0.3)';
-                  e.currentTarget.style.filter = 'brightness(1.1)';
+                  e.currentTarget.style.background = '#1F2937';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!isModalOpening) {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 6px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
-                  e.currentTarget.style.filter = 'brightness(1)';
+                  e.currentTarget.style.background = '#111827';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >
-              {isModalOpening ? (
-                <>
-                  <div style={{
-                    width: '18px',
-                    height: '18px',
-                    border: '3px solid rgba(255, 255, 255, 0.3)',
-                    borderTop: '3px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite'
-                  }} />
-                  <span>{t('common.loading')}...</span>
-                </>
-              ) : (
-                <>
-                  <FaTicketAlt style={{ fontSize: '18px' }} />
-                  <span>{t('reservations.reserveNow')}</span>
-                </>
-              )}
+              {isModalOpening ? 'Ładowanie...' : 'Zarezerwuj'}
             </button>
           )}
         </div>
