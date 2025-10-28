@@ -144,6 +144,7 @@
     "noReservations": "Brak rezerwacji",
     "cancelReservation": "Anuluj rezerwację",
     "reserveNow": "Zarezerwuj teraz",
+    "reserve": "Zarezerwuj",
     "viewDetails": "Zobacz szczegóły",
     "confirmCancel": "Czy na pewno chcesz anulować rezerwację?",
     "reservationFrom": "Rezerwacja od",
@@ -172,7 +173,28 @@
     "loadError": "Nie udało się załadować rezerwacji",
     "cancelSuccess": "Rezerwacja została anulowana",
     "cancelError": "Nie udało się anulować rezerwacji",
-    "fetchChargingError": "Nie udało się pobrać sesji ładowania"
+    "fetchChargingError": "Nie udało się pobrać sesji ładowania",
+    "modal": {
+      "title": "Szczegóły rezerwacji",
+      "selectPayment": "Wybierz płatność",
+      "processing": "Przetwarzanie...",
+      "details": "Szczegóły",
+      "payment": "Płatność",
+      "confirmation": "Potwierdzenie",
+      "startDate": "Początek rezerwacji",
+      "endDate": "Koniec rezerwacji",
+      "licensePlate": "Numer rejestracyjny",
+      "licensePlatePlaceholder": "np. WA 12345",
+      "price": "Cena",
+      "hourlyRate": "Stawka godzinowa",
+      "dailyRate": "Stawka dzienna",
+      "weeklyRate": "Stawka tygodniowa",
+      "monthlyRate": "Stawka miesięczna",
+      "bestOption": "Najlepsza opcja",
+      "otherOptions": "Inne opcje",
+      "hours": "godz",
+      "days": "dni"
+    }
   },
   "parking": {
     "addParking": "Dodaj parking",
@@ -193,7 +215,15 @@
     "accessible": "Dostępny dla niepełnosprawnych",
     "parkingType": "Typ parkingu",
     "public": "Publiczny",
-    "private": "Prywatny"
+    "private": "Prywatny",
+    "available": "Dostępne",
+    "full": "Brak miejsc",
+    "manyAvailableSpots": "Wiele dostępnych",
+    "fewAvailableSpots": "Ograniczone miejsca",
+    "noAvailableSpots": "Brak miejsc",
+    "coveredType": "Zadaszony",
+    "evChargingType": "Z ładowarką",
+    "openType": "Odkryty"
   },
   "charging": {
     "title": "Ładowarki EV",

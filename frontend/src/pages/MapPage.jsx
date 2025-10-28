@@ -1248,12 +1248,12 @@ function MapPage() {
   >
     <Popup>
       <div style={{
-        minWidth: '280px',
-        maxWidth: '320px',
+        minWidth: '260px',
+        maxWidth: '300px',
         background: '#FFFFFF',
-        borderRadius: '16px',
+        borderRadius: '12px',
         padding: '0',
-        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
         border: 'none',
         overflow: 'hidden'
       }}>
@@ -1312,7 +1312,7 @@ function MapPage() {
                 fontWeight: '500',
                 color: parking.available_spots > 0 ? '#065F46' : '#991B1B'
               }}>
-                {parking.available_spots > 0 ? 'Dostępne' : 'Brak miejsc'}
+                {parking.available_spots > 0 ? t('parking.available') : t('parking.full')}
               </span>
             </div>
             <span style={{
@@ -1339,7 +1339,7 @@ function MapPage() {
               color: '#6B7280',
               fontWeight: '500'
             }}>
-              Cena
+              {t('reservations.modal.price')}
             </span>
             <span style={{
               fontSize: '16px',
@@ -1377,10 +1377,10 @@ function MapPage() {
               </span>
               <span>
                 {parking.type === 'covered'
-                  ? 'Zadaszony'
+                  ? t('parking.coveredType')
                   : parking.type === 'ev_charging'
-                  ? 'Z ładowarką'
-                  : 'Odkryty'}
+                  ? t('parking.evChargingType')
+                  : t('parking.openType')}
               </span>
             </div>
           )}
@@ -1397,30 +1397,28 @@ function MapPage() {
                 width: '100%',
                 background: '#111827',
                 color: 'white',
-                padding: '14px',
+                padding: '12px',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '8px',
                 fontWeight: '600',
                 cursor: isModalOpening ? 'wait' : 'pointer',
-                fontSize: '15px',
-                transition: 'all 0.2s ease',
-                opacity: isModalOpening ? 0.7 : 1,
+                fontSize: '14px',
+                transition: 'all 0.15s ease',
+                opacity: isModalOpening ? 0.5 : 1,
                 letterSpacing: '-0.2px'
               }}
               onMouseOver={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.background = '#1F2937';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.background = '#111827';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >
-              {isModalOpening ? 'Ładowanie...' : 'Zarezerwuj'}
+              {isModalOpening ? t('common.loading') : t('reservations.reserve')}
             </button>
           )}
         </div>
