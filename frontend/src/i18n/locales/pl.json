@@ -112,12 +112,6 @@
         "title": "Moje Rezerwacje",
         "description": "Zarządzaj swoimi rezerwacjami",
         "stats": "Fast"
-      },
-      "community": {
-        "title": "CrowdScan",
-        "description": "Społeczność raportuje dostępność",
-        "stats": "Społeczność",
-        "badge": "Beta"
       }
     },
     "quickStats": {
@@ -136,10 +130,6 @@
       "blockchain": {
         "title": "Blockchain Security",
         "description": "Wszystkie transakcje zabezpieczone przez blockchain. Twoje dane są w 100% bezpieczne."
-      },
-      "crowdscan": {
-        "title": "CrowdScan Network",
-        "description": "Społeczność zgłasza dostępność miejsc parkingowych w czasie rzeczywistym"
       }
     }
   },
@@ -412,7 +402,6 @@
     "mustBeLoggedInToAddParking": "Musisz być zalogowany aby dodać parking",
     "mustBeLoggedInToAddCharger": "Musisz być zalogowany aby dodać ładowarkę",
     "mustBeLoggedInToAddFavorite": "Musisz być zalogowany, aby dodać do ulubionych",
-    "mustBeLoggedInToReport": "Musisz być zalogowany, aby zgłosić inspekcję",
     "favoriteStatusChangeError": "Nie udało się zmienić statusu ulubionych",
     "noParkingsWithCoordinates": "⚠️ Brak parkingów z poprawnymi współrzędnymi",
     "centeringOnParking": "🎯 Centruję mapę na parkingu:",
@@ -458,16 +447,9 @@
     "addParkingError": "Błąd przy dodawaniu parkingu:",
     "searchNearbyError": "Błąd przy szukaniu parkingów w pobliżu:",
     "fetchStatsError": "Błąd przy pobieraniu statystyk:",
-    "reportInspectionError": "Błąd przy zgłaszaniu inspekcji:",
-    "fetchReportsError": "Błąd przy pobieraniu zgłoszeń:",
-    "verifyReportError": "Błąd przy weryfikacji zgłoszenia:",
-    "fetchReputationError": "Błąd przy pobieraniu reputacji:",
     "fetchDataError": "Błąd pobierania danych:",
     "fetchOwnerDataError": "Błąd pobierania danych właściciela:",
-    "fetchChargersDataError": "Błąd pobierania danych ładowarek:",
-    "fetchReportsDataError": "Błąd pobierania zgłoszeń:",
-    "verifyError": "Błąd weryfikacji:",
-    "reportingError": "Błąd zgłaszania:"
+    "fetchChargersDataError": "Błąd pobierania danych ładowarek:"
   },
   "dashboard": {
     "owner": {
@@ -530,14 +512,9 @@
   "profilePage": {
     "title": "Mój Profil",
     "profile": "Profil",
-    "activity": "Aktywność",
     "security": "Bezpieczeństwo",
     "notifications": "Powiadomienia",
     "billing": "Płatności",
-    "reputationPoints": "Punkty Reputacji",
-    "approved": "Zatwierdzone",
-    "rejected": "Odrzucone",
-    "totalReports": "Łączne zgłoszenia",
     "personalInfo": "Informacje osobiste",
     "fullName": "Imię i nazwisko",
     "email": "Email",
@@ -551,15 +528,6 @@
     "phoneLabel": "Telefon",
     "roleLabel": "Rola",
     "driver": "Kierowca",
-    "crowdscanActivity": "Aktywność CrowdScan",
-    "howItWorks": "Jak to działa?",
-    "howItWorksSteps": {
-      "step1": "Zgłaszaj zajętość parkingów na mapie (przycisk CrowdScan)",
-      "step2": "Inspektorzy weryfikują Twoje zgłoszenia",
-      "step3": "Za potwierdzone zgłoszenia otrzymujesz punkty i nagrody (5 PLN)",
-      "step4": "Buduj swoją reputację i pomagaj społeczności!"
-    },
-    "noReputationData": "Brak danych o reputacji. Zacznij zgłaszać zajętość parkingów na mapie!",
     "comingSoon": "Ta sekcja będzie dostępna wkrótce"
   }
 }

@@ -2,22 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { inspectionAPI } from '../services/api';
 import { useTranslation } from 'react-i18next';
 import {
   FaUser,
   FaShieldAlt,
-  FaChartLine,
   FaBell,
   FaCreditCard,
   FaSignOutAlt,
   FaEnvelope,
   FaPhone,
-  FaIdCard,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaClipboardList,
-  FaTrophy
+  FaIdCard
 } from 'react-icons/fa';
 import { Card, Button, Avatar, Badge, SkeletonProfile } from '../components/ui';
 
@@ -25,27 +19,7 @@ function ProfilePage() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [reputation, setReputation] = useState(null);
-  const [loadingReputation, setLoadingReputation] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchReputation();
-    }
-  }, [isAuthenticated]);
-
-  const fetchReputation = async () => {
-    try {
-      setLoadingReputation(true);
-      const data = await inspectionAPI.getMyReputation();
-      setReputation(data);
-    } catch (err) {
-      console.error(t('console.fetchReputationError'), err);
-    } finally {
-      setLoadingReputation(false);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -68,45 +42,9 @@ function ProfilePage() {
 
   const menuItems = [
     { id: 'profile', label: t('profilePage.profile'), icon: FaUser },
-    { id: 'activity', label: t('profilePage.activity'), icon: FaChartLine },
     { id: 'security', label: t('profilePage.security'), icon: FaShieldAlt },
     { id: 'notifications', label: t('profilePage.notifications'), icon: FaBell },
     { id: 'billing', label: t('profilePage.billing'), icon: FaCreditCard },
-  ];
-
-  const stats = [
-    {
-      icon: FaTrophy,
-      label: t('profilePage.reputationPoints'),
-      value: reputation?.score || 0,
-      gradient: 'from-blue-500 to-cyan-500',
-      bg: 'bg-blue-500/10',
-      color: 'text-blue-400'
-    },
-    {
-      icon: FaCheckCircle,
-      label: t('profilePage.approved'),
-      value: reputation?.reports_confirmed || 0,
-      gradient: 'from-green-500 to-emerald-500',
-      bg: 'bg-green-500/10',
-      color: 'text-green-400'
-    },
-    {
-      icon: FaTimesCircle,
-      label: t('profilePage.rejected'),
-      value: reputation?.reports_rejected || 0,
-      gradient: 'from-red-500 to-pink-500',
-      bg: 'bg-red-500/10',
-      color: 'text-red-400'
-    },
-    {
-      icon: FaClipboardList,
-      label: t('profilePage.totalReports'),
-      value: reputation?.reports_total || 0,
-      gradient: 'from-purple-500 to-pink-500',
-      bg: 'bg-purple-500/10',
-      color: 'text-purple-400'
-    }
   ];
 
   return (
@@ -277,99 +215,6 @@ function ProfilePage() {
                       </Card>
                     </motion.div>
                   </div>
-                </motion.div>
-              )}
-
-              {/* Activity Tab */}
-              {activeTab === 'activity' && (
-                <motion.div
-                  key="activity"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h1 className="text-3xl md:text-4xl font-black text-white mb-8">
-                    {t('profilePage.crowdscanActivity')}
-                  </h1>
-
-                  {loadingReputation ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-pulse">
-                          <div className="h-8 bg-slate-700 rounded mb-4" />
-                          <div className="h-12 bg-slate-700 rounded mb-2" />
-                          <div className="h-4 bg-slate-700 rounded w-2/3" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : reputation ? (
-                    <>
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {stats.map((stat, index) => (
-                          <motion.div
-                            key={stat.label}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.1 * index }}
-                          >
-                            <Card variant="glass" hoverable className={stat.bg}>
-                              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${stat.gradient} opacity-10 blur-2xl`} />
-                              <div className="relative">
-                                <stat.icon className={`text-3xl ${stat.color} mb-3`} />
-                                <div className={`text-4xl font-black ${stat.color} mb-2`}>
-                                  {stat.value}
-                                </div>
-                                <div className="text-gray-400 text-sm font-medium">
-                                  {stat.label}
-                                </div>
-                              </div>
-                            </Card>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {/* Info Box */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        <Card variant="glass" className="bg-gradient-to-br from-parkchain-500/10 to-purple-500/10 border-parkchain-400/20">
-                          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-                            <FaChartLine className="text-parkchain-400" />
-                            {t('profilePage.howItWorks')}
-                          </h3>
-                          <ul className="space-y-3 text-gray-300 text-sm md:text-base">
-                            <li className="flex items-start gap-3">
-                              <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>{t('profilePage.howItWorksSteps.step1')}</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>{t('profilePage.howItWorksSteps.step2')}</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>{t('profilePage.howItWorksSteps.step3')}</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>{t('profilePage.howItWorksSteps.step4')}</span>
-                            </li>
-                          </ul>
-                        </Card>
-                      </motion.div>
-                    </>
-                  ) : (
-                    <Card variant="glass" padding="lg" className="text-center">
-                      <FaChartLine className="text-6xl text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">
-                        {t('profilePage.noReputationData')}
-                      </p>
-                    </Card>
-                  )}
                 </motion.div>
               )}
 

@@ -112,12 +112,6 @@
         "title": "My Reservations",
         "description": "Manage your reservations",
         "stats": "Fast"
-      },
-      "community": {
-        "title": "CrowdScan",
-        "description": "Community reports availability",
-        "stats": "Community",
-        "badge": "Beta"
       }
     },
     "quickStats": {
@@ -136,10 +130,6 @@
       "blockchain": {
         "title": "Blockchain Security",
         "description": "All transactions secured by blockchain. Your data is 100% safe."
-      },
-      "crowdscan": {
-        "title": "CrowdScan Network",
-        "description": "Community reports parking spot availability in real-time"
       }
     }
   },
@@ -412,7 +402,6 @@
     "mustBeLoggedInToAddParking": "You must be logged in to add parking",
     "mustBeLoggedInToAddCharger": "You must be logged in to add charger",
     "mustBeLoggedInToAddFavorite": "You must be logged in to add to favorites",
-    "mustBeLoggedInToReport": "You must be logged in to report an inspection",
     "favoriteStatusChangeError": "Failed to change favorite status",
     "noParkingsWithCoordinates": "⚠️ No parkings with valid coordinates",
     "centeringOnParking": "🎯 Centering map on parking:",
@@ -458,16 +447,9 @@
     "addParkingError": "Error adding parking:",
     "searchNearbyError": "Error searching nearby parkings:",
     "fetchStatsError": "Error fetching stats:",
-    "reportInspectionError": "Error reporting inspection:",
-    "fetchReportsError": "Error fetching reports:",
-    "verifyReportError": "Error verifying report:",
-    "fetchReputationError": "Error fetching reputation:",
     "fetchDataError": "Error fetching data:",
     "fetchOwnerDataError": "Error fetching owner data:",
-    "fetchChargersDataError": "Error fetching chargers data:",
-    "fetchReportsDataError": "Error fetching reports:",
-    "verifyError": "Error verifying:",
-    "reportingError": "Error reporting:"
+    "fetchChargersDataError": "Error fetching chargers data:"
   },
   "dashboard": {
     "owner": {
@@ -530,14 +512,9 @@
   "profilePage": {
     "title": "My Profile",
     "profile": "Profile",
-    "activity": "Activity",
     "security": "Security",
     "notifications": "Notifications",
     "billing": "Billing",
-    "reputationPoints": "Reputation Points",
-    "approved": "Approved",
-    "rejected": "Rejected",
-    "totalReports": "Total Reports",
     "personalInfo": "Personal Information",
     "fullName": "Full Name",
     "email": "Email",
@@ -551,15 +528,6 @@
     "phoneLabel": "Phone",
     "roleLabel": "Role",
     "driver": "Driver",
-    "crowdscanActivity": "CrowdScan Activity",
-    "howItWorks": "How it works?",
-    "howItWorksSteps": {
-      "step1": "Report parking availability on the map (CrowdScan button)",
-      "step2": "Inspectors verify your reports",
-      "step3": "You receive points and rewards for confirmed reports (5 PLN)",
-      "step4": "Build your reputation and help the community!"
-    },
-    "noReputationData": "No reputation data. Start reporting parking availability on the map!",
     "comingSoon": "This section will be available soon"
   }
 }

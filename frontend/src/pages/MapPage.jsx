@@ -11,7 +11,6 @@ import { parkingAPI } from '../services/api';
 import ReservationModal from '../components/ReservationModal';
 import ReservationSuccessModal from '../components/ReservationSuccessModal';
 import ReservationQRModal from '../components/ReservationQRModal';
-import ReportOccupancyModal from '../components/ReportOccupancyModal';
 import AddParkingModal from '../components/AddParkingModal';
 import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
@@ -212,7 +211,6 @@ function MapPage() {
   const [error, setError] = useState(null);
   const [selectedParking, setSelectedParking] = useState(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successReservation, setSuccessReservation] = useState(null);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -372,16 +370,6 @@ function MapPage() {
     setShowQRModal(false);
   };
 
-  const handleReportClick = (parking) => {
-    setSelectedParking(parking);
-    setShowReportModal(true);
-  };
-
-  const handleReportSuccess = () => {
-    setShowReportModal(false);
-    // Odśwież parkingi
-    parkingAPI.getAllParkings().then(data => setParkings(data));
-  };
 
   const handleDestinationSet = async (lat, lng) => {
     if (!searchMode) return;
@@ -1649,39 +1637,6 @@ function MapPage() {
               )}
             </button>
           )}
-
-          <button
-            onClick={() => handleReportClick(parking)}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-              color: 'white',
-              padding: '11px 18px',
-              border: 'none',
-              borderRadius: '12px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
-              letterSpacing: '0.2px'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.35)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
-            }}
-          >
-            <FaMapMarkerAlt style={{ fontSize: '14px' }} />
-            <span>{t('crowdscan.reportOccupancy')}</span>
-          </button>
         </div>
       </div>
     </Popup>
@@ -2117,14 +2072,6 @@ function MapPage() {
           parking={selectedParking}
           onClose={() => setShowReservationModal(false)}
           onSuccess={handleReservationSuccess}
-        />
-      )}
-
-      {showReportModal && selectedParking && (
-        <ReportOccupancyModal
-          parking={selectedParking}
-          onClose={() => setShowReportModal(false)}
-          onSuccess={handleReportSuccess}
         />
       )}
 
