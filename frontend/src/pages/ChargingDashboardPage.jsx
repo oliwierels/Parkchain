@@ -176,7 +176,7 @@ function ChargingDashboardPage() {
 
   const handleVerifySubmit = async (approved) => {
     if (approved && !verifyFormData.energy_delivered_kwh) {
-      addToast({ message: 'Podaj ilość dostarczonej energii', type: 'warning' });
+      addToast({ message: t('charging.provideEnergyAmount'), type: 'warning' });
       return;
     }
 
@@ -196,18 +196,18 @@ function ChargingDashboardPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się zweryfikować sesji');
+        throw new Error(errorData.error || t('charging.verificationFailed'));
       }
 
       addToast({
-        message: approved ? 'Sesja zatwierdzona pomyślnie!' : 'Sesja została odrzucona',
+        message: approved ? t('charging.sessionApproved') : t('charging.sessionRejected'),
         type: approved ? 'success' : 'info'
       });
       setVerifyingSession(null);
       fetchChargingData();
     } catch (err) {
-      console.error('Błąd weryfikacji:', err);
-      addToast({ message: 'Nie udało się zweryfikować sesji: ' + err.message, type: 'error' });
+      console.error(t('console.verifyError'), err);
+      addToast({ message: t('charging.verificationError') + err.message, type: 'error' });
     }
   };
 
@@ -239,13 +239,13 @@ function ChargingDashboardPage() {
   const getStatusText = (status) => {
     switch (status) {
       case 'active':
-        return 'Aktywna';
+        return t('charging.statuses.active');
       case 'completed':
-        return 'Zakończona';
+        return t('charging.statuses.completed');
       case 'cancelled':
-        return 'Anulowana';
+        return t('charging.statuses.cancelled');
       case 'pending_verification':
-        return 'Oczekuje weryfikacji';
+        return t('charging.statuses.pending_verification');
       default:
         return status;
     }
@@ -345,7 +345,7 @@ function ChargingDashboardPage() {
             size="lg"
             leftIcon={<FaPlus />}
           >
-            Dodaj ładowarkę
+            {t('charging.addCharger')}
           </Button>
         </motion.div>
 
@@ -405,13 +405,12 @@ function ChargingDashboardPage() {
           >
             <h2 className="text-2xl font-bold mb-5 text-yellow-400 flex items-center gap-3">
               <FaExclamationTriangle />
-              Sesje oczekujące na weryfikację ({stats.pendingVerification})
+              {t('charging.sessionsAwaitingVerification')} ({stats.pendingVerification})
             </h2>
 
             <Card variant="glass" className="bg-yellow-900/20 border-yellow-500 mb-5">
               <p className="text-yellow-200 text-sm">
-                <strong>Ważne:</strong> Zweryfikuj wartości podane przez użytkowników przed zatwierdzeniem.
-                Możesz skorygować ilość pobranej energii jeśli użytkownik podał nieprawdziwe dane.
+                <strong>{t('charging.important')}:</strong> {t('charging.verificationNotice')}
               </p>
             </Card>
 
@@ -427,26 +426,26 @@ function ChargingDashboardPage() {
                     <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-white mb-2">
-                          {session.charging_stations?.name || 'Nieznana stacja'}
+                          {session.charging_stations?.name || t('charging.unknownStation')}
                         </h3>
                         <p className="text-sm text-gray-400 mb-1">
                           📍 {session.charging_stations?.address}
                         </p>
                         <p className="text-sm text-gray-400 mb-1">
-                          👤 Użytkownik: {session.users?.full_name || session.users?.email || 'Nieznany'}
+                          👤 {t('charging.user')}: {session.users?.full_name || session.users?.email || t('charging.unknownStation')}
                         </p>
                         <p className="text-sm text-gray-300 mb-2">
                           🕐 {formatDate(session.start_time)} → {formatDate(session.end_time)}
                         </p>
                         <div className="bg-slate-800/50 p-3 rounded-lg mt-3">
-                          <p className="text-xs text-gray-400 mb-2">Dane zgłoszone przez użytkownika:</p>
+                          <p className="text-xs text-gray-400 mb-2">{t('charging.dataReportedByUser')}:</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <p className="text-xs text-gray-400">Energia</p>
+                              <p className="text-xs text-gray-400">{t('charging.energy')}</p>
                               <p className="text-base font-bold text-amber-400">{session.energy_delivered_kwh || '-'} kWh</p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-400">Szacowany koszt</p>
+                              <p className="text-xs text-gray-400">{t('charging.estimatedCost')}</p>
                               <p className="text-base font-bold text-green-400">{session.total_cost || '-'} zł</p>
                             </div>
                           </div>
@@ -460,7 +459,7 @@ function ChargingDashboardPage() {
                           size="md"
                           className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
                         >
-                          ✅ Weryfikuj i zatwierdź
+                          ✅ {t('charging.verifyAndApprove')}
                         </Button>
                         <Button
                           onClick={() => {
@@ -471,7 +470,7 @@ function ChargingDashboardPage() {
                           size="md"
                           className="whitespace-nowrap"
                         >
-                          ❌ Odrzuć
+                          ❌ {t('charging.reject')}
                         </Button>
                       </div>
                     </div>
@@ -490,16 +489,16 @@ function ChargingDashboardPage() {
           className="mb-10"
         >
           <h2 className="text-2xl font-bold mb-5 text-white">
-            Lista moich ładowarek
+            {t('charging.chargersList')}
           </h2>
 
           {myChargers.length === 0 ? (
             <EmptyState
               icon={<FaChargingStation className="text-6xl text-amber-500" />}
-              title="Nie masz jeszcze ładowarek"
-              description="Dodaj pierwszą ładowarkę na mapie"
+              title={t('charging.noChargersYet')}
+              description={t('charging.addFirstCharger')}
               action={() => navigate('/map')}
-              actionLabel="Przejdź do mapy"
+              actionLabel={t('charging.goToMap')}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -526,25 +525,25 @@ function ChargingDashboardPage() {
                         size="sm"
                         className="whitespace-nowrap ml-2"
                       >
-                        {charger.available_connectors}/{charger.total_connectors} wolne
+                        {charger.available_connectors}/{charger.total_connectors} {t('charging.available_connectors')}
                       </Badge>
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-4 border-t border-slate-700">
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Typ ładowarki</p>
+                        <p className="text-xs text-gray-400 mb-0.5">{t('charging.chargerType')}</p>
                         <p className="text-base font-bold text-gray-100">{charger.charger_type}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Moc maksymalna</p>
+                        <p className="text-xs text-gray-400 mb-0.5">{t('charging.maxPower')}</p>
                         <p className="text-base font-bold text-amber-400">{charger.max_power_kw} kW</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Cena za kWh</p>
+                        <p className="text-xs text-gray-400 mb-0.5">{t('charging.pricePerKwh')}</p>
                         <p className="text-base font-bold text-green-400">{charger.price_per_kwh} zł</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">Liczba złączy</p>
+                        <p className="text-xs text-gray-400 mb-0.5">{t('charging.numberOfConnectors')}</p>
                         <p className="text-base font-bold text-gray-100">{charger.total_connectors}</p>
                       </div>
                     </div>
@@ -568,8 +567,8 @@ function ChargingDashboardPage() {
           {mySessions.length === 0 ? (
             <EmptyState
               icon={<FaHistory className="text-6xl text-indigo-500" />}
-              title="Brak sesji ładowania"
-              description="Nie masz jeszcze żadnych sesji ładowania"
+              title={t('charging.noSessionsYet')}
+              description={t('charging.noSessionsDescription')}
             />
           ) : (
             <Card variant="glass" padding="none">
@@ -577,19 +576,19 @@ function ChargingDashboardPage() {
                 <table className="min-w-full divide-y divide-slate-700">
                   <thead className="bg-slate-800">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stacja</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data rozpoczęcia</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Energia</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koszt</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Akcje</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.station')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.startDate')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.energy')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.cost')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.status')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('charging.tableHeaders.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700">
                     {mySessions.map((session) => (
                       <tr key={session.id} className="hover:bg-slate-800/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-white">{session.charging_stations?.name || 'Nieznana stacja'}</div>
+                          <div className="font-medium text-white">{session.charging_stations?.name || t('charging.unknownStation')}</div>
                           <div className="text-sm text-gray-400">{session.charging_stations?.address}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
@@ -634,7 +633,7 @@ function ChargingDashboardPage() {
       <Modal
         isOpen={!!verifyingSession}
         onClose={() => setVerifyingSession(null)}
-        title="⚠️ Weryfikacja sesji"
+        title={`⚠️ ${t('charging.sessionVerification')}`}
         size="md"
       >
         {verifyingSession && (
@@ -650,12 +649,12 @@ function ChargingDashboardPage() {
                 🕐 {formatDate(verifyingSession.start_time)} → {formatDate(verifyingSession.end_time)}
               </p>
               <div className="mt-3 pt-3 border-t border-slate-700">
-                <p className="text-xs text-yellow-400 mb-2">Wartości zgłoszone przez użytkownika:</p>
+                <p className="text-xs text-yellow-400 mb-2">{t('charging.valuesReportedByUser')}:</p>
                 <p className="text-sm text-gray-300">
-                  Energia: <strong>{verifyingSession.energy_delivered_kwh} kWh</strong>
+                  {t('charging.energy')}: <strong>{verifyingSession.energy_delivered_kwh} kWh</strong>
                 </p>
                 <p className="text-sm text-gray-300">
-                  Koszt: <strong>{verifyingSession.total_cost} zł</strong>
+                  {t('charging.cost')}: <strong>{verifyingSession.total_cost} zł</strong>
                 </p>
               </div>
             </Card>
@@ -663,12 +662,12 @@ function ChargingDashboardPage() {
             <form onSubmit={(e) => { e.preventDefault(); handleVerifySubmit(true); }}>
               <Card variant="glass" className="bg-yellow-900/20 border-yellow-500 mb-4">
                 <p className="text-sm text-yellow-200">
-                  Sprawdź wartości na wyświetlaczu ładowarki. Możesz je skorygować jeśli użytkownik podał nieprawdziwe dane.
+                  {t('charging.checkDisplayValues')}
                 </p>
               </Card>
 
               <Input
-                label="Dostarczona energia (kWh)"
+                label={t('charging.energyDelivered')}
                 type="number"
                 value={verifyFormData.energy_delivered_kwh}
                 onChange={(e) => setVerifyFormData({ ...verifyFormData, energy_delivered_kwh: e.target.value })}
@@ -681,7 +680,7 @@ function ChargingDashboardPage() {
               />
 
               <Input
-                label="Czas ładowania (minuty)"
+                label={t('charging.chargingDuration')}
                 type="number"
                 value={verifyFormData.charging_duration_minutes}
                 onChange={(e) => setVerifyFormData({ ...verifyFormData, charging_duration_minutes: e.target.value })}
@@ -693,7 +692,7 @@ function ChargingDashboardPage() {
 
               {verifyFormData.energy_delivered_kwh && (
                 <Card variant="glass" className="bg-green-900/20 border-green-700 mb-5">
-                  <p className="text-xs text-gray-400 mb-1">Finalny koszt</p>
+                  <p className="text-xs text-gray-400 mb-1">{t('charging.finalCost')}</p>
                   <p className="text-2xl font-bold text-green-400">
                     {(parseFloat(verifyFormData.energy_delivered_kwh) * parseFloat(verifyingSession.charging_stations?.price_per_kwh || 0)).toFixed(2)} zł
                   </p>
@@ -707,7 +706,7 @@ function ChargingDashboardPage() {
                   variant="ghost"
                   fullWidth
                 >
-                  Anuluj
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -716,7 +715,7 @@ function ChargingDashboardPage() {
                   fullWidth
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  ✅ Zatwierdź sesję
+                  ✅ {t('charging.approveSession')}
                 </Button>
               </div>
             </form>

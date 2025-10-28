@@ -220,7 +220,54 @@
     "chargingHistory": "Historia ładowania",
     "totalEnergy": "Całkowita energia",
     "duration": "Czas trwania",
-    "cost": "Koszt"
+    "cost": "Koszt",
+    "addCharger": "Dodaj ładowarkę",
+    "chargersList": "Lista moich ładowarek",
+    "noChargersYet": "Nie masz jeszcze ładowarek",
+    "addFirstCharger": "Dodaj pierwszą ładowarkę na mapie",
+    "goToMap": "Przejdź do mapy",
+    "sessionsAwaitingVerification": "Sesje oczekujące na weryfikację",
+    "important": "Ważne",
+    "verificationNotice": "Zweryfikuj wartości podane przez użytkowników przed zatwierdzeniem. Możesz skorygować ilość pobranej energii jeśli użytkownik podał nieprawdziwe dane.",
+    "unknownStation": "Nieznana stacja",
+    "user": "Użytkownik",
+    "dataReportedByUser": "Dane zgłoszone przez użytkownika",
+    "energy": "Energia",
+    "estimatedCost": "Szacowany koszt",
+    "verifyAndApprove": "Weryfikuj i zatwierdź",
+    "reject": "Odrzuć",
+    "available_connectors": "wolne",
+    "chargerType": "Typ ładowarki",
+    "maxPower": "Moc maksymalna",
+    "numberOfConnectors": "Liczba złączy",
+    "noSessionsYet": "Brak sesji ładowania",
+    "noSessionsDescription": "Nie masz jeszcze żadnych sesji ładowania",
+    "tableHeaders": {
+      "station": "Stacja",
+      "startDate": "Data rozpoczęcia",
+      "energy": "Energia",
+      "cost": "Koszt",
+      "status": "Status",
+      "actions": "Akcje"
+    },
+    "sessionVerification": "Weryfikacja sesji",
+    "valuesReportedByUser": "Wartości zgłoszone przez użytkownika",
+    "checkDisplayValues": "Sprawdź wartości na wyświetlaczu ładowarki. Możesz je skorygować jeśli użytkownik podał nieprawdziwe dane.",
+    "energyDelivered": "Dostarczona energia (kWh)",
+    "chargingDuration": "Czas ładowania (minuty)",
+    "finalCost": "Finalny koszt",
+    "approveSession": "Zatwierdź sesję",
+    "sessionApproved": "Sesja zatwierdzona pomyślnie!",
+    "sessionRejected": "Sesja została odrzucona",
+    "verificationFailed": "Nie udało się zweryfikować sesji",
+    "verificationError": "Nie udało się zweryfikować sesji: ",
+    "provideEnergyAmount": "Podaj ilość dostarczonej energii",
+    "statuses": {
+      "active": "Aktywna",
+      "completed": "Zakończona",
+      "cancelled": "Anulowana",
+      "pending_verification": "Oczekuje weryfikacji"
+    }
   },
   "badges": {
     "title": "Twoje Odznaki",
@@ -431,6 +478,7 @@
       "totalEarnings": "Łączne zarobki",
       "recentReservations": "Ostatnie rezerwacje",
       "noReservations": "Brak rezerwacji",
+      "noReservationsDescription": "Nie ma jeszcze żadnych rezerwacji na Twoich parkingach",
       "addParking": "Dodaj parking",
       "parkingName": "Nazwa parkingu",
       "location": "Lokalizacja",
@@ -438,7 +486,25 @@
       "availableSpots": "Dostępne miejsca",
       "status": "Status",
       "active": "Aktywny",
-      "full": "Pełny"
+      "full": "Pełny",
+      "spaces": "miejsc",
+      "activeReservations": "aktywnych rezerwacji",
+      "unknown": "Nieznany",
+      "tableHeaders": {
+        "parking": "Parking",
+        "user": "Użytkownik",
+        "start": "Start",
+        "end": "Koniec",
+        "price": "Cena",
+        "status": "Status"
+      },
+      "statusText": {
+        "pending": "Oczekująca",
+        "active": "Aktywna",
+        "completed": "Zakończona",
+        "cancelled": "Anulowana"
+      },
+      "fetchError": "Nie udało się pobrać parkingów"
     },
     "charging": {
       "title": "Moje Ładowarki",
@@ -478,6 +544,22 @@
     "phone": "Telefon",
     "memberSince": "Członek od",
     "accountType": "Typ konta",
-    "logout": "Wyloguj"
+    "logout": "Wyloguj",
+    "myProfile": "Mój Profil",
+    "fullNameLabel": "Imię i nazwisko",
+    "emailLabel": "Email",
+    "phoneLabel": "Telefon",
+    "roleLabel": "Rola",
+    "driver": "Kierowca",
+    "crowdscanActivity": "Aktywność CrowdScan",
+    "howItWorks": "Jak to działa?",
+    "howItWorksSteps": {
+      "step1": "Zgłaszaj zajętość parkingów na mapie (przycisk CrowdScan)",
+      "step2": "Inspektorzy weryfikują Twoje zgłoszenia",
+      "step3": "Za potwierdzone zgłoszenia otrzymujesz punkty i nagrody (5 PLN)",
+      "step4": "Buduj swoją reputację i pomagaj społeczności!"
+    },
+    "noReputationData": "Brak danych o reputacji. Zacznij zgłaszać zajętość parkingów na mapie!",
+    "comingSoon": "Ta sekcja będzie dostępna wkrótce"
   }
 }

@@ -220,7 +220,54 @@
     "chargingHistory": "Charging history",
     "totalEnergy": "Total energy",
     "duration": "Duration",
-    "cost": "Cost"
+    "cost": "Cost",
+    "addCharger": "Add charger",
+    "chargersList": "My chargers list",
+    "noChargersYet": "You don't have any chargers yet",
+    "addFirstCharger": "Add your first charger on the map",
+    "goToMap": "Go to map",
+    "sessionsAwaitingVerification": "Sessions awaiting verification",
+    "important": "Important",
+    "verificationNotice": "Verify values provided by users before approval. You can correct the amount of energy if the user provided incorrect data.",
+    "unknownStation": "Unknown station",
+    "user": "User",
+    "dataReportedByUser": "Data reported by user",
+    "energy": "Energy",
+    "estimatedCost": "Estimated cost",
+    "verifyAndApprove": "Verify and approve",
+    "reject": "Reject",
+    "available_connectors": "available",
+    "chargerType": "Charger type",
+    "maxPower": "Max power",
+    "numberOfConnectors": "Number of connectors",
+    "noSessionsYet": "No charging sessions yet",
+    "noSessionsDescription": "You don't have any charging sessions yet",
+    "tableHeaders": {
+      "station": "Station",
+      "startDate": "Start date",
+      "energy": "Energy",
+      "cost": "Cost",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "sessionVerification": "Session verification",
+    "valuesReportedByUser": "Values reported by user",
+    "checkDisplayValues": "Check the values on the charger display. You can correct them if the user provided incorrect data.",
+    "energyDelivered": "Energy delivered (kWh)",
+    "chargingDuration": "Charging duration (minutes)",
+    "finalCost": "Final cost",
+    "approveSession": "Approve session",
+    "sessionApproved": "Session approved successfully!",
+    "sessionRejected": "Session has been rejected",
+    "verificationFailed": "Failed to verify session",
+    "verificationError": "Failed to verify session: ",
+    "provideEnergyAmount": "Provide energy amount",
+    "statuses": {
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "pending_verification": "Awaiting verification"
+    }
   },
   "badges": {
     "title": "Your Badges",
@@ -431,6 +478,7 @@
       "totalEarnings": "Total Earnings",
       "recentReservations": "Recent Reservations",
       "noReservations": "No reservations yet",
+      "noReservationsDescription": "There are no reservations on your parking lots yet",
       "addParking": "Add Parking Lot",
       "parkingName": "Parking name",
       "location": "Location",
@@ -438,7 +486,25 @@
       "availableSpots": "Available spots",
       "status": "Status",
       "active": "Active",
-      "full": "Full"
+      "full": "Full",
+      "spaces": "spaces",
+      "activeReservations": "active reservations",
+      "unknown": "Unknown",
+      "tableHeaders": {
+        "parking": "Parking",
+        "user": "User",
+        "start": "Start",
+        "end": "End",
+        "price": "Price",
+        "status": "Status"
+      },
+      "statusText": {
+        "pending": "Pending",
+        "active": "Active",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "fetchError": "Failed to fetch parkings"
     },
     "charging": {
       "title": "My Chargers",
@@ -478,6 +544,22 @@
     "phone": "Phone",
     "memberSince": "Member since",
     "accountType": "Account type",
-    "logout": "Logout"
+    "logout": "Logout",
+    "myProfile": "My Profile",
+    "fullNameLabel": "Full name",
+    "emailLabel": "Email",
+    "phoneLabel": "Phone",
+    "roleLabel": "Role",
+    "driver": "Driver",
+    "crowdscanActivity": "CrowdScan Activity",
+    "howItWorks": "How it works?",
+    "howItWorksSteps": {
+      "step1": "Report parking availability on the map (CrowdScan button)",
+      "step2": "Inspectors verify your reports",
+      "step3": "You receive points and rewards for confirmed reports (5 PLN)",
+      "step4": "Build your reputation and help the community!"
+    },
+    "noReputationData": "No reputation data. Start reporting parking availability on the map!",
+    "comingSoon": "This section will be available soon"
   }
 }

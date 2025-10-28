@@ -44,7 +44,7 @@ function OwnerDashboardPage() {
       });
 
       if (!parkingsResponse.ok) {
-        throw new Error('Nie udało się pobrać parkingów');
+        throw new Error(t('dashboard.owner.fetchError'));
       }
 
       const parkingsData = await parkingsResponse.json();
@@ -116,10 +116,10 @@ function OwnerDashboardPage() {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Oczekująca';
-      case 'active': return 'Aktywna';
-      case 'completed': return 'Zakończona';
-      case 'cancelled': return 'Anulowana';
+      case 'pending': return t('dashboard.owner.statusText.pending');
+      case 'active': return t('dashboard.owner.statusText.active');
+      case 'completed': return t('dashboard.owner.statusText.completed');
+      case 'cancelled': return t('dashboard.owner.statusText.cancelled');
       default: return status;
     }
   };
@@ -284,10 +284,10 @@ function OwnerDashboardPage() {
                             variant={parking.available_spots > 0 ? 'success' : 'error'}
                             size="md"
                           >
-                            {parking.available_spots}/{parking.total_spots} miejsc
+                            {parking.available_spots}/{parking.total_spots} {t('dashboard.owner.spaces')}
                           </Badge>
                           <p className="text-sm text-gray-400">
-                            {activeReservations.length} aktywnych rezerwacji
+                            {activeReservations.length} {t('dashboard.owner.activeReservations')}
                           </p>
                         </div>
                       </div>
@@ -313,7 +313,7 @@ function OwnerDashboardPage() {
             <EmptyState
               icon={<FaClipboardList className="text-6xl" />}
               title={t('dashboard.owner.noReservations')}
-              description="Nie ma jeszcze żadnych rezerwacji na Twoich parkingach"
+              description={t('dashboard.owner.noReservationsDescription')}
             />
           ) : (
             <Card variant="glass" padding="none">
@@ -321,12 +321,12 @@ function OwnerDashboardPage() {
                 <table className="min-w-full divide-y divide-slate-700">
                   <thead className="bg-slate-800/50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Parking</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Użytkownik</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Start</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Koniec</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cena</th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.parking')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.user')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.start')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.end')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.price')}</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{t('dashboard.owner.tableHeaders.status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700">
@@ -341,10 +341,10 @@ function OwnerDashboardPage() {
                           className="hover:bg-slate-800/50 transition-colors"
                         >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                            {parking?.name || 'Nieznany'}
+                            {parking?.name || t('dashboard.owner.unknown')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            {reservation.users?.full_name || reservation.users?.email || 'Nieznany'}
+                            {reservation.users?.full_name || reservation.users?.email || t('dashboard.owner.unknown')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                             {formatDate(reservation.start_time)}

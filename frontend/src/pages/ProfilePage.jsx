@@ -138,7 +138,7 @@ function ProfilePage() {
                 </h2>
                 <p className="text-gray-400 text-sm mb-2">{user.email}</p>
                 <Badge variant="primary" size="sm">
-                  {user.role === 'driver' ? 'Kierowca' : user.role}
+                  {user.role === 'driver' ? t('profilePage.driver') : user.role}
                 </Badge>
               </div>
             </motion.div>
@@ -177,7 +177,7 @@ function ProfilePage() {
               leftIcon={<FaSignOutAlt />}
               className="text-red-400 hover:bg-red-500/10"
             >
-              Wyloguj
+              {t('profilePage.logout')}
             </Button>
           </div>
         </motion.div>
@@ -196,7 +196,7 @@ function ProfilePage() {
                   transition={{ duration: 0.3 }}
                 >
                   <h1 className="text-3xl md:text-4xl font-black text-white mb-8">
-                    Mój Profil
+                    {t('profilePage.myProfile')}
                   </h1>
 
                   {/* Info Cards */}
@@ -212,7 +212,7 @@ function ProfilePage() {
                             <FaIdCard className="text-white text-xl" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-gray-400 text-sm">Imię i nazwisko</p>
+                            <p className="text-gray-400 text-sm">{t('profilePage.fullNameLabel')}</p>
                             <p className="text-white font-semibold text-lg truncate">{user.full_name}</p>
                           </div>
                         </div>
@@ -230,7 +230,7 @@ function ProfilePage() {
                             <FaEnvelope className="text-white text-xl" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-gray-400 text-sm">Email</p>
+                            <p className="text-gray-400 text-sm">{t('profilePage.emailLabel')}</p>
                             <p className="text-white font-semibold text-lg truncate">{user.email}</p>
                           </div>
                         </div>
@@ -249,7 +249,7 @@ function ProfilePage() {
                               <FaPhone className="text-white text-xl" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-gray-400 text-sm">Telefon</p>
+                              <p className="text-gray-400 text-sm">{t('profilePage.phoneLabel')}</p>
                               <p className="text-white font-semibold text-lg truncate">{user.phone}</p>
                             </div>
                           </div>
@@ -268,9 +268,9 @@ function ProfilePage() {
                             <FaShieldAlt className="text-white text-xl" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-gray-400 text-sm">Rola</p>
+                            <p className="text-gray-400 text-sm">{t('profilePage.roleLabel')}</p>
                             <Badge variant="primary" size="md">
-                              {user.role === 'driver' ? 'Kierowca' : user.role}
+                              {user.role === 'driver' ? t('profilePage.driver') : user.role}
                             </Badge>
                           </div>
                         </div>
@@ -290,7 +290,7 @@ function ProfilePage() {
                   transition={{ duration: 0.3 }}
                 >
                   <h1 className="text-3xl md:text-4xl font-black text-white mb-8">
-                    Aktywność CrowdScan
+                    {t('profilePage.crowdscanActivity')}
                   </h1>
 
                   {loadingReputation ? (
@@ -339,24 +339,24 @@ function ProfilePage() {
                         <Card variant="glass" className="bg-gradient-to-br from-parkchain-500/10 to-purple-500/10 border-parkchain-400/20">
                           <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
                             <FaChartLine className="text-parkchain-400" />
-                            Jak to działa?
+                            {t('profilePage.howItWorks')}
                           </h3>
                           <ul className="space-y-3 text-gray-300 text-sm md:text-base">
                             <li className="flex items-start gap-3">
                               <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>Zgłaszaj zajętość parkingów na mapie (przycisk CrowdScan)</span>
+                              <span>{t('profilePage.howItWorksSteps.step1')}</span>
                             </li>
                             <li className="flex items-start gap-3">
                               <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>Inspektorzy weryfikują Twoje zgłoszenia</span>
+                              <span>{t('profilePage.howItWorksSteps.step2')}</span>
                             </li>
                             <li className="flex items-start gap-3">
                               <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>Za potwierdzone zgłoszenia otrzymujesz punkty i nagrody (5 PLN)</span>
+                              <span>{t('profilePage.howItWorksSteps.step3')}</span>
                             </li>
                             <li className="flex items-start gap-3">
                               <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                              <span>Buduj swoją reputację i pomagaj społeczności!</span>
+                              <span>{t('profilePage.howItWorksSteps.step4')}</span>
                             </li>
                           </ul>
                         </Card>
@@ -366,7 +366,7 @@ function ProfilePage() {
                     <Card variant="glass" padding="lg" className="text-center">
                       <FaChartLine className="text-6xl text-gray-600 mx-auto mb-4" />
                       <p className="text-gray-400 text-lg">
-                        Brak danych o reputacji. Zacznij zgłaszać zajętość parkingów na mapie!
+                        {t('profilePage.noReputationData')}
                       </p>
                     </Card>
                   )}
@@ -392,7 +392,7 @@ function ProfilePage() {
                       {menuItems.find(item => item.id === activeTab)?.label}
                     </h2>
                     <p className="text-gray-400">
-                      Ta sekcja będzie dostępna wkrótce
+                      {t('profilePage.comingSoon')}
                     </p>
                   </Card>
                 </motion.div>
