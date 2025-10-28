@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useChargingFeed } from '../hooks/useWebSocket';
 import ChargingSessionQRModal from '../components/ChargingSessionQRModal';
 import {
@@ -26,6 +27,7 @@ import {
 
 function ChargingDashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toasts, addToast, removeToast } = useToast();
   const [myChargers, setMyChargers] = useState([]);
   const [mySessions, setMySessions] = useState([]);
@@ -146,8 +148,8 @@ function ChargingDashboardPage() {
 
       setError(null);
     } catch (err) {
-      console.error('Błąd pobierania danych ładowarek:', err);
-      setError('Nie udało się załadować danych');
+      console.error(t('console.fetchChargersDataError'), err);
+      setError(t('errors.loadDataError'));
     } finally {
       setLoading(false);
     }
@@ -273,7 +275,7 @@ function ChargingDashboardPage() {
   const statCards = [
     {
       icon: FaChargingStation,
-      label: 'Moje ładowarki',
+      label: t('dashboard.charging.totalChargers'),
       value: stats.totalChargers,
       gradient: 'from-amber-500 to-orange-600',
       bg: 'bg-amber-500/10',
@@ -281,7 +283,7 @@ function ChargingDashboardPage() {
     },
     {
       icon: FaPlug,
-      label: 'Aktywne złącza',
+      label: t('dashboard.charging.activeChargers'),
       value: stats.activeChargers,
       gradient: 'from-green-500 to-emerald-500',
       bg: 'bg-green-500/10',
@@ -289,7 +291,7 @@ function ChargingDashboardPage() {
     },
     {
       icon: FaHistory,
-      label: 'Wszystkie sesje',
+      label: t('dashboard.charging.totalSessions'),
       value: stats.totalSessions,
       gradient: 'from-indigo-500 to-purple-500',
       bg: 'bg-indigo-500/10',
@@ -297,7 +299,7 @@ function ChargingDashboardPage() {
     },
     {
       icon: FaBolt,
-      label: 'Aktywne sesje',
+      label: t('dashboard.charging.activeSessions'),
       value: stats.activeSessions,
       gradient: 'from-blue-500 to-cyan-500',
       bg: 'bg-blue-500/10',
@@ -305,7 +307,7 @@ function ChargingDashboardPage() {
     },
     {
       icon: FaExclamationTriangle,
-      label: 'Do weryfikacji',
+      label: t('dashboard.charging.pendingVerification'),
       value: stats.pendingVerification,
       gradient: 'from-yellow-500 to-orange-500',
       bg: 'bg-yellow-500/10',
@@ -314,7 +316,7 @@ function ChargingDashboardPage() {
     },
     {
       icon: FaCheckCircle,
-      label: 'Energia dostarczona',
+      label: t('dashboard.charging.totalEnergy'),
       value: `${stats.totalEnergy} kWh`,
       gradient: 'from-green-500 to-teal-500',
       bg: 'bg-green-500/10',
@@ -335,7 +337,7 @@ function ChargingDashboardPage() {
         >
           <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
             <FaChargingStation className="text-amber-500" />
-            Moje ładowarki
+            {t('dashboard.charging.title')}
           </h1>
           <Button
             onClick={() => navigate('/map')}
@@ -560,7 +562,7 @@ function ChargingDashboardPage() {
           transition={{ delay: 0.7 }}
         >
           <h2 className="text-2xl font-bold mb-5 text-white">
-            Historia sesji ładowania
+            {t('dashboard.charging.mySessions')}
           </h2>
 
           {mySessions.length === 0 ? (

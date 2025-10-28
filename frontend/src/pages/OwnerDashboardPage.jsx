@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { FaParking, FaCheckCircle, FaClipboardList, FaMoneyBillWave, FaPlus } from 'react-icons/fa';
 import {
   Card,
@@ -15,6 +16,7 @@ import {
 
 function OwnerDashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [myParkings, setMyParkings] = useState([]);
   const [allReservations, setAllReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,10 +82,10 @@ function OwnerDashboardPage() {
 
       setError(null);
     } catch (err) {
-      console.error('Błąd pobierania danych właściciela:', err);
-      setError('Nie udało się załadować danych');
+      console.error(t('console.fetchOwnerDataError'), err);
+      setError(t('errors.loadDataError'));
       addToast({
-        message: 'Nie udało się załadować danych',
+        message: t('errors.loadDataError'),
         type: 'error'
       });
     } finally {
@@ -141,7 +143,7 @@ function OwnerDashboardPage() {
   const statCards = [
     {
       icon: FaParking,
-      label: 'Moje parkingi',
+      label: t('dashboard.owner.totalParkings'),
       value: stats.totalParkings,
       gradient: 'from-blue-500 to-cyan-500',
       bg: 'bg-blue-500/10',
@@ -149,7 +151,7 @@ function OwnerDashboardPage() {
     },
     {
       icon: FaCheckCircle,
-      label: 'Aktywne parkingi',
+      label: t('dashboard.owner.activeParkings'),
       value: stats.activeParkings,
       gradient: 'from-green-500 to-emerald-500',
       bg: 'bg-green-500/10',
@@ -157,7 +159,7 @@ function OwnerDashboardPage() {
     },
     {
       icon: FaClipboardList,
-      label: 'Rezerwacje',
+      label: t('dashboard.owner.totalReservations'),
       value: stats.totalReservations,
       gradient: 'from-purple-500 to-pink-500',
       bg: 'bg-purple-500/10',
@@ -165,7 +167,7 @@ function OwnerDashboardPage() {
     },
     {
       icon: FaMoneyBillWave,
-      label: 'Zarobki',
+      label: t('dashboard.owner.totalEarnings'),
       value: `${stats.totalEarnings} zł`,
       gradient: 'from-yellow-500 to-orange-500',
       bg: 'bg-yellow-500/10',
@@ -185,7 +187,7 @@ function OwnerDashboardPage() {
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
         >
           <h1 className="text-4xl font-bold text-white">
-            Panel właściciela
+            {t('dashboard.owner.title')}
           </h1>
           <Button
             onClick={() => navigate('/add-parking')}
@@ -193,7 +195,7 @@ function OwnerDashboardPage() {
             size="lg"
             leftIcon={<FaPlus />}
           >
-            Dodaj parking
+            {t('dashboard.owner.addParking')}
           </Button>
         </motion.div>
 
@@ -235,7 +237,7 @@ function OwnerDashboardPage() {
           className="mb-10"
         >
           <h2 className="text-2xl font-bold mb-5 text-white">
-            Moje parkingi
+            {t('dashboard.owner.title')}
           </h2>
 
           {myParkings.length === 0 ? (
@@ -304,13 +306,13 @@ function OwnerDashboardPage() {
           transition={{ delay: 0.3 }}
         >
           <h2 className="text-2xl font-bold mb-5 text-white">
-            Rezerwacje na moich parkingach
+            {t('dashboard.owner.recentReservations')}
           </h2>
 
           {allReservations.length === 0 ? (
             <EmptyState
               icon={<FaClipboardList className="text-6xl" />}
-              title="Brak rezerwacji"
+              title={t('dashboard.owner.noReservations')}
               description="Nie ma jeszcze żadnych rezerwacji na Twoich parkingach"
             />
           ) : (

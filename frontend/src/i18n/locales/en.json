@@ -421,5 +421,63 @@
     "fetchReportsDataError": "Error fetching reports:",
     "verifyError": "Error verifying:",
     "reportingError": "Error reporting:"
+  },
+  "dashboard": {
+    "owner": {
+      "title": "My Parking Lots",
+      "totalParkings": "Total Parking Lots",
+      "activeParkings": "Active Parking Lots",
+      "totalReservations": "Total Reservations",
+      "totalEarnings": "Total Earnings",
+      "recentReservations": "Recent Reservations",
+      "noReservations": "No reservations yet",
+      "addParking": "Add Parking Lot",
+      "parkingName": "Parking name",
+      "location": "Location",
+      "totalSpots": "Total spots",
+      "availableSpots": "Available spots",
+      "status": "Status",
+      "active": "Active",
+      "full": "Full"
+    },
+    "charging": {
+      "title": "My Chargers",
+      "totalChargers": "Total Chargers",
+      "activeChargers": "Active Chargers",
+      "totalSessions": "Total Sessions",
+      "activeSessions": "Active Sessions",
+      "totalEnergy": "Total Energy Delivered",
+      "pendingVerification": "Pending Verification",
+      "mySessions": "My Charging Sessions",
+      "noSessions": "No sessions yet",
+      "addCharger": "Add Charger",
+      "chargerName": "Charger name",
+      "maxPower": "Max power",
+      "connectors": "Connectors",
+      "pricePerKwh": "Price per kWh",
+      "verifySession": "Verify Session",
+      "energyDelivered": "Energy delivered (kWh)",
+      "duration": "Duration (minutes)",
+      "verify": "Verify"
+    }
+  },
+  "profilePage": {
+    "title": "My Profile",
+    "profile": "Profile",
+    "activity": "Activity",
+    "security": "Security",
+    "notifications": "Notifications",
+    "billing": "Billing",
+    "reputationPoints": "Reputation Points",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "totalReports": "Total Reports",
+    "personalInfo": "Personal Information",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "memberSince": "Member since",
+    "accountType": "Account type",
+    "logout": "Logout"
   }
 }
