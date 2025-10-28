@@ -11,7 +11,12 @@ import {
   FaSignOutAlt,
   FaEnvelope,
   FaPhone,
-  FaIdCard
+  FaIdCard,
+  FaParking,
+  FaChargingStation,
+  FaStar,
+  FaCoins,
+  FaWallet
 } from 'react-icons/fa';
 import { Card, Button, Avatar, Badge, SkeletonProfile } from '../components/ui';
 
@@ -20,6 +25,46 @@ function ProfilePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
+  const [stats, setStats] = useState({
+    reservations: 0,
+    chargingSessions: 0,
+    ratingsGiven: 0,
+    dcpPoints: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch user stats from API
+        const token = localStorage.getItem('token');
+
+        // Get reservations count
+        const resRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/reservations`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const resData = await resRes.json();
+
+        // Get charging sessions count
+        const chargeRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/charging-sessions/my-sessions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const chargeData = await chargeRes.json();
+
+        setStats({
+          reservations: resData.reservations?.length || 0,
+          chargingSessions: chargeData.sessions?.length || 0,
+          ratingsGiven: 0, // TODO: implement rating count API
+          dcpPoints: 0 // TODO: implement points API
+        });
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchStats();
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -215,6 +260,106 @@ function ProfilePage() {
                       </Card>
                     </motion.div>
                   </div>
+
+                  {/* Stats Section */}
+                  <h2 className="text-2xl font-bold text-white mb-4 mt-8">
+                    {t('profilePage.statistics') || 'Statystyki'}
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Card variant="glass" padding="lg" className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <FaParking className="text-white text-2xl" />
+                        </div>
+                        <p className="text-3xl font-bold text-white mb-1">{stats.reservations}</p>
+                        <p className="text-gray-400 text-sm">Rezerwacji</p>
+                      </Card>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.35 }}
+                    >
+                      <Card variant="glass" padding="lg" className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <FaChargingStation className="text-white text-2xl" />
+                        </div>
+                        <p className="text-3xl font-bold text-white mb-1">{stats.chargingSessions}</p>
+                        <p className="text-gray-400 text-sm">Ładowań</p>
+                      </Card>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Card variant="glass" padding="lg" className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <FaStar className="text-white text-2xl" />
+                        </div>
+                        <p className="text-3xl font-bold text-white mb-1">{stats.ratingsGiven}</p>
+                        <p className="text-gray-400 text-sm">Ocen</p>
+                      </Card>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.45 }}
+                    >
+                      <Card variant="glass" padding="lg" className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <FaCoins className="text-white text-2xl" />
+                        </div>
+                        <p className="text-3xl font-bold text-white mb-1">{stats.dcpPoints}</p>
+                        <p className="text-gray-400 text-sm">DCP Points</p>
+                      </Card>
+                    </motion.div>
+                  </div>
+
+                  {/* Wallet Section */}
+                  {user.wallet_address && (
+                    <>
+                      <h2 className="text-2xl font-bold text-white mb-4 mt-8">
+                        Portfel Solana
+                      </h2>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <Card variant="glass" padding="lg">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <FaWallet className="text-white text-2xl" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-gray-400 text-sm mb-1">Adres portfela</p>
+                              <p className="text-white font-mono text-sm truncate">
+                                {user.wallet_address}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(user.wallet_address);
+                                alert('Skopiowano adres!');
+                              }}
+                            >
+                              Kopiuj
+                            </Button>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    </>
+                  )}
                 </motion.div>
               )}
 

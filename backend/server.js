@@ -3040,6 +3040,138 @@ app.use((req, res) => {
   });
 });
 
+// ========== RATING SYSTEM ENDPOINTS ==========
+
+// POST /api/parking-ratings - Add rating for parking lot
+app.post('/api/parking-ratings', authenticateToken, [
+  body('lot_id').notEmpty().withMessage('Parking lot ID is required'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be 1-5')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { lot_id, rating, comment } = req.body;
+    const user_id = req.user.id;
+
+    const { data, error } = await supabase
+      .from('parking_ratings')
+      .upsert({
+        lot_id,
+        user_id,
+        rating,
+        comment: comment || null
+      }, {
+        onConflict: 'lot_id,user_id'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error adding parking rating:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/charging-ratings - Add rating for charging station
+app.post('/api/charging-ratings', authenticateToken, [
+  body('station_id').notEmpty().withMessage('Station ID is required'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be 1-5')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { station_id, rating, comment } = req.body;
+    const user_id = req.user.id;
+
+    const { data, error } = await supabase
+      .from('charging_ratings')
+      .upsert({
+        station_id,
+        user_id,
+        rating,
+        comment: comment || null
+      }, {
+        onConflict: 'station_id,user_id'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error adding charging rating:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/parking-ratings/:lotId - Get ratings for a parking lot
+app.get('/api/parking-ratings/:lotId', async (req, res) => {
+  try {
+    const { lotId } = req.params;
+
+    const { data, error } = await supabase
+      .from('parking_ratings')
+      .select('*')
+      .eq('lot_id', lotId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Calculate average
+    const avgRating = data.length > 0
+      ? (data.reduce((sum, r) => sum + r.rating, 0) / data.length).toFixed(1)
+      : 0;
+
+    res.json({
+      ratings: data,
+      average: parseFloat(avgRating),
+      total: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching parking ratings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/charging-ratings/:stationId - Get ratings for a charging station
+app.get('/api/charging-ratings/:stationId', async (req, res) => {
+  try {
+    const { stationId } = req.params;
+
+    const { data, error } = await supabase
+      .from('charging_ratings')
+      .select('*')
+      .eq('station_id', stationId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Calculate average
+    const avgRating = data.length > 0
+      ? (data.reduce((sum, r) => sum + r.rating, 0) / data.length).toFixed(1)
+      : 0;
+
+    res.json({
+      ratings: data,
+      average: parseFloat(avgRating),
+      total: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching charging ratings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
