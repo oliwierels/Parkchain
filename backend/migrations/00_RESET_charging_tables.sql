@@ -26,16 +26,16 @@ CREATE TABLE charging_stations (
     -- Typ ładowarki i złącza
     charger_type VARCHAR(50) NOT NULL,
     connector_types TEXT[] DEFAULT ARRAY['Type2'],
-    max_power_kw DECIMAL(6, 2) NOT NULL,
+    max_power_kw DECIMAL(8, 2) NOT NULL,
 
     -- Dostępność
     total_connectors INTEGER NOT NULL DEFAULT 1,
     available_connectors INTEGER NOT NULL DEFAULT 1,
 
     -- Pricing
-    price_per_kwh DECIMAL(6, 4) NOT NULL,
-    price_per_minute DECIMAL(6, 4),
-    price_per_session DECIMAL(6, 2),
+    price_per_kwh DECIMAL(8, 4) NOT NULL,
+    price_per_minute DECIMAL(8, 4),
+    price_per_session DECIMAL(8, 2),
 
     -- Właściciel i status
     -- ⚠️ BIGINT to match users.id type
@@ -60,9 +60,9 @@ CREATE TABLE charging_sessions (
     end_time TIMESTAMP,
 
     -- Dane energetyczne
-    energy_delivered_kwh DECIMAL(8, 3),
+    energy_delivered_kwh DECIMAL(10, 3),
     charging_duration_minutes INTEGER,
-    average_power_kw DECIMAL(6, 2),
+    average_power_kw DECIMAL(8, 2),
 
     -- Koszt i płatność
     total_cost DECIMAL(10, 2),
