@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useTranslation } from 'react-i18next';
-import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown, FaChargingStation, FaUsers, FaClock } from "react-icons/fa";
+import { FaMapMarkedAlt, FaLock, FaBolt, FaParking, FaChevronDown, FaChargingStation, FaClock } from "react-icons/fa";
 import { useAuth } from '../context/AuthContext';
 
 function HomePage() {
@@ -123,16 +123,6 @@ function HomePage() {
       path: '/my-reservations',
       stats: t('home.features.reservations.stats'),
       badge: null
-    },
-    {
-      id: 'community',
-      icon: FaUsers,
-      title: t('home.features.community.title'),
-      description: t('home.features.community.description'),
-      gradient: 'from-orange-500 to-red-500',
-      path: '/map',
-      stats: t('home.features.community.stats'),
-      badge: t('home.features.community.badge')
     }
   ];
 
@@ -551,12 +541,6 @@ function HomePage() {
                 title: t('home.benefits.blockchain.title'),
                 description: t('home.benefits.blockchain.description'),
                 color: "from-purple-500 to-pink-500"
-              },
-              {
-                icon: FaUsers,
-                title: t('home.benefits.crowdscan.title'),
-                description: t('home.benefits.crowdscan.description'),
-                color: "from-orange-500 to-red-500"
               }
             ].map((item, index) => (
               <motion.div
