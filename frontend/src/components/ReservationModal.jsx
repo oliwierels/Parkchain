@@ -385,11 +385,28 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             rotateX: 15
           }}
           transition={{
-            type: 'spring',
-            stiffness: 200,
-            damping: 20,
-            mass: 1.2,
-            duration: 0.8
+            scale: {
+              type: 'tween',
+              ease: [0.34, 1.56, 0.64, 1],
+              duration: 0.7,
+              times: [0, 0.4, 0.7, 1]
+            },
+            opacity: { duration: 0.3 },
+            y: {
+              type: 'spring',
+              stiffness: 200,
+              damping: 25
+            },
+            rotateX: {
+              type: 'spring',
+              stiffness: 150,
+              damping: 20
+            },
+            rotateZ: {
+              type: 'spring',
+              stiffness: 150,
+              damping: 20
+            }
           }}
           style={{
             backgroundColor: 'white',
