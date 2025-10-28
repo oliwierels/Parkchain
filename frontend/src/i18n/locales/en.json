@@ -143,6 +143,7 @@
     "inProgress": "In Progress",
     "noReservations": "No reservations",
     "cancelReservation": "Cancel reservation",
+    "reserveNow": "Reserve now",
     "viewDetails": "View details",
     "confirmCancel": "Are you sure you want to cancel this reservation?",
     "reservationFrom": "Reservation from",

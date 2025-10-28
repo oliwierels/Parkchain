@@ -1248,63 +1248,79 @@ function MapPage() {
   >
     <Popup>
       <div style={{
-        minWidth: '280px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)',
+        minWidth: '300px',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
         backdropFilter: 'blur(20px)',
-        borderRadius: '16px',
-        padding: '16px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.8)'
+        borderRadius: '20px',
+        padding: '20px',
+        boxShadow: '0 25px 70px rgba(0, 0, 0, 0.2), 0 10px 25px rgba(99, 102, 241, 0.15)',
+        border: '2px solid rgba(255, 255, 255, 0.9)'
       }}>
-        {/* Nagłówek z ikoną */}
+        {/* Nagłówek z gradientem */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginBottom: '16px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid rgba(99, 102, 241, 0.1)'
+          marginBottom: '18px',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
           <div style={{
-            width: '44px',
-            height: '44px',
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.2), 0 8px 16px rgba(99, 102, 241, 0.4)',
-            animation: 'pulse 2s infinite, float 3s infinite ease-in-out'
+            gap: '14px',
+            position: 'relative',
+            zIndex: 1
           }}>
-            <FaParking style={{ fontSize: '22px', color: 'white' }} />
+            <div style={{
+              width: '52px',
+              height: '52px',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+              transform: 'rotate(-5deg)',
+              transition: 'transform 0.3s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(-5deg) scale(1)'}
+            >
+              <FaParking style={{ fontSize: '26px', color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{
+                margin: '0 0 6px 0',
+                fontSize: '20px',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.5px'
+              }}>
+                {parking.name}
+              </h3>
+              <div style={{
+                fontSize: '13px',
+                color: '#6b7280',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <FaMapMarkerAlt style={{ fontSize: '12px', color: '#6366F1' }} />
+                <span style={{ fontWeight: '500' }}>{parking.address}</span>
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: '18px',
-              fontWeight: '700',
-              color: '#1f2937',
-              letterSpacing: '-0.5px'
-            }}>
-              {parking.name}
-            </h3>
-          </div>
-        </div>
-
-        {/* Adres */}
-        <div style={{
-          fontSize: '13px',
-          color: '#6b7280',
-          margin: '0 0 12px 0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          background: 'rgba(99, 102, 241, 0.05)',
-          borderRadius: '8px'
-        }}>
-          <FaMapMarkerAlt style={{ fontSize: '14px', color: '#6366F1', flexShrink: 0 }} />
-          <span>{parking.address}</span>
+          {/* Gradient overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100px',
+            height: '100px',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
+            borderRadius: '50%',
+            pointerEvents: 'none'
+          }}></div>
         </div>
 
         {/* Typ parkingu / Amenities Badge */}
@@ -1574,46 +1590,38 @@ function MapPage() {
                   ? 'linear-gradient(135deg, #9333EA 0%, #C026D3 100%)'
                   : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                 color: 'white',
-                padding: '14px 24px',
+                padding: '16px 28px',
                 border: 'none',
-                borderRadius: '14px',
-                fontWeight: '700',
+                borderRadius: '16px',
+                fontWeight: '800',
                 cursor: isModalOpening ? 'wait' : 'pointer',
-                fontSize: '15px',
+                fontSize: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '10px',
-                transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                gap: '12px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 boxShadow: isModalOpening
-                  ? '0 8px 32px rgba(147, 51, 234, 0.5)'
-                  : '0 4px 16px rgba(99, 102, 241, 0.4)',
-                letterSpacing: '0.5px',
+                  ? '0 12px 40px rgba(147, 51, 234, 0.5), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  : '0 6px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+                letterSpacing: '0.3px',
                 position: 'relative',
                 overflow: 'hidden',
-                transform: isModalOpening ? 'scale(0.98)' : 'scale(1)'
+                transform: isModalOpening ? 'scale(0.98)' : 'scale(1)',
+                textTransform: 'uppercase'
               }}
               onMouseOver={(e) => {
                 if (!isModalOpening) {
-                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.08)';
-                  e.currentTarget.style.boxShadow = '0 20px 60px rgba(99, 102, 241, 0.8), 0 0 0 4px rgba(99, 102, 241, 0.3)';
-                  e.currentTarget.style.filter = 'brightness(1.15)';
-                  e.currentTarget.style.animation = 'pulse 0.8s infinite';
-
-                  // Animacja ikony
-                  const icon = e.currentTarget.querySelector('svg');
-                  if (icon) {
-                    icon.style.animation = 'shake 0.5s';
-                    setTimeout(() => { if(icon) icon.style.animation = ''; }, 500);
-                  }
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255,255,255,0.3)';
+                  e.currentTarget.style.filter = 'brightness(1.1)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(99, 102, 241, 0.4)';
+                  e.currentTarget.style.boxShadow = '0 6px 24px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
                   e.currentTarget.style.filter = 'brightness(1)';
-                  e.currentTarget.style.animation = '';
                 }
               }}
             >
