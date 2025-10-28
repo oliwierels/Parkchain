@@ -166,6 +166,12 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       return;
     }
 
+    // Validate wallet connection for Solana payments only
+    if ((paymentMethod === 'gateway' || paymentMethod === 'solana') && !wallet.connected) {
+      setError('Połącz portfel Solana aby użyć tej metody płatności');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setStep('processing');
@@ -177,14 +183,20 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       // Process payment based on selected method
       let paymentResult = null;
 
+      console.log('💳 Wybrana metoda płatności:', paymentMethod);
+
       if (paymentMethod === 'gateway') {
         paymentResult = await processGatewayPayment();
       } else if (paymentMethod === 'solana') {
         paymentResult = await processStandardSolanaPayment();
       } else if (paymentMethod === 'card') {
+        console.log('💳 Przetwarzanie płatności kartą (bez Solany)...');
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
+        console.log('🕐 Płatność później (bez Solany)...');
         paymentResult = { method: 'later', paid: false };
+      } else {
+        throw new Error(`Nieznana metoda płatności: ${paymentMethod}`);
       }
 
       // Create reservation in database
@@ -218,6 +230,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
   const processGatewayPayment = async () => {
     console.log('⚡ Procesowanie płatności przez Gateway...');
+
+    // Validate wallet is connected
+    if (!wallet.connected || !wallet.publicKey) {
+      throw new Error('Portfel Solana nie jest połączony. Połącz portfel aby użyć Gateway.');
+    }
 
     // Treasury wallet for parking payments (in production, use owner's wallet)
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
@@ -273,6 +290,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
   const processStandardSolanaPayment = async () => {
     console.log('◎ Procesowanie standardowej płatności Solana...');
+
+    // Validate wallet is connected
+    if (!wallet.connected || !wallet.publicKey) {
+      throw new Error('Portfel Solana nie jest połączony. Połącz portfel aby użyć płatności Solana.');
+    }
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
     const priceSOL = priceCalculation.price / 600;
