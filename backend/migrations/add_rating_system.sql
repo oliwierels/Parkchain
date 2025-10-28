@@ -2,9 +2,10 @@
 -- Date: 2025-10-28
 
 -- Ratings for parking lots
+-- ⚠️ lot_id is INTEGER to match parking_lots.id
 CREATE TABLE IF NOT EXISTS parking_ratings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    lot_id UUID NOT NULL REFERENCES parking_lots(id) ON DELETE CASCADE,
+    lot_id INTEGER NOT NULL REFERENCES parking_lots(id) ON DELETE CASCADE,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS parking_ratings (
 );
 
 -- Ratings for charging stations
+-- ⚠️ station_id is UUID to match charging_stations.id
 CREATE TABLE IF NOT EXISTS charging_ratings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     station_id UUID NOT NULL REFERENCES charging_stations(id) ON DELETE CASCADE,
@@ -52,7 +54,8 @@ CREATE TRIGGER charging_ratings_updated_at_trigger
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to calculate average rating for parking lot
-CREATE OR REPLACE FUNCTION get_parking_avg_rating(p_lot_id UUID)
+-- ⚠️ lot_id parameter is INTEGER
+CREATE OR REPLACE FUNCTION get_parking_avg_rating(p_lot_id INTEGER)
 RETURNS TABLE (
     avg_rating NUMERIC,
     total_ratings INTEGER
@@ -68,6 +71,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to calculate average rating for charging station
+-- ⚠️ station_id parameter is UUID
 CREATE OR REPLACE FUNCTION get_charging_avg_rating(p_station_id UUID)
 RETURNS TABLE (
     avg_rating NUMERIC,
@@ -89,4 +93,6 @@ BEGIN
     RAISE NOTICE '✅ Rating system migration completed';
     RAISE NOTICE '📊 Created tables: parking_ratings, charging_ratings';
     RAISE NOTICE '⭐ Users can now rate parking lots and charging stations (1-5 stars)';
+    RAISE NOTICE 'ℹ️  parking_ratings.lot_id: INTEGER (matches parking_lots.id)';
+    RAISE NOTICE 'ℹ️  charging_ratings.station_id: UUID (matches charging_stations.id)';
 END $$;
