@@ -1397,26 +1397,24 @@ function MapPage() {
                 width: '100%',
                 background: '#111827',
                 color: 'white',
-                padding: '14px',
+                padding: '12px',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '8px',
                 fontWeight: '600',
                 cursor: isModalOpening ? 'wait' : 'pointer',
-                fontSize: '15px',
-                transition: 'all 0.2s ease',
-                opacity: isModalOpening ? 0.7 : 1,
+                fontSize: '14px',
+                transition: 'all 0.15s ease',
+                opacity: isModalOpening ? 0.5 : 1,
                 letterSpacing: '-0.2px'
               }}
               onMouseOver={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.background = '#1F2937';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!isModalOpening) {
                   e.currentTarget.style.background = '#111827';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >

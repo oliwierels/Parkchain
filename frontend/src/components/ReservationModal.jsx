@@ -867,19 +867,19 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 }}
                 style={{
                   flex: 1,
-                  padding: '14px',
+                  padding: '12px',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '10px',
-                  fontSize: '15px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   backgroundColor: 'white',
                   color: '#6B7280',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.15s ease',
                   letterSpacing: '-0.2px'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = '#F9FAFB';
+                  e.currentTarget.style.background = '#FAFAFA';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.background = 'white';
@@ -893,28 +893,26 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 disabled={!paymentMethod || loading}
                 style={{
                   flex: 2,
-                  padding: '14px',
+                  padding: '12px',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '15px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
                   fontWeight: '600',
                   cursor: !paymentMethod || loading ? 'not-allowed' : 'pointer',
-                  backgroundColor: !paymentMethod || loading ? '#9CA3AF' : '#111827',
+                  backgroundColor: !paymentMethod || loading ? '#D1D5DB' : '#111827',
                   color: 'white',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.15s ease',
                   letterSpacing: '-0.2px',
-                  opacity: !paymentMethod || loading ? 0.6 : 1
+                  opacity: !paymentMethod || loading ? 0.5 : 1
                 }}
                 onMouseOver={(e) => {
                   if (paymentMethod && !loading) {
                     e.currentTarget.style.background = '#1F2937';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
                   }
                 }}
                 onMouseOut={(e) => {
                   if (paymentMethod && !loading) {
                     e.currentTarget.style.background = '#111827';
-                    e.currentTarget.style.transform = 'translateY(0)';
                   }
                 }}
               >
