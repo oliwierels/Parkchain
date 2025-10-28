@@ -160,6 +160,7 @@ function createChargingIcon(station) {
 
 // Komponent do automatycznego centrowania mapy
 function AutoCenter({ parkings }) {
+  const { t } = useTranslation();
   const map = useMap();
 
   useEffect(() => {
