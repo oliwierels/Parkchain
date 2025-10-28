@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { inspectionAPI } from '../services/api';
+import { useTranslation } from 'react-i18next';
 import {
   FaUser,
   FaShieldAlt,
@@ -22,6 +23,7 @@ import { Card, Button, Avatar, Badge, SkeletonProfile } from '../components/ui';
 
 function ProfilePage() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [reputation, setReputation] = useState(null);
   const [loadingReputation, setLoadingReputation] = useState(true);
@@ -39,7 +41,7 @@ function ProfilePage() {
       const data = await inspectionAPI.getMyReputation();
       setReputation(data);
     } catch (err) {
-      console.error('Błąd pobierania reputacji:', err);
+      console.error(t('console.fetchReputationError'), err);
     } finally {
       setLoadingReputation(false);
     }
@@ -65,17 +67,17 @@ function ProfilePage() {
   }
 
   const menuItems = [
-    { id: 'profile', label: 'Profil', icon: FaUser },
-    { id: 'activity', label: 'Aktywność', icon: FaChartLine },
-    { id: 'security', label: 'Bezpieczeństwo', icon: FaShieldAlt },
-    { id: 'notifications', label: 'Powiadomienia', icon: FaBell },
-    { id: 'billing', label: 'Płatności', icon: FaCreditCard },
+    { id: 'profile', label: t('profilePage.profile'), icon: FaUser },
+    { id: 'activity', label: t('profilePage.activity'), icon: FaChartLine },
+    { id: 'security', label: t('profilePage.security'), icon: FaShieldAlt },
+    { id: 'notifications', label: t('profilePage.notifications'), icon: FaBell },
+    { id: 'billing', label: t('profilePage.billing'), icon: FaCreditCard },
   ];
 
   const stats = [
     {
       icon: FaTrophy,
-      label: 'Punkty Reputacji',
+      label: t('profilePage.reputationPoints'),
       value: reputation?.score || 0,
       gradient: 'from-blue-500 to-cyan-500',
       bg: 'bg-blue-500/10',
@@ -83,7 +85,7 @@ function ProfilePage() {
     },
     {
       icon: FaCheckCircle,
-      label: 'Zatwierdzone',
+      label: t('profilePage.approved'),
       value: reputation?.reports_confirmed || 0,
       gradient: 'from-green-500 to-emerald-500',
       bg: 'bg-green-500/10',
@@ -91,7 +93,7 @@ function ProfilePage() {
     },
     {
       icon: FaTimesCircle,
-      label: 'Odrzucone',
+      label: t('profilePage.rejected'),
       value: reputation?.reports_rejected || 0,
       gradient: 'from-red-500 to-pink-500',
       bg: 'bg-red-500/10',
@@ -99,7 +101,7 @@ function ProfilePage() {
     },
     {
       icon: FaClipboardList,
-      label: 'Razem zgłoszeń',
+      label: t('profilePage.totalReports'),
       value: reputation?.reports_total || 0,
       gradient: 'from-purple-500 to-pink-500',
       bg: 'bg-purple-500/10',

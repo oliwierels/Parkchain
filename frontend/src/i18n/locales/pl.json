@@ -421,5 +421,63 @@
     "fetchReportsDataError": "Błąd pobierania zgłoszeń:",
     "verifyError": "Błąd weryfikacji:",
     "reportingError": "Błąd zgłaszania:"
+  },
+  "dashboard": {
+    "owner": {
+      "title": "Moje Parkingi",
+      "totalParkings": "Łączna liczba parkingów",
+      "activeParkings": "Aktywne parkingi",
+      "totalReservations": "Łączna liczba rezerwacji",
+      "totalEarnings": "Łączne zarobki",
+      "recentReservations": "Ostatnie rezerwacje",
+      "noReservations": "Brak rezerwacji",
+      "addParking": "Dodaj parking",
+      "parkingName": "Nazwa parkingu",
+      "location": "Lokalizacja",
+      "totalSpots": "Wszystkie miejsca",
+      "availableSpots": "Dostępne miejsca",
+      "status": "Status",
+      "active": "Aktywny",
+      "full": "Pełny"
+    },
+    "charging": {
+      "title": "Moje Ładowarki",
+      "totalChargers": "Łączna liczba ładowarek",
+      "activeChargers": "Aktywne ładowarki",
+      "totalSessions": "Łączna liczba sesji",
+      "activeSessions": "Aktywne sesje",
+      "totalEnergy": "Łącznie dostarczonej energii",
+      "pendingVerification": "Oczekujące weryfikacji",
+      "mySessions": "Moje sesje ładowania",
+      "noSessions": "Brak sesji",
+      "addCharger": "Dodaj ładowarkę",
+      "chargerName": "Nazwa ładowarki",
+      "maxPower": "Maksymalna moc",
+      "connectors": "Złącza",
+      "pricePerKwh": "Cena za kWh",
+      "verifySession": "Zweryfikuj sesję",
+      "energyDelivered": "Dostarczona energia (kWh)",
+      "duration": "Czas trwania (minuty)",
+      "verify": "Zweryfikuj"
+    }
+  },
+  "profilePage": {
+    "title": "Mój Profil",
+    "profile": "Profil",
+    "activity": "Aktywność",
+    "security": "Bezpieczeństwo",
+    "notifications": "Powiadomienia",
+    "billing": "Płatności",
+    "reputationPoints": "Punkty Reputacji",
+    "approved": "Zatwierdzone",
+    "rejected": "Odrzucone",
+    "totalReports": "Łączne zgłoszenia",
+    "personalInfo": "Informacje osobiste",
+    "fullName": "Imię i nazwisko",
+    "email": "Email",
+    "phone": "Telefon",
+    "memberSince": "Członek od",
+    "accountType": "Typ konta",
+    "logout": "Wyloguj"
   }
 }
