@@ -159,7 +159,29 @@
     "reservationTo": "do",
     "totalCost": "Całkowity koszt",
     "parkingSpot": "Miejsce parkingowe",
-    "reservationNumber": "Numer rezerwacji"
+    "reservationNumber": "Numer rezerwacji",
+    "filterAll": "Wszystkie",
+    "filterActive": "Aktywne",
+    "filterCompleted": "Zakończone",
+    "filterCancelled": "Anulowane",
+    "stats": {
+      "total": "Łączna liczba",
+      "active": "Aktywne",
+      "pending": "Oczekujące"
+    },
+    "type": {
+      "parking": "Parking",
+      "charging": "Ładowanie"
+    },
+    "unknownStation": "Nieznana stacja",
+    "noAddress": "Brak adresu",
+    "estimatedCost": "Szacowany koszt",
+    "viewQR": "Pokaż kod QR",
+    "endSession": "Zakończ sesję",
+    "loadError": "Nie udało się załadować rezerwacji",
+    "cancelSuccess": "Rezerwacja została anulowana",
+    "cancelError": "Nie udało się anulować rezerwacji",
+    "fetchChargingError": "Nie udało się pobrać sesji ładowania"
   },
   "parking": {
     "addParking": "Dodaj parking",

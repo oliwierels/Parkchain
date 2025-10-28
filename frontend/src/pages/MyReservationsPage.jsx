@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { reservationAPI } from '../services/api';
 import EndChargingSessionModal from '../components/EndChargingSessionModal';
 import ReservationQRModal from '../components/ReservationQRModal';
@@ -19,6 +20,7 @@ import {
 
 function MyReservationsPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [reservations, setReservations] = useState([]);
   const [stats, setStats] = useState({
     totalReservations: 0,
@@ -52,7 +54,7 @@ function MyReservationsPage() {
         }
       }).then(res => {
         if (res.ok) return res.json();
-        throw new Error('Nie udało się pobrać sesji ładowania');
+        throw new Error(t('reservations.fetchChargingError'));
       });
 
       const [parkingData, chargingData] = await Promise.all([
@@ -82,8 +84,8 @@ function MyReservationsPage() {
         return {
           id: s.id,
           type: 'charging',
-          name: s.charging_stations?.name || 'Nieznana stacja',
-          address: s.charging_stations?.address || 'Brak adresu',
+          name: s.charging_stations?.name || t('reservations.unknownStation'),
+          address: s.charging_stations?.address || t('reservations.noAddress'),
           startTime: s.start_time,
           endTime: s.end_time,
           price: calculatedPrice,
@@ -112,9 +114,9 @@ function MyReservationsPage() {
       setError(null);
     } catch (err) {
       console.error('Błąd pobierania danych:', err);
-      setError('Nie udało się załadować rezerwacji');
+      setError(t('reservations.loadError'));
       addToast({
-        message: 'Nie udało się załadować rezerwacji',
+        message: t('reservations.loadError'),
         type: 'error'
       });
     } finally {
@@ -134,19 +136,19 @@ function MyReservationsPage() {
           }
         });
         if (!response.ok) {
-          throw new Error('Nie udało się anulować sesji ładowania');
+          throw new Error(t('reservations.cancelError'));
         }
       }
 
       fetchData();
       addToast({
-        message: 'Rezerwacja została anulowana',
+        message: t('reservations.cancelSuccess'),
         type: 'success'
       });
     } catch (err) {
       console.error(err);
       addToast({
-        message: 'Nie udało się anulować rezerwacji',
+        message: t('reservations.cancelError'),
         type: 'error'
       });
     }
@@ -162,7 +164,7 @@ function MyReservationsPage() {
     setSelectedSession(null);
     fetchData();
     addToast({
-      message: 'Sesja ładowania została zakończona',
+      message: t('charging.endCharging') + ' - ' + t('common.success'),
       type: 'success'
     });
   };
@@ -190,11 +192,11 @@ function MyReservationsPage() {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Oczekująca';
-      case 'active': return 'Aktywna';
-      case 'completed': return 'Zakończona';
-      case 'cancelled': return 'Anulowana';
-      case 'pending_verification': return 'Weryfikacja';
+      case 'pending': return t('reservations.pending');
+      case 'active': return t('reservations.active');
+      case 'completed': return t('reservations.completed');
+      case 'cancelled': return t('reservations.cancelled');
+      case 'pending_verification': return t('reservations.pending');
       default: return status;
     }
   };
@@ -238,7 +240,7 @@ function MyReservationsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl font-bold text-white mb-8"
         >
-          Moje Rezerwacje
+          {t('reservations.title')}
         </motion.h1>
 
         {/* Stats Cards */}
@@ -251,7 +253,7 @@ function MyReservationsPage() {
           <Card variant="gradient" hoverable>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400 mb-1">Wszystkie</p>
+                <p className="text-sm text-slate-400 mb-1">{t('reservations.stats.total')}</p>
                 <p className="text-4xl font-bold text-white">{stats.totalReservations}</p>
               </div>
               <div className="p-4 bg-parkchain-500/20 rounded-xl">
@@ -265,7 +267,7 @@ function MyReservationsPage() {
           <Card variant="gradient" hoverable>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400 mb-1">Aktywne</p>
+                <p className="text-sm text-slate-400 mb-1">{t('reservations.stats.active')}</p>
                 <p className="text-4xl font-bold text-green-400">{stats.activeReservations}</p>
               </div>
               <div className="p-4 bg-green-500/20 rounded-xl">
@@ -279,7 +281,7 @@ function MyReservationsPage() {
           <Card variant="gradient" hoverable>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400 mb-1">Oczekujące</p>
+                <p className="text-sm text-slate-400 mb-1">{t('reservations.stats.pending')}</p>
                 <p className="text-4xl font-bold text-yellow-400">{stats.pendingReservations}</p>
               </div>
               <div className="p-4 bg-yellow-500/20 rounded-xl">
@@ -299,11 +301,11 @@ function MyReservationsPage() {
           className="flex gap-3 mb-6 flex-wrap"
         >
           {[
-            { value: 'all', label: 'Wszystkie' },
-            { value: 'active', label: 'Aktywne' },
-            { value: 'pending', label: 'Oczekujące' },
-            { value: 'past', label: 'Historia' },
-            { value: 'cancelled', label: 'Anulowane' }
+            { value: 'all', label: t('reservations.filterAll') },
+            { value: 'active', label: t('reservations.filterActive') },
+            { value: 'pending', label: t('reservations.pending') },
+            { value: 'past', label: t('reservations.completed') },
+            { value: 'cancelled', label: t('reservations.filterCancelled') }
           ].map(({ value, label }) => (
             <Button
               key={value}
@@ -406,7 +408,7 @@ function MyReservationsPage() {
                         </p>
                         {reservation.isEstimated && (
                           <p className="text-xs text-slate-500 mt-1">
-                            szacunkowy koszt
+                            {t('reservations.estimatedCost')}
                           </p>
                         )}
                       </div>
@@ -424,7 +426,7 @@ function MyReservationsPage() {
                               </svg>
                             }
                           >
-                            Pokaż QR
+                            {t('reservations.viewQR')}
                           </Button>
                           {reservation.type === 'charging' && reservation.status === 'active' && (
                             <Button
@@ -438,7 +440,7 @@ function MyReservationsPage() {
                                 </svg>
                               }
                             >
-                              Zakończ
+                              {t('reservations.endSession')}
                             </Button>
                           )}
                           <Button
@@ -452,7 +454,7 @@ function MyReservationsPage() {
                               </svg>
                             }
                           >
-                            Anuluj
+                            {t('common.cancel')}
                           </Button>
                         </div>
                       )}

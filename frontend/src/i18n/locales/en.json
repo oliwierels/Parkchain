@@ -159,7 +159,29 @@
     "reservationTo": "to",
     "totalCost": "Total cost",
     "parkingSpot": "Parking spot",
-    "reservationNumber": "Reservation number"
+    "reservationNumber": "Reservation number",
+    "filterAll": "All",
+    "filterActive": "Active",
+    "filterCompleted": "Completed",
+    "filterCancelled": "Cancelled",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "pending": "Pending"
+    },
+    "type": {
+      "parking": "Parking",
+      "charging": "Charging"
+    },
+    "unknownStation": "Unknown station",
+    "noAddress": "No address",
+    "estimatedCost": "Estimated cost",
+    "viewQR": "Show QR code",
+    "endSession": "End session",
+    "loadError": "Failed to load reservations",
+    "cancelSuccess": "Reservation cancelled",
+    "cancelError": "Failed to cancel reservation",
+    "fetchChargingError": "Failed to fetch charging sessions"
   },
   "parking": {
     "addParking": "Add Parking",
