@@ -74,7 +74,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         const hourlyRate = parking.price_per_hour || parking.hourly_rate;
         allOptions.push({
           type: 'hourly',
-          label: 'Stawka godzinowa',
+          label: t('reservations.modal.hourlyRate'),
           price: parseFloat((hours * hourlyRate).toFixed(2))
         });
       }
@@ -84,7 +84,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         const fullDays = Math.ceil(days);
         allOptions.push({
           type: 'daily',
-          label: 'Stawka dzienna',
+          label: t('reservations.modal.dailyRate'),
           price: parseFloat((fullDays * parking.price_per_day).toFixed(2))
         });
       }
@@ -94,7 +94,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         const fullWeeks = Math.ceil(weeks);
         allOptions.push({
           type: 'weekly',
-          label: 'Stawka tygodniowa',
+          label: t('reservations.modal.weeklyRate'),
           price: parseFloat((fullWeeks * parking.price_per_week).toFixed(2))
         });
       }
@@ -104,7 +104,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         const fullMonths = Math.ceil(months);
         allOptions.push({
           type: 'monthly',
-          label: 'Stawka miesięczna',
+          label: t('reservations.modal.monthlyRate'),
           price: parseFloat((fullMonths * parking.price_per_month).toFixed(2))
         });
       }
@@ -415,9 +415,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               animate={{ opacity: 1, x: 0 }}
               style={{ fontSize: '20px', fontWeight: '600', margin: '0 0 12px 0', color: '#111827', letterSpacing: '-0.3px' }}
             >
-              {step === 'details' && 'Szczegóły rezerwacji'}
-              {step === 'payment' && 'Wybierz płatność'}
-              {step === 'processing' && 'Przetwarzanie...'}
+              {step === 'details' && t('reservations.modal.title')}
+              {step === 'payment' && t('reservations.modal.selectPayment')}
+              {step === 'processing' && t('reservations.modal.processing')}
             </motion.h2>
 
             {/* Progress bar */}
@@ -482,7 +482,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     fontWeight: '500'
                   }}
                 >
-                  Szczegóły
+                  {t('reservations.modal.details')}
                 </motion.span>
               </div>
 
@@ -533,7 +533,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     fontWeight: '500'
                   }}
                 >
-                  Płatność
+                  {t('reservations.modal.payment')}
                 </motion.span>
               </div>
 
@@ -584,7 +584,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     fontWeight: '500'
                   }}
                 >
-                  Potwierdzenie
+                  {t('reservations.modal.confirmation')}
                 </motion.span>
               </div>
             </div>
@@ -676,10 +676,10 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               </span>
               <span>
                 {parking.type === 'covered'
-                  ? 'Zadaszony'
+                  ? t('parking.coveredType')
                   : parking.type === 'ev_charging'
-                  ? 'Z ładowarką EV'
-                  : 'Odkryty'}
+                  ? t('parking.evChargingType')
+                  : t('parking.openType')}
               </span>
             </div>
           )}
@@ -698,7 +698,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               color: '#6B7280',
               fontWeight: '500'
             }}>
-              Cena
+              {t('reservations.modal.price')}
             </span>
             <span style={{
               fontSize: '16px',
@@ -743,7 +743,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               fontSize: '13px',
               color: '#374151'
             }}>
-              Początek rezerwacji
+              {t('reservations.modal.startDate')}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <input
@@ -795,7 +795,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               fontSize: '13px',
               color: '#374151'
             }}>
-              Koniec rezerwacji
+              {t('reservations.modal.endDate')}
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <input
@@ -847,7 +847,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               fontSize: '13px',
               color: '#374151'
             }}>
-              Numer rejestracyjny
+              {t('reservations.modal.licensePlate')}
             </label>
             <input
               type="text"
@@ -855,7 +855,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               value={formData.licensePlate}
               onChange={handleChange}
               required
-              placeholder="np. WA 12345"
+              placeholder={t('reservations.modal.licensePlatePlaceholder')}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -913,7 +913,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   {priceCalculation.price} zł
                 </div>
                 <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px' }}>
-                  {priceCalculation.hours.toFixed(1)} godz • {priceCalculation.days.toFixed(1)} dni
+                  {priceCalculation.hours.toFixed(1)} {t('reservations.modal.hours')} • {priceCalculation.days.toFixed(1)} {t('reservations.modal.days')}
                 </div>
               </div>
 
@@ -931,7 +931,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     marginBottom: '8px',
                     color: '#6B7280'
                   }}>
-                    Inne opcje:
+                    {t('reservations.modal.otherOptions')}:
                   </div>
                   {priceCalculation.allOptions.map((option, index) => (
                     option.type !== priceCalculation.pricingType && (
@@ -979,7 +979,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 e.currentTarget.style.background = 'white';
               }}
             >
-              Anuluj
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -1011,7 +1011,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                 }
               }}
             >
-              {loading ? 'Ładowanie...' : 'Dalej'}
+              {loading ? t('common.loading') : t('common.next')}
             </button>
           </div>
         </motion.form>
@@ -1060,7 +1060,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   e.currentTarget.style.background = 'white';
                 }}
               >
-                Wróć
+                {t('common.back')}
               </button>
               <button
                 type="button"
@@ -1093,7 +1093,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   }
                 }}
               >
-                {loading ? 'Przetwarzanie...' : 'Potwierdź'}
+                {loading ? t('reservations.modal.processing') : t('common.confirm')}
               </button>
             </div>
           </div>

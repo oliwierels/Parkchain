@@ -144,6 +144,7 @@
     "noReservations": "No reservations",
     "cancelReservation": "Cancel reservation",
     "reserveNow": "Reserve now",
+    "reserve": "Reserve",
     "viewDetails": "View details",
     "confirmCancel": "Are you sure you want to cancel this reservation?",
     "reservationFrom": "Reservation from",
@@ -172,7 +173,28 @@
     "loadError": "Failed to load reservations",
     "cancelSuccess": "Reservation cancelled",
     "cancelError": "Failed to cancel reservation",
-    "fetchChargingError": "Failed to fetch charging sessions"
+    "fetchChargingError": "Failed to fetch charging sessions",
+    "modal": {
+      "title": "Reservation details",
+      "selectPayment": "Select payment",
+      "processing": "Processing...",
+      "details": "Details",
+      "payment": "Payment",
+      "confirmation": "Confirmation",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "licensePlate": "License plate",
+      "licensePlatePlaceholder": "e.g. ABC 1234",
+      "price": "Price",
+      "hourlyRate": "Hourly rate",
+      "dailyRate": "Daily rate",
+      "weeklyRate": "Weekly rate",
+      "monthlyRate": "Monthly rate",
+      "bestOption": "Best option",
+      "otherOptions": "Other options",
+      "hours": "hrs",
+      "days": "days"
+    }
   },
   "parking": {
     "addParking": "Add Parking",
@@ -193,7 +215,15 @@
     "accessible": "Accessible",
     "parkingType": "Parking type",
     "public": "Public",
-    "private": "Private"
+    "private": "Private",
+    "available": "Available",
+    "full": "Full",
+    "manyAvailableSpots": "Plenty available",
+    "fewAvailableSpots": "Limited spots",
+    "noAvailableSpots": "Full",
+    "coveredType": "Covered",
+    "evChargingType": "With charger",
+    "openType": "Open"
   },
   "charging": {
     "title": "EV Chargers",

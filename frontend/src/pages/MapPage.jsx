@@ -1312,7 +1312,7 @@ function MapPage() {
                 fontWeight: '500',
                 color: parking.available_spots > 0 ? '#065F46' : '#991B1B'
               }}>
-                {parking.available_spots > 0 ? 'Dostępne' : 'Brak miejsc'}
+                {parking.available_spots > 0 ? t('parking.available') : t('parking.full')}
               </span>
             </div>
             <span style={{
@@ -1339,7 +1339,7 @@ function MapPage() {
               color: '#6B7280',
               fontWeight: '500'
             }}>
-              Cena
+              {t('reservations.modal.price')}
             </span>
             <span style={{
               fontSize: '16px',
@@ -1377,10 +1377,10 @@ function MapPage() {
               </span>
               <span>
                 {parking.type === 'covered'
-                  ? 'Zadaszony'
+                  ? t('parking.coveredType')
                   : parking.type === 'ev_charging'
-                  ? 'Z ładowarką'
-                  : 'Odkryty'}
+                  ? t('parking.evChargingType')
+                  : t('parking.openType')}
               </span>
             </div>
           )}
@@ -1420,7 +1420,7 @@ function MapPage() {
                 }
               }}
             >
-              {isModalOpening ? 'Ładowanie...' : 'Zarezerwuj'}
+              {isModalOpening ? t('common.loading') : t('reservations.reserve')}
             </button>
           )}
         </div>
