@@ -136,17 +136,6 @@ function Navbar() {
                   <span>DCP Tokens</span>
                 </NavLink>
                 <NavLink
-                  to="/parking-marketplace"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-cyan-600',
-                    gradient: 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700'
-                  })}
-                  title="🏆 ParkFi - Institutional Parking Marketplace (Mastercard Hackathon)"
-                >
-                  <FaWarehouse />
-                  <span>🅿️ ParkFi</span>
-                </NavLink>
-                <NavLink
                   to="/institutional-operator"
                   className={getFeaturedLinkClasses({
                     active: 'bg-orange-600',
@@ -441,18 +430,6 @@ function Navbar() {
                 >
                   <FaGem />
                   <span>DCP Tokens</span>
-                </NavLink>
-                <NavLink
-                  to="/parking-marketplace"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-cyan-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaWarehouse />
-                  <span>🅿️ ParkFi Marketplace</span>
                 </NavLink>
                 <NavLink
                   to="/institutional-operator"

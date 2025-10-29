@@ -188,10 +188,10 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               {t('modals.locationLabel')}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
-              Szerokość: {latitude.toFixed(6)}
+              {t('modals.latitude')}: {latitude.toFixed(6)}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
-              Długość: {longitude.toFixed(6)}
+              {t('modals.longitude')}: {longitude.toFixed(6)}
             </div>
           </div>
 
@@ -204,7 +204,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Nazwa parkingu <span style={{ color: '#EF4444' }}>*</span>
+              {t('modals.parkingName')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -212,7 +212,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="np. Parking Centrum"
+              placeholder={t('modals.parkingNamePlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -233,7 +233,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Adres <span style={{ color: '#EF4444' }}>*</span>
+              {t('modals.addressLabel')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -241,7 +241,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               value={formData.address}
               onChange={handleChange}
               required
-              placeholder="np. ul. Marszałkowska 1"
+              placeholder={t('modals.addressPlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -262,14 +262,14 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Miasto
+              {t('modals.cityLabel')}
             </label>
             <input
               type="text"
               name="city"
               value={formData.city}
               onChange={handleChange}
-              placeholder="np. Warszawa"
+              placeholder={t('modals.cityPlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -290,14 +290,13 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              Typ parkingu <span style={{ color: '#EF4444' }}>*</span>
+              {t('modals.parkingTypeLabel')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '8px'
             }}>
-              {/* Zadaszony */}
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, type: 'covered' })}
@@ -313,10 +312,9 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                   transition: 'all 0.2s'
                 }}
               >
-                ☂️ Zadaszony
+                {t('modals.typeCovered')}
               </button>
 
-              {/* Odkryty */}
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, type: 'outdoor' })}
@@ -332,10 +330,9 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                   transition: 'all 0.2s'
                 }}
               >
-                ☀️ Odkryty
+                {t('modals.typeOutdoor')}
               </button>
 
-              {/* Z ładowarką */}
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, type: 'ev_charging' })}
@@ -351,7 +348,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                   transition: 'all 0.2s'
                 }}
               >
-                ⚡ Ładowarka EV
+                {t('modals.typeEVCharging')}
               </button>
             </div>
           </div>
@@ -365,7 +362,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Liczba miejsc parkingowych <span style={{ color: '#EF4444' }}>*</span>
+              {t('modals.totalSpotsLabel')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="number"
@@ -374,7 +371,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               onChange={handleChange}
               required
               min="1"
-              placeholder="np. 50"
+              placeholder={t('modals.totalSpotsPlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -400,7 +397,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '12px'
             }}>
-              💰 Cennik
+              {t('modals.pricingTitle')}
             </div>
 
             {/* Cena za godzinę */}
@@ -412,7 +409,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za godzinę (zł) <span style={{ color: '#EF4444' }}>*</span>
+                {t('modals.pricePerHourLabel')} <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 type="number"
@@ -422,7 +419,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 required
                 min="0"
                 step="0.01"
-                placeholder="np. 5.00"
+                placeholder={t('modals.pricePerHourPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -443,7 +440,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za dzień (zł)
+                {t('modals.pricePerDayLabel')}
               </label>
               <input
                 type="number"
@@ -452,7 +449,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="np. 40.00"
+                placeholder={t('modals.pricePerDayPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -473,7 +470,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za tydzień (zł)
+                {t('modals.pricePerWeekLabel')}
               </label>
               <input
                 type="number"
@@ -482,7 +479,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="np. 200.00"
+                placeholder={t('modals.pricePerWeekPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -503,7 +500,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za miesiąc (zł)
+                {t('modals.pricePerMonthLabel')}
               </label>
               <input
                 type="number"
@@ -512,7 +509,7 @@ function AddParkingModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="np. 600.00"
+                placeholder={t('modals.pricePerMonthPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
