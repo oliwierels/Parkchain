@@ -6,17 +6,17 @@ import pl from './locales/pl.json';
 import en from './locales/en.json';
 
 i18n
-  .use(LanguageDetector) // Automatyczne wykrywanie języka przeglądarki
+  .use(LanguageDetector) // Auto-detect browser language
   .use(initReactI18next)
   .init({
     resources: {
       pl: { translation: pl },
       en: { translation: en }
     },
-    fallbackLng: 'pl', // Domyślny język
-    lng: localStorage.getItem('language') || 'pl', // Przywróć zapisany język
+    fallbackLng: 'en', // Default language
+    lng: localStorage.getItem('language') || 'en', // Restore saved language
     interpolation: {
-      escapeValue: false // React już zabezpiecza przed XSS
+      escapeValue: false // React already protects against XSS
     },
     detection: {
       order: ['localStorage', 'navigator'],
