@@ -16,9 +16,17 @@ import {
   FaChargingStation,
   FaStar,
   FaCoins,
-  FaWallet
+  FaWallet,
+  FaTrophy,
+  FaMedal,
+  FaBuilding,
+  FaBolt
 } from 'react-icons/fa';
 import { Card, Button, Avatar, Badge, SkeletonProfile } from '../components/ui';
+import AchievementsPage from './AchievementsPage';
+import BadgesPage from './BadgesPage';
+import InstitutionalOperatorDashboard from './InstitutionalOperatorDashboard';
+import AdvancedGatewayDashboard from './AdvancedGatewayDashboard';
 
 function ProfilePage() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -87,6 +95,10 @@ function ProfilePage() {
 
   const menuItems = [
     { id: 'profile', label: t('profilePage.profile'), icon: FaUser },
+    { id: 'achievements', label: t('profilePage.achievements') || 'Achievements', icon: FaTrophy },
+    { id: 'badges', label: t('profilePage.badges') || 'Badges', icon: FaMedal },
+    { id: 'operator', label: t('profilePage.operator') || 'Operator', icon: FaBuilding },
+    { id: 'gateway', label: t('profilePage.gateway') || 'Gateway Pro', icon: FaBolt },
     { id: 'security', label: t('profilePage.security'), icon: FaShieldAlt },
     { id: 'notifications', label: t('profilePage.notifications'), icon: FaBell },
     { id: 'billing', label: t('profilePage.billing'), icon: FaCreditCard },
@@ -360,6 +372,58 @@ function ProfilePage() {
                       </motion.div>
                     </>
                   )}
+                </motion.div>
+              )}
+
+              {/* Achievements Tab */}
+              {activeTab === 'achievements' && (
+                <motion.div
+                  key="achievements"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AchievementsPage />
+                </motion.div>
+              )}
+
+              {/* Badges Tab */}
+              {activeTab === 'badges' && (
+                <motion.div
+                  key="badges"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <BadgesPage />
+                </motion.div>
+              )}
+
+              {/* Operator Tab */}
+              {activeTab === 'operator' && (
+                <motion.div
+                  key="operator"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <InstitutionalOperatorDashboard />
+                </motion.div>
+              )}
+
+              {/* Gateway Pro Tab */}
+              {activeTab === 'gateway' && (
+                <motion.div
+                  key="gateway"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AdvancedGatewayDashboard />
                 </motion.div>
               )}
 
