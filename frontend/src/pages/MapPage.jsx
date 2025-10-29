@@ -16,6 +16,7 @@ import AddChargingStationModal from '../components/AddChargingStationModal';
 import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import AdvancedFilters from '../components/AdvancedFilters';
 import ParkingSuccessAnimation from '../components/ParkingSuccessAnimation';
+import RatingStars from '../components/RatingStars';
 import { useAuth } from '../context/AuthContext';
 import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
 import {
@@ -1282,6 +1283,25 @@ function MapPage() {
             <FaMapMarkerAlt style={{ fontSize: '11px', color: '#9CA3AF' }} />
             <span>{parking.address}</span>
           </div>
+
+          {/* Rating Display */}
+          {parking.average_rating > 0 && (
+            <div style={{
+              marginTop: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <RatingStars rating={parking.average_rating || 0} size="sm" />
+              <span style={{
+                fontSize: '12px',
+                color: '#6B7280',
+                fontWeight: '500'
+              }}>
+                ({parking.total_reviews || 0})
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -1487,7 +1507,7 @@ function MapPage() {
         <div style={{
           fontSize: '13px',
           color: '#6b7280',
-          margin: '0 0 16px 0',
+          margin: '0 0 12px 0',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -1498,6 +1518,28 @@ function MapPage() {
           <FaMapMarkerAlt style={{ fontSize: '14px', color: '#F59E0B', flexShrink: 0 }} />
           <span>{station.address}</span>
         </div>
+
+        {/* Rating Display */}
+        {station.average_rating > 0 && (
+          <div style={{
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            background: 'rgba(245, 158, 11, 0.05)',
+            borderRadius: '8px'
+          }}>
+            <RatingStars rating={station.average_rating || 0} size="sm" />
+            <span style={{
+              fontSize: '12px',
+              color: '#6B7280',
+              fontWeight: '500'
+            }}>
+              ({station.total_reviews || 0})
+            </span>
+          </div>
+        )}
 
         {/* Status dostępności */}
         <div style={{

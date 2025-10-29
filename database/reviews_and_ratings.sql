@@ -117,8 +117,8 @@ ALTER TABLE parking_lots
 ADD COLUMN IF NOT EXISTS average_rating DECIMAL(3,2) DEFAULT 0.0,
 ADD COLUMN IF NOT EXISTS total_reviews INTEGER DEFAULT 0;
 
--- Add rating statistics columns to ev_chargers table
-ALTER TABLE ev_chargers
+-- Add rating statistics columns to charging_stations table
+ALTER TABLE charging_stations
 ADD COLUMN IF NOT EXISTS average_rating DECIMAL(3,2) DEFAULT 0.0,
 ADD COLUMN IF NOT EXISTS total_reviews INTEGER DEFAULT 0;
 
@@ -137,7 +137,7 @@ BEGIN
         IF target_table = 'parking_lot' THEN
             target_table := 'parking_lots';
         ELSIF target_table = 'ev_charger' THEN
-            target_table := 'ev_chargers';
+            target_table := 'charging_stations';
         END IF;
 
         -- Calculate new statistics
@@ -156,7 +156,7 @@ BEGIN
         IF target_table = 'parking_lot' THEN
             target_table := 'parking_lots';
         ELSIF target_table = 'ev_charger' THEN
-            target_table := 'ev_chargers';
+            target_table := 'charging_stations';
         END IF;
 
         -- Calculate new statistics
