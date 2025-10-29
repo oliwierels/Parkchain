@@ -119,10 +119,10 @@ function MapPickerModal({ onClose, onSelect }) {
         boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
       }}>
         <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
-          Wybierz lokalizację z mapy
+          {t('modals.mapPicker.title')}
         </h2>
         <p style={{ color: '#6b7280', marginBottom: '15px' }}>
-          Kliknij na mapie, aby ustawić pinezkę w miejscu parkingu.
+          {t('modals.mapPicker.instruction')}
         </p>
         
         {/* Kontener mapy */}

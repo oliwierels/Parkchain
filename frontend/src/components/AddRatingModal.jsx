@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -15,7 +17,7 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
     e.preventDefault();
 
     if (rating === 0) {
-      setError('Wybierz ocenę (1-5 gwiazdek)');
+      setError(t('reviews.selectRating'));
       return;
     }
 
@@ -42,7 +44,7 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Nie udało się dodać oceny');
+        throw new Error(errorData.error || t('reviews.addRatingError'));
       }
 
       setSuccess(true);
@@ -52,8 +54,8 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
       }, 1500);
 
     } catch (err) {
-      console.error('Błąd dodawania oceny:', err);
-      setError(err.message || 'Nie udało się dodać oceny');
+      console.error(t('reviews.addingRatingError'), err);
+      setError(err.message || t('reviews.addRatingError'));
     } finally {
       setLoading(false);
     }
@@ -82,15 +84,15 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
               className="text-center py-8"
             >
               <FaCheckCircle className="text-green-400 text-6xl mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">Dziękujemy!</h3>
-              <p className="text-gray-300">Twoja ocena została zapisana</p>
+              <h3 className="text-2xl font-bold text-white mb-2">{t('reviews.thankYou')}</h3>
+              <p className="text-gray-300">{t('reviews.ratingSubmitted')}</p>
             </motion.div>
           ) : (
             <>
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-white">
-                  Oceń {type === 'parking' ? 'parking' : 'ładowarkę'}
+                  {type === 'parking' ? t('reviews.rateParking') : t('reviews.rateCharger')}
                 </h2>
                 <button
                   onClick={onClose}
@@ -112,7 +114,7 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
                 {/* Star Rating */}
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-300 mb-3">
-                    Twoja ocena
+                    {t('reviews.yourReview')}
                   </label>
                   <div className="flex gap-2 justify-center">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -136,11 +138,11 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
                   </div>
                   {rating > 0 && (
                     <p className="text-center text-gray-400 mt-2 text-sm">
-                      {rating === 1 && 'Bardzo źle'}
-                      {rating === 2 && 'Źle'}
-                      {rating === 3 && 'Średnio'}
-                      {rating === 4 && 'Dobrze'}
-                      {rating === 5 && 'Świetnie!'}
+                      {rating === 1 && t('reviews.ratings.veryBad')}
+                      {rating === 2 && t('reviews.ratings.bad')}
+                      {rating === 3 && t('reviews.ratings.average')}
+                      {rating === 4 && t('reviews.ratings.good')}
+                      {rating === 5 && t('reviews.ratings.excellent')}
                     </p>
                   )}
                 </div>
@@ -148,12 +150,12 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
                 {/* Comment */}
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-300 mb-2">
-                    Komentarz (opcjonalnie)
+                    {t('reviews.commentOptional')}
                   </label>
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Opisz swoje doświadczenie..."
+                    placeholder={t('reviews.describeExperience')}
                     rows={4}
                     className="w-full px-4 py-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
                   />
@@ -167,7 +169,7 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
                     disabled={loading}
                     className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all disabled:opacity-50"
                   >
-                    Anuluj
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -177,12 +179,12 @@ function AddRatingModal({ type, itemId, itemName, onClose, onSuccess }) {
                     {loading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Zapisywanie...
+                        {t('reviews.saving')}
                       </>
                     ) : (
                       <>
                         <FaStar />
-                        Dodaj ocenę
+                        {t('reviews.addReview')}
                       </>
                     )}
                   </button>
