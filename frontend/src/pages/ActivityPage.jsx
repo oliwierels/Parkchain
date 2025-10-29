@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaHistory, FaParking, FaBolt, FaStar, FaHeart, FaTrophy } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 
 const ActivityPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activities, setActivities] = useState([]);
   const [stats, setStats] = useState(null);
@@ -76,20 +78,7 @@ const ActivityPage = () => {
   };
 
   const getActivityText = (type) => {
-    const textMap = {
-      reservation_created: 'Utworzono rezerwację',
-      reservation_cancelled: 'Anulowano rezerwację',
-      charging_session_started: 'Rozpoczęto ładowanie',
-      charging_session_ended: 'Zakończono ładowanie',
-      review_posted: 'Dodano recenzję',
-      favorite_added: 'Dodano do ulubionych',
-      points_earned: 'Zdobyto punkty',
-      badge_unlocked: 'Odblokowano odznakę',
-      ticket_created: 'Utworzono zgłoszenie',
-      marketplace_purchase: 'Dokonano zakupu',
-      profile_updated: 'Zaktualizowano profil'
-    };
-    return textMap[type] || type;
+    return t(`activity.types.${type}`) || type;
   };
 
   return (
@@ -101,25 +90,25 @@ const ActivityPage = () => {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <FaHistory className="text-4xl text-blue-600" />
-              <h1 className="text-4xl font-bold">Moja Aktywność</h1>
+              <h1 className="text-4xl font-bold">{t('activity.title')}</h1>
             </div>
-            <p className="text-gray-600">Historia Twoich działań w Parkchain</p>
+            <p className="text-gray-600">{t('activity.historyDescription')}</p>
           </div>
 
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-sm font-semibold text-gray-600 mb-2">Łączna aktywność</h3>
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">{t('activity.stats.totalActivity')}</h3>
                 <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
               </div>
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-sm font-semibold text-gray-600 mb-2">Rezerwacje</h3>
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">{t('activity.stats.reservations')}</h3>
                 <p className="text-3xl font-bold text-blue-600">
                   {(stats.byType?.reservation_created || 0)}
                 </p>
               </div>
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-sm font-semibold text-gray-600 mb-2">Sesje ładowania</h3>
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">{t('activity.stats.chargingSessions')}</h3>
                 <p className="text-3xl font-bold text-green-600">
                   {(stats.byType?.charging_session_started || 0)}
                 </p>
@@ -134,13 +123,13 @@ const ActivityPage = () => {
           ) : activities.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-12 text-center">
               <FaHistory className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-2xl font-semibold mb-2">Brak aktywności</h3>
-              <p className="text-gray-600">Zacznij korzystać z Parkchain, aby zobaczyć swoją aktywność</p>
+              <h3 className="text-2xl font-semibold mb-2">{t('activity.noActivity')}</h3>
+              <p className="text-gray-600">{t('activity.startUsing')}</p>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Ostatnia aktywność</h2>
+                <h2 className="text-2xl font-bold mb-4">{t('activity.recentActivity')}</h2>
                 <div className="space-y-4">
                   {activities.map((activity) => (
                     <div key={activity.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">

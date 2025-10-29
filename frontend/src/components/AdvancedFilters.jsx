@@ -13,8 +13,10 @@ import {
   FaSave,
   FaTrash
 } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     searchQuery: '',
     priceMin: '',
@@ -171,7 +173,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
 
   const savePreset = () => {
     if (!presetName.trim()) {
-      alert('Podaj nazwę presetu');
+      alert(t('filters.enterPresetName'));
       return;
     }
 
@@ -233,11 +235,11 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <FaFilter />
-                  Zaawansowane Filtry
+                  {t('filters.title')}
                 </h2>
                 {activeFiltersCount > 0 && (
                   <p className="text-sm text-indigo-200 mt-1">
-                    {activeFiltersCount} aktywnych filtrów
+                    {activeFiltersCount} {t('filters.activeFilters')}
                   </p>
                 )}
               </div>
@@ -256,13 +258,13 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <FaSearch className="inline mr-2" />
-                Szukaj
+                {t('filters.searchLabel')}
               </label>
               <input
                 type="text"
                 value={filters.searchQuery}
                 onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
-                placeholder="Nazwa parkingu, adres, miasto..."
+                placeholder={t('filters.searchPlaceholder')}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
@@ -271,21 +273,21 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <FaDollarSign className="inline mr-2" />
-                Zakres cen (PLN/godz)
+                {t('filters.priceRangeLabel')}
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="number"
                   value={filters.priceMin}
                   onChange={(e) => handleFilterChange('priceMin', e.target.value)}
-                  placeholder="Min"
+                  placeholder={t('filters.priceMin')}
                   className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
                 <input
                   type="number"
                   value={filters.priceMax}
                   onChange={(e) => handleFilterChange('priceMax', e.target.value)}
-                  placeholder="Max"
+                  placeholder={t('filters.priceMax')}
                   className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
@@ -295,33 +297,33 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <FaParking className="inline mr-2" />
-                Typ parkingu
+                {t('filters.parkingTypeLabel')}
               </label>
               <select
                 value={filters.parkingType}
                 onChange={(e) => handleFilterChange('parkingType', e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="all">Wszystkie typy</option>
-                <option value="covered">Zadaszony</option>
-                <option value="outdoor">Odkryty</option>
-                <option value="ev_charging">Z ładowarką EV</option>
+                <option value="all">{t('filters.allTypes')}</option>
+                <option value="covered">{t('filters.covered')}</option>
+                <option value="outdoor">{t('filters.outdoor')}</option>
+                <option value="ev_charging">{t('filters.withEVCharger')}</option>
               </select>
             </div>
 
             {/* Availability */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Dostępność
+                {t('filters.availabilityLabel')}
               </label>
               <select
                 value={filters.availability}
                 onChange={(e) => handleFilterChange('availability', e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="all">Wszystkie</option>
-                <option value="available">Dostępne teraz</option>
-                <option value="full">Zajęte</option>
+                <option value="all">{t('filters.all')}</option>
+                <option value="available">{t('filters.availableNow')}</option>
+                <option value="full">{t('filters.occupied')}</option>
               </select>
             </div>
 
@@ -330,13 +332,13 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <FaMapMarkerAlt className="inline mr-2" />
-                  Odległość max (km)
+                  {t('filters.maxDistanceLabel')}
                 </label>
                 <input
                   type="number"
                   value={filters.distanceMax}
                   onChange={(e) => handleFilterChange('distanceMax', e.target.value)}
-                  placeholder="np. 5"
+                  placeholder={t('filters.distancePlaceholder')}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
@@ -346,7 +348,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <FaStar className="inline mr-2 text-yellow-500" />
-                Minimalna ocena
+                {t('filters.minRatingLabel')}
               </label>
               <div className="flex gap-2">
                 {[0, 1, 2, 3, 4, 5].map((rating) => (
@@ -359,7 +361,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    {rating === 0 ? 'Wszystkie' : `${rating}+`}
+                    {rating === 0 ? t('filters.all') : `${rating}+`}
                   </button>
                 ))}
               </div>
@@ -368,17 +370,17 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             {/* Sort By */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Sortuj według
+                {t('filters.sortByLabel')}
               </label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="distance">Odległość (najbliższe)</option>
-                <option value="price-low">Cena (najtańsze)</option>
-                <option value="price-high">Cena (najdroższe)</option>
-                <option value="rating">Ocena (najwyższe)</option>
+                <option value="distance">{t('filters.sortDistance')}</option>
+                <option value="price-low">{t('filters.sortPriceLow')}</option>
+                <option value="price-high">{t('filters.sortPriceHigh')}</option>
+                <option value="rating">{t('filters.sortRating')}</option>
               </select>
             </div>
 
@@ -386,7 +388,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
             {savedPresets.length > 0 && (
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Zapisane presety
+                  {t('filters.savedPresets')}
                 </label>
                 <div className="space-y-2">
                   {savedPresets.map((preset) => (
@@ -419,7 +421,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
                 className="w-full px-4 py-3 bg-green-100 text-green-700 rounded-lg font-semibold hover:bg-green-200 transition-colors flex items-center justify-center gap-2"
               >
                 <FaSave />
-                Zapisz obecne filtry jako preset
+                {t('filters.saveCurrentFilters')}
               </button>
             ) : (
               <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
@@ -427,7 +429,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
                   type="text"
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
-                  placeholder="Nazwa presetu..."
+                  placeholder={t('filters.presetNamePlaceholder')}
                   className="w-full px-4 py-2 border-2 border-green-300 rounded-lg mb-2"
                 />
                 <div className="flex gap-2">
@@ -435,7 +437,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
                     onClick={savePreset}
                     className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700"
                   >
-                    Zapisz
+                    {t('filters.savePreset')}
                   </button>
                   <button
                     onClick={() => {
@@ -444,7 +446,7 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
                     }}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
                   >
-                    Anuluj
+                    {t('filters.cancelPreset')}
                   </button>
                 </div>
               </div>
@@ -457,13 +459,13 @@ function AdvancedFilters({ parkings, onFilterChange, isOpen, onClose }) {
               onClick={resetFilters}
               className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
             >
-              Resetuj
+              {t('filters.reset')}
             </button>
             <button
               onClick={onClose}
               className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
             >
-              Zastosuj filtry
+              {t('filters.applyFilters')}
             </button>
           </div>
         </motion.div>
