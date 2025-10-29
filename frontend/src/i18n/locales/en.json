@@ -194,6 +194,21 @@
       "otherOptions": "Other options",
       "hours": "hrs",
       "days": "days"
+    },
+    "success": {
+      "title": "Reservation Confirmed!",
+      "subtitle": "Your parking spot has been reserved",
+      "from": "From",
+      "to": "To",
+      "noDate": "No date",
+      "licensePlate": "License Plate",
+      "cost": "Cost",
+      "showQR": "Show QR Code",
+      "close": "Close",
+      "findDetails": "You can find reservation details in the",
+      "myReservationsSection": "My Reservations",
+      "section": "section",
+      "parkingAddress": "Parking Address"
     }
   },
   "parking": {
