@@ -38,7 +38,6 @@ function ProfilePage() {
   const [stats, setStats] = useState({
     reservations: 0,
     chargingSessions: 0,
-    ratingsGiven: 0,
     dcpPoints: 0
   });
 
@@ -63,7 +62,6 @@ function ProfilePage() {
         setStats({
           reservations: resData.reservations?.length || 0,
           chargingSessions: chargeData.sessions?.length || 0,
-          ratingsGiven: 0, // TODO: implement rating count API
           dcpPoints: 0 // TODO: implement points API
         });
       } catch (err) {
@@ -306,20 +304,6 @@ function ProfilePage() {
                         </div>
                         <p className="text-3xl font-bold text-white mb-1">{stats.chargingSessions}</p>
                         <p className="text-gray-400 text-sm">Ładowań</p>
-                      </Card>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <Card variant="glass" padding="lg" className="text-center">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                          <FaStar className="text-white text-2xl" />
-                        </div>
-                        <p className="text-3xl font-bold text-white mb-1">{stats.ratingsGiven}</p>
-                        <p className="text-gray-400 text-sm">Ocen</p>
                       </Card>
                     </motion.div>
 

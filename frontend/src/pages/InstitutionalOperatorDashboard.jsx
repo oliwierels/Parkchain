@@ -186,12 +186,6 @@ const InstitutionalOperatorDashboard = () => {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-gray-400 text-sm">Operator Rating</p>
-                <p className="text-yellow-400 text-2xl font-bold">
-                  {operatorProfile.operator_rating || '0.0'} ⭐
-                </p>
-              </div>
             </div>
           </motion.div>
         )}
