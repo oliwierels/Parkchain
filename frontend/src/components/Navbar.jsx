@@ -135,39 +135,6 @@ function Navbar() {
                   <FaGem />
                   <span>DCP Tokens</span>
                 </NavLink>
-                <NavLink
-                  to="/institutional-operator"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-orange-600',
-                    gradient: 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
-                  })}
-                  title="🏢 Institutional Operator Dashboard"
-                >
-                  <FaLandmark />
-                  <span>Operator</span>
-                </NavLink>
-                <NavLink
-                  to="/badges"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-amber-600',
-                    gradient: 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700'
-                  })}
-                  title="Twoje odznaki"
-                >
-                  <FaMedal />
-                  <span>Badges</span>
-                </NavLink>
-                <NavLink
-                  to="/achievements"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-purple-600',
-                    gradient: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                  })}
-                  title="Achievements & Rewards"
-                >
-                  <FaTrophy />
-                  <span>Achievements</span>
-                </NavLink>
               </div>
 
               {/* Divider */}
@@ -183,17 +150,6 @@ function Navbar() {
                 <NavLink to="/analytics" className={getLinkClasses} title="Analytics i statystyki">
                   <FaChartLine />
                   <span>Analytics</span>
-                </NavLink>
-                <NavLink
-                  to="/advanced-gateway"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-blue-600',
-                    gradient: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                  })}
-                  title="Advanced Gateway - Premium Features & Analytics"
-                >
-                  <FaRocket />
-                  <span>Gateway Pro</span>
                 </NavLink>
               </div>
             </div>
@@ -431,42 +387,6 @@ function Navbar() {
                   <FaGem />
                   <span>DCP Tokens</span>
                 </NavLink>
-                <NavLink
-                  to="/institutional-operator"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-orange-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaLandmark />
-                  <span>🏢 Institutional Operator</span>
-                </NavLink>
-                <NavLink
-                  to="/badges"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-amber-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaMedal />
-                  <span>Badges</span>
-                </NavLink>
-                <NavLink
-                  to="/achievements"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-purple-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaTrophy />
-                  <span>Achievements</span>
-                </NavLink>
               </div>
 
               {/* Management Section */}
@@ -533,18 +453,6 @@ function Navbar() {
                 >
                   <FaChartLine />
                   <span>{t('nav.analytics')}</span>
-                </NavLink>
-                <NavLink
-                  to="/advanced-gateway"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-blue-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaRocket />
-                  <span>Gateway Dashboard</span>
                 </NavLink>
               </div>
             </div>

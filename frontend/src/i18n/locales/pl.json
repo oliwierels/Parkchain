@@ -620,6 +620,8 @@
     "selectLocationOnMap": "Wybierz lokalizację na mapie, klikając na nią.",
     "reverseGeocodingError": "Nie udało się pobrać adresu dla tej lokalizacji.",
     "parkingAddedSuccess": "⚡ Parking dodany pomyślnie!",
+    "parkingAddedTitle": "Parking dodany!",
+    "parkingAddedDescription": "Twój parking jest już dostępny na mapie",
     "chargerAddedSuccess": "⚡ Ładowarka dodana pomyślnie!",
     "reportSentSuccess": "Zgłoszenie wysłane! Dzięki za pomoc w aktualizacji danych.",
     "sessionStartedSuccess": "⚡ Sesja ładowania rozpoczęta!",
