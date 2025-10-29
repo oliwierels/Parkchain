@@ -257,6 +257,17 @@
     "totalEnergy": "Całkowita energia",
     "duration": "Czas trwania",
     "cost": "Koszt",
+    "markerInfo": {
+      "type": "Typ:",
+      "power": "Moc:",
+      "connectors": "Złącza:",
+      "noInfo": "Brak info",
+      "chargerTypes": {
+        "acSlow": "AC (wolne)",
+        "dcFast": "DC Fast (szybkie)",
+        "ultraFast": "Ultra Fast (bardzo szybkie)"
+      }
+    },
     "addCharger": "Dodaj ładowarkę",
     "chargersList": "Lista moich ładowarek",
     "noChargersYet": "Nie masz jeszcze ładowarek",

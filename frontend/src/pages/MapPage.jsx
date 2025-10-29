@@ -1585,7 +1585,7 @@ function MapPage() {
               padding: '6px 0'
             }}>
               <FaChargingStation style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
-              <span><strong style={{ color: '#1F2937' }}>Typ:</strong> {station.charger_type === 'AC' ? 'AC (wolne)' : station.charger_type === 'DC_FAST' ? 'DC Fast (szybkie)' : 'Ultra Fast (bardzo szybkie)'}</span>
+              <span><strong style={{ color: '#1F2937' }}>{t('charging.markerInfo.type')}</strong> {station.charger_type === 'AC' ? t('charging.markerInfo.chargerTypes.acSlow') : station.charger_type === 'DC_FAST' ? t('charging.markerInfo.chargerTypes.dcFast') : t('charging.markerInfo.chargerTypes.ultraFast')}</span>
             </div>
             <div style={{
               display: 'flex',
@@ -1595,7 +1595,7 @@ function MapPage() {
               padding: '6px 0'
             }}>
               <FaBolt style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
-              <span><strong style={{ color: '#1F2937' }}>Moc:</strong> {station.max_power_kw} kW</span>
+              <span><strong style={{ color: '#1F2937' }}>{t('charging.markerInfo.power')}</strong> {station.max_power_kw} kW</span>
             </div>
             <div style={{
               display: 'flex',
@@ -1604,7 +1604,7 @@ function MapPage() {
               padding: '6px 0'
             }}>
               <FaPlug style={{ fontSize: '14px', color: '#3B82F6', flexShrink: 0 }} />
-              <span><strong style={{ color: '#1F2937' }}>Złącza:</strong> {station.connector_types?.join(', ') || 'Brak info'}</span>
+              <span><strong style={{ color: '#1F2937' }}>{t('charging.markerInfo.connectors')}</strong> {station.connector_types?.join(', ') || t('charging.markerInfo.noInfo')}</span>
             </div>
           </div>
         </div>

@@ -257,6 +257,17 @@
     "totalEnergy": "Total energy",
     "duration": "Duration",
     "cost": "Cost",
+    "markerInfo": {
+      "type": "Type:",
+      "power": "Power:",
+      "connectors": "Connectors:",
+      "noInfo": "No info",
+      "chargerTypes": {
+        "acSlow": "AC (slow)",
+        "dcFast": "DC Fast (fast)",
+        "ultraFast": "Ultra Fast (very fast)"
+      }
+    },
     "addCharger": "Add charger",
     "chargersList": "My chargers list",
     "noChargersYet": "You don't have any chargers yet",
