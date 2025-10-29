@@ -721,6 +721,10 @@
   "profilePage": {
     "title": "Mój Profil",
     "profile": "Profil",
+    "achievements": "Osiągnięcia",
+    "badges": "Odznaki",
+    "operator": "Operator",
+    "gateway": "Gateway Pro",
     "security": "Bezpieczeństwo",
     "notifications": "Powiadomienia",
     "billing": "Płatności",
