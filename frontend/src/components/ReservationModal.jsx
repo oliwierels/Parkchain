@@ -625,7 +625,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             onSubmit={handleDetailsSubmit}
           >
-          {/* Data i godzina rozpoczęcia */}
+          {/* Start date and time */}
           <div style={{ marginBottom: '18px' }}>
             <label style={{
               display: 'block',
@@ -677,7 +677,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Data i godzina zakończenia */}
+          {/* End date and time */}
           <div style={{ marginBottom: '18px' }}>
             <label style={{
               display: 'block',
@@ -729,7 +729,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Numer rejestracyjny */}
+          {/* License plate */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
@@ -763,7 +763,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Podsumowanie ceny */}
+          {/* Price summary */}
           {calculatingPrice && (
             <div style={{
               backgroundColor: '#f3f4f6',
@@ -779,7 +779,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
           {priceCalculation && !calculatingPrice && (
             <div style={{ marginBottom: '20px' }}>
-              {/* Cena */}
+              {/* Price */}
               <div style={{
                 backgroundColor: '#F0FDF4',
                 padding: '16px',

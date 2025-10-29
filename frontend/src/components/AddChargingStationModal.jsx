@@ -68,7 +68,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
         longitude: longitude
       };
 
-      console.log('📝 Dodawanie ładowarki:', stationData);
+      console.log('Adding charging station:', stationData);
 
       const response = await fetch('http://localhost:3000/api/charging-stations', {
         method: 'POST',
@@ -161,13 +161,13 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#10B981',
               margin: '0 0 12px 0'
             }}>
-              Ładowarka dodana!
+              {t('charging.modal.chargerAdded')}
             </h3>
             <p style={{ fontSize: '16px', color: '#6B7280', margin: '0 0 8px 0' }}>
-              Twoja stacja ładowania jest już dostępna na mapie
+              {t('charging.modal.chargerAddedDescription')}
             </p>
             <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>
-              Zamykanie...
+              {t('charging.modal.closing')}
             </p>
           </motion.div>
         ) : (
@@ -233,10 +233,10 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               {t('modals.locationLabel')}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
-              Szerokość: {latitude.toFixed(6)}
+              Latitude: {latitude.toFixed(6)}
             </div>
             <div style={{ fontSize: '13px', color: '#1F2937' }}>
-              Długość: {longitude.toFixed(6)}
+              Longitude: {longitude.toFixed(6)}
             </div>
           </div>
 
@@ -249,7 +249,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              {t('modals.chargerName')} <span style={{ color: '#EF4444' }}>*</span>
+              {t('charging.modal.name')} <span style={{ color: '#EF4444' }}>{t('charging.modal.required')}</span>
             </label>
             <input
               type="text"
@@ -257,7 +257,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="np. Moja ładowarka domowa"
+              placeholder={t('charging.modal.namePlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -278,7 +278,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Adres <span style={{ color: '#EF4444' }}>*</span>
+              {t('charging.modal.address')} <span style={{ color: '#EF4444' }}>{t('charging.modal.required')}</span>
             </label>
             <input
               type="text"
@@ -286,7 +286,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               value={formData.address}
               onChange={handleChange}
               required
-              placeholder="np. ul. Główna 1"
+              placeholder={t('charging.modal.addressPlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -307,14 +307,14 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '6px'
             }}>
-              Miasto
+              {t('charging.modal.city')}
             </label>
             <input
               type="text"
               name="city"
               value={formData.city}
               onChange={handleChange}
-              placeholder="np. Warszawa"
+              placeholder={t('charging.modal.cityPlaceholder')}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -340,7 +340,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '12px'
             }}>
-              ⚡ Specyfikacja
+              ⚡ Specification
             </div>
 
             {/* Typ ładowarki */}
@@ -352,7 +352,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '6px'
               }}>
-                Typ ładowarki <span style={{ color: '#EF4444' }}>*</span>
+                {t('charging.modal.chargerType')} <span style={{ color: '#EF4444' }}>{t('charging.modal.required')}</span>
               </label>
               <select
                 name="charger_type"
@@ -369,9 +369,9 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                   backgroundColor: 'white'
                 }}
               >
-                <option value="AC">AC (wolniejsze, domowe)</option>
-                <option value="DC_FAST">DC Fast (szybkie)</option>
-                <option value="ULTRA_FAST">Ultra Fast (bardzo szybkie)</option>
+                <option value="AC">AC (slower, home)</option>
+                <option value="DC_FAST">DC Fast (fast)</option>
+                <option value="ULTRA_FAST">Ultra Fast (very fast)</option>
               </select>
             </div>
 
@@ -384,7 +384,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '8px'
               }}>
-                Dostępne złącza
+                {t('charging.modal.connectorTypes')}
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {['Type2', 'CCS', 'CHAdeMO', 'Tesla'].map(connector => (
@@ -410,7 +410,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Moc maksymalna (kW) <span style={{ color: '#EF4444' }}>*</span>
+                {t('charging.modal.maxPower')} <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 type="number"
@@ -420,7 +420,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 required
                 min="0"
                 step="0.1"
-                placeholder="np. 22"
+                placeholder={t('charging.modal.maxPowerPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -441,7 +441,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Liczba złączy <span style={{ color: '#EF4444' }}>*</span>
+                {t('charging.modal.totalConnectors')} <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 type="number"
@@ -450,7 +450,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 required
                 min="1"
-                placeholder="np. 2"
+                placeholder={t('charging.modal.totalConnectorsPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -477,7 +477,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '12px'
             }}>
-              💰 Cennik
+              💰 Pricing
             </div>
 
             {/* Cena za kWh */}
@@ -489,7 +489,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za kWh (zł) <span style={{ color: '#EF4444' }}>*</span>
+                {t('charging.modal.pricePerKwh')} <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 type="number"
@@ -499,7 +499,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 required
                 min="0"
                 step="0.01"
-                placeholder="np. 1.50"
+                placeholder={t('charging.modal.pricePerKwhPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -520,7 +520,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Cena za minutę (zł) <span style={{ fontSize: '11px', color: '#6B7280' }}>opcjonalne</span>
+                {t('charging.modal.pricePerMinute')} <span style={{ fontSize: '11px', color: '#6B7280' }}>{t('charging.modal.optional')}</span>
               </label>
               <input
                 type="number"
@@ -529,7 +529,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="np. 0.10"
+                placeholder={t('charging.modal.pricePerMinutePlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -550,7 +550,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 color: '#4B5563',
                 marginBottom: '4px'
               }}>
-                Opłata za sesję (zł) <span style={{ fontSize: '11px', color: '#6B7280' }}>opcjonalne</span>
+                {t('charging.modal.pricePerSession')} <span style={{ fontSize: '11px', color: '#6B7280' }}>{t('charging.modal.optional')}</span>
               </label>
               <input
                 type="number"
@@ -559,7 +559,7 @@ function AddChargingStationModal({ latitude, longitude, onClose, onSuccess }) {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="np. 2.00"
+                placeholder={t('charging.modal.pricePerSessionPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px',
