@@ -620,6 +620,8 @@
     "selectLocationOnMap": "Select a location on the map by clicking on it.",
     "reverseGeocodingError": "Failed to get address for this location.",
     "parkingAddedSuccess": "⚡ Parking added successfully!",
+    "parkingAddedTitle": "Parking added!",
+    "parkingAddedDescription": "Your parking is now available on the map",
     "chargerAddedSuccess": "⚡ Charger added successfully!",
     "reportSentSuccess": "Report sent! Thank you for helping update the data.",
     "sessionStartedSuccess": "⚡ Charging session started!",

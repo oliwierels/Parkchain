@@ -1,9 +1,11 @@
 // frontend/src/components/ParkingSuccessAnimation.jsx
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaParking, FaStar, FaCheckCircle } from 'react-icons/fa';
 
 function ParkingSuccessAnimation({ show, onComplete }) {
+  const { t } = useTranslation();
   const [particles, setParticles] = useState([]);
 
   useEffect(() => {
@@ -138,7 +140,7 @@ function ParkingSuccessAnimation({ show, onComplete }) {
               transition={{ delay: 0.6, duration: 0.5 }}
               className="text-4xl font-bold text-white drop-shadow-lg"
             >
-              Parking dodany! 🎉
+              {t('messages.parkingAddedTitle')} 🎉
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
@@ -146,7 +148,7 @@ function ParkingSuccessAnimation({ show, onComplete }) {
               transition={{ delay: 0.8 }}
               className="text-lg text-gray-200 mt-2 drop-shadow"
             >
-              Twój parking jest już dostępny na mapie
+              {t('messages.parkingAddedDescription')}
             </motion.p>
           </motion.div>
 
