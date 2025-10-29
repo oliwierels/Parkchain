@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion';
 import { FaCheckCircle, FaQrcode, FaCalendar, FaParking, FaTimes } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
+  const { t, i18n } = useTranslation();
   const [confetti, setConfetti] = useState([]);
 
   useEffect(() => {
@@ -23,7 +25,8 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language === 'pl' ? 'pl-PL' : 'en-US';
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -88,10 +91,10 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
             transition={{ delay: 0.3 }}
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-              Reservation Confirmed!
+              {t('reservations.success.title')}
             </h2>
             <p className="text-gray-600 text-center mb-6">
-              Your parking spot has been reserved
+              {t('reservations.success.subtitle')}
             </p>
 
             {/* Reservation Details */}
@@ -105,7 +108,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                     {reservation?.parking_lot_name || 'Parking'}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {reservation?.address || 'Parking Address'}
+                    {reservation?.address || t('reservations.success.parkingAddress')}
                   </p>
                 </div>
               </div>
@@ -114,9 +117,9 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaCalendar className="text-indigo-500 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500">From</p>
+                    <p className="text-xs text-gray-500">{t('reservations.success.from')}</p>
                     <p className="font-medium text-sm">
-                      {reservation?.start_time ? formatDate(reservation.start_time) : 'No date'}
+                      {reservation?.start_time ? formatDate(reservation.start_time) : t('reservations.success.noDate')}
                     </p>
                   </div>
                 </div>
@@ -124,9 +127,9 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaCalendar className="text-indigo-500 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500">To</p>
+                    <p className="text-xs text-gray-500">{t('reservations.success.to')}</p>
                     <p className="font-medium text-sm">
-                      {reservation?.end_time ? formatDate(reservation.end_time) : 'No date'}
+                      {reservation?.end_time ? formatDate(reservation.end_time) : t('reservations.success.noDate')}
                     </p>
                   </div>
                 </div>
@@ -135,7 +138,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   <div className="flex items-center gap-3 text-gray-700 pt-3 border-t border-indigo-200">
                     <span className="text-lg">🚗</span>
                     <div>
-                      <p className="text-xs text-gray-500">License Plate</p>
+                      <p className="text-xs text-gray-500">{t('reservations.success.licensePlate')}</p>
                       <p className="font-bold text-lg tracking-wider">
                         {reservation.license_plate}
                       </p>
@@ -147,7 +150,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   <div className="flex items-center gap-3 text-gray-700 pt-3 border-t border-indigo-200">
                     <span className="text-xl">💰</span>
                     <div>
-                      <p className="text-xs text-gray-500">Cost</p>
+                      <p className="text-xs text-gray-500">{t('reservations.success.cost')}</p>
                       <p className="font-bold text-2xl text-indigo-600">
                         {reservation.price} PLN
                       </p>
@@ -167,7 +170,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
                 >
                   <FaQrcode className="text-xl" />
-                  Show QR Code
+                  {t('reservations.success.showQR')}
                 </motion.button>
               )}
 
@@ -177,15 +180,16 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 onClick={onClose}
                 className="w-full px-6 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
               >
-                Close
+                {t('reservations.success.close')}
               </motion.button>
             </div>
 
             {/* Info */}
             <div className="mt-6 text-center text-xs text-gray-500">
               <p>
-                You can find reservation details in the{' '}
-                <span className="font-semibold text-indigo-600">My Reservations</span> section
+                {t('reservations.success.findDetails')}{' '}
+                <span className="font-semibold text-indigo-600">{t('reservations.success.myReservationsSection')}</span>
+                {t('reservations.success.section') && ` ${t('reservations.success.section')}`}
               </p>
             </div>
           </motion.div>

@@ -194,6 +194,21 @@
       "otherOptions": "Inne opcje",
       "hours": "godz",
       "days": "dni"
+    },
+    "success": {
+      "title": "Rezerwacja potwierdzona!",
+      "subtitle": "Twoje miejsce parkingowe zostało zarezerwowane",
+      "from": "Od",
+      "to": "Do",
+      "noDate": "Brak daty",
+      "licensePlate": "Numer rejestracyjny",
+      "cost": "Koszt",
+      "showQR": "Pokaż kod QR",
+      "close": "Zamknij",
+      "findDetails": "Szczegóły rezerwacji znajdziesz w sekcji",
+      "myReservationsSection": "Moje Rezerwacje",
+      "section": "",
+      "parkingAddress": "Adres parkingu"
     }
   },
   "parking": {
