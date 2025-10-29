@@ -8,8 +8,6 @@ import LanguageSwitcher from './LanguageSwitcher';
 import {
   FaHome,
   FaMap,
-  FaBolt,
-  FaGem,
   FaMedal,
   FaParking,
   FaChartLine,
@@ -69,13 +67,6 @@ function Navbar() {
       : 'text-gray-300 hover:text-indigo-400 hover:bg-gray-800/30 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2';
   };
 
-  const getFeaturedLinkClasses = (colors) => ({ isActive }) => {
-    if (isActive) {
-      return `${colors.active} text-white font-bold px-3 py-2 rounded-lg text-sm flex items-center gap-2 shadow-lg transform scale-105 transition-all`;
-    }
-    return `${colors.gradient} text-white hover:shadow-lg hover:scale-105 px-3 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2`;
-  };
-
   return (
     <nav className="bg-gray-900 border-b border-gray-700 shadow-lg sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -105,35 +96,6 @@ function Navbar() {
                 <NavLink to="/map" className={getLinkClasses} title={t('nav.map')}>
                   <FaMap />
                   <span>{t('nav.map')}</span>
-                </NavLink>
-              </div>
-
-              {/* Divider */}
-              <div className="h-8 w-px bg-gray-700 mx-2"></div>
-
-              {/* Featured Links Group */}
-              <div className="flex items-center gap-1 mr-2">
-                <NavLink
-                  to="/live-feed"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-purple-600',
-                    gradient: 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-                  })}
-                  title="Live feed aktywności"
-                >
-                  <FaBolt />
-                  <span>Live Feed</span>
-                </NavLink>
-                <NavLink
-                  to="/marketplace"
-                  className={getFeaturedLinkClasses({
-                    active: 'bg-green-600',
-                    gradient: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                  })}
-                  title="Marketplace DCP tokenów"
-                >
-                  <FaGem />
-                  <span>DCP Tokens</span>
                 </NavLink>
               </div>
 
@@ -355,37 +317,6 @@ function Navbar() {
                 >
                   <FaMap />
                   <span>{t('nav.map')}</span>
-                </NavLink>
-              </div>
-
-              {/* Featured Section */}
-              <div className="mb-3">
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">
-                  {t('nav.featuredSection')}
-                </div>
-                <NavLink
-                  to="/live-feed"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-purple-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg'
-                      : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all'
-                  }
-                >
-                  <FaBolt />
-                  <span>Live Feed</span>
-                </NavLink>
-                <NavLink
-                  to="/marketplace"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'bg-green-600 text-white font-bold flex items-center gap-3 px-3 py-2.5 rounded-lg text-base shadow-lg mt-1'
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-bold transition-all mt-1'
-                  }
-                >
-                  <FaGem />
-                  <span>DCP Tokens</span>
                 </NavLink>
               </div>
 
