@@ -20,13 +20,15 @@ import {
   FaTrophy,
   FaMedal,
   FaBuilding,
-  FaBolt
+  FaBolt,
+  FaWarehouse
 } from 'react-icons/fa';
 import { Card, Button, Avatar, Badge, SkeletonProfile } from '../components/ui';
 import AchievementsPage from './AchievementsPage';
 import BadgesPage from './BadgesPage';
 import InstitutionalOperatorDashboard from './InstitutionalOperatorDashboard';
 import AdvancedGatewayDashboard from './AdvancedGatewayDashboard';
+import ParkingMarketplacePage from './ParkingMarketplacePage';
 
 function ProfilePage() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -97,6 +99,7 @@ function ProfilePage() {
     { id: 'profile', label: t('profilePage.profile'), icon: FaUser },
     { id: 'achievements', label: t('profilePage.achievements') || 'Achievements', icon: FaTrophy },
     { id: 'badges', label: t('profilePage.badges') || 'Badges', icon: FaMedal },
+    { id: 'parkfi', label: t('profilePage.parkfi') || '🅿️ ParkFi', icon: FaWarehouse },
     { id: 'operator', label: t('profilePage.operator') || 'Operator', icon: FaBuilding },
     { id: 'gateway', label: t('profilePage.gateway') || 'Gateway Pro', icon: FaBolt },
     { id: 'security', label: t('profilePage.security'), icon: FaShieldAlt },
@@ -398,6 +401,19 @@ function ProfilePage() {
                   transition={{ duration: 0.3 }}
                 >
                   <BadgesPage />
+                </motion.div>
+              )}
+
+              {/* ParkFi Tab */}
+              {activeTab === 'parkfi' && (
+                <motion.div
+                  key="parkfi"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ParkingMarketplacePage />
                 </motion.div>
               )}
 
