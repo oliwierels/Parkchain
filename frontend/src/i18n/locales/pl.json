@@ -576,6 +576,10 @@
   "modals": {
     "addNewParking": "Dodaj nowy parking",
     "addChargingStation": "⚡ Dodaj ładowarkę EV",
+    "clickMapToAddParking": "Kliknij na mapę, aby dodać parking",
+    "clickMapToAddCharger": "Kliknij na mapę, aby dodać ładowarkę",
+    "cancelAddParking": "Anuluj dodawanie parkingu",
+    "cancelAddCharger": "Anuluj dodawanie ładowarki",
     "editReview": "Edytuj recenzję",
     "addReview": "Dodaj recenzję",
     "reviewFor": "Recenzja dla:",
