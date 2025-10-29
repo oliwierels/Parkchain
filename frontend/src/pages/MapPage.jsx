@@ -17,6 +17,7 @@ import StartChargingSessionModal from '../components/StartChargingSessionModal';
 import AdvancedFilters from '../components/AdvancedFilters';
 import ParkingSuccessAnimation from '../components/ParkingSuccessAnimation';
 import RatingStars from '../components/RatingStars';
+import AddRatingModal from '../components/AddRatingModal';
 import { useAuth } from '../context/AuthContext';
 import { useParkingFeed, useChargingFeed } from '../hooks/useWebSocket';
 import {
@@ -241,6 +242,10 @@ function MapPage() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [filteredParkings, setFilteredParkings] = useState([]);
 
+  // Rating modal
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState(null); // { type: 'parking'|'charging', id, name }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -337,6 +342,27 @@ function MapPage() {
     console.log('🎯 Kliknięto rezerwuj dla:', parking.name);
     setSelectedParking(parking);
     setShowReservationModal(true);
+  };
+
+  const handleRateClick = (type, id, name) => {
+    console.log('⭐ Kliknięto oceń:', type, id, name);
+    setRatingTarget({ type, id, name });
+    setShowRatingModal(true);
+  };
+
+  const handleRatingSuccess = async () => {
+    console.log('✅ Ocena dodana pomyślnie, odświeżam dane...');
+    // Odśwież dane parkingów i ładowarek
+    try {
+      const parkingsData = await parkingAPI.getAllParkings();
+      setParkings(parkingsData);
+
+      const response = await fetch('http://localhost:3000/api/charging-stations');
+      const chargingData = await response.json();
+      setChargingStations(chargingData.stations || []);
+    } catch (err) {
+      console.error('Błąd odświeżania danych:', err);
+    }
   };
 
   const handleReservationSuccess = (reservation) => {
@@ -1405,42 +1431,85 @@ function MapPage() {
             </div>
           )}
 
-          {/* Reserve Button - Bolt Style */}
-          {parking.available_spots > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReserveClick(parking);
-              }}
-              disabled={isModalOpening}
-              style={{
-                width: '100%',
-                background: '#111827',
-                color: 'white',
-                padding: '12px',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '600',
-                cursor: isModalOpening ? 'wait' : 'pointer',
-                fontSize: '14px',
-                transition: 'all 0.15s ease',
-                opacity: isModalOpening ? 0.5 : 1,
-                letterSpacing: '-0.2px'
-              }}
-              onMouseOver={(e) => {
-                if (!isModalOpening) {
-                  e.currentTarget.style.background = '#1F2937';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isModalOpening) {
-                  e.currentTarget.style.background = '#111827';
-                }
-              }}
-            >
-              {isModalOpening ? t('common.loading') : t('reservations.reserve')}
-            </button>
-          )}
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            flexDirection: 'column'
+          }}>
+            {/* Reserve Button */}
+            {parking.available_spots > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReserveClick(parking);
+                }}
+                disabled={isModalOpening}
+                style={{
+                  width: '100%',
+                  background: '#111827',
+                  color: 'white',
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  cursor: isModalOpening ? 'wait' : 'pointer',
+                  fontSize: '14px',
+                  transition: 'all 0.15s ease',
+                  opacity: isModalOpening ? 0.5 : 1,
+                  letterSpacing: '-0.2px'
+                }}
+                onMouseOver={(e) => {
+                  if (!isModalOpening) {
+                    e.currentTarget.style.background = '#1F2937';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isModalOpening) {
+                    e.currentTarget.style.background = '#111827';
+                  }
+                }}
+              >
+                {isModalOpening ? t('common.loading') : t('reservations.reserve')}
+              </button>
+            )}
+
+            {/* Rate Button */}
+            {user && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRateClick('parking', parking.id, parking.name);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  color: 'white',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                ⭐ {t('reviews.rateParking') || 'Oceń'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Popup>
@@ -1747,6 +1816,42 @@ function MapPage() {
               <span>{t('charging.startCharging')}</span>
             </button>
           )}
+
+          {/* Rate Button */}
+          {user && (
+            <button
+              onClick={() => {
+                handleRateClick('charging', station.id, station.name);
+              }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3)';
+              }}
+            >
+              ⭐ <span>{t('reviews.rateCharger') || 'Oceń stację'}</span>
+            </button>
+          )}
         </div>
       </div>
     </Popup>
@@ -1951,6 +2056,19 @@ function MapPage() {
         <ReservationQRModal
           reservation={successReservation}
           onClose={handleCloseQRModal}
+        />
+      )}
+
+      {showRatingModal && ratingTarget && (
+        <AddRatingModal
+          type={ratingTarget.type}
+          itemId={ratingTarget.id}
+          itemName={ratingTarget.name}
+          onClose={() => {
+            setShowRatingModal(false);
+            setRatingTarget(null);
+          }}
+          onSuccess={handleRatingSuccess}
         />
       )}
 

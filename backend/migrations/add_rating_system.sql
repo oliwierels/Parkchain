@@ -32,15 +32,15 @@ CREATE TABLE IF NOT EXISTS charging_ratings (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_parking_ratings_lot ON parking_ratings(lot_id);
-CREATE INDEX idx_parking_ratings_user ON parking_ratings(user_id);
-CREATE INDEX idx_parking_ratings_rating ON parking_ratings(rating);
-CREATE INDEX idx_parking_ratings_created ON parking_ratings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_parking_ratings_lot ON parking_ratings(lot_id);
+CREATE INDEX IF NOT EXISTS idx_parking_ratings_user ON parking_ratings(user_id);
+CREATE INDEX IF NOT EXISTS idx_parking_ratings_rating ON parking_ratings(rating);
+CREATE INDEX IF NOT EXISTS idx_parking_ratings_created ON parking_ratings(created_at DESC);
 
-CREATE INDEX idx_charging_ratings_station ON charging_ratings(station_id);
-CREATE INDEX idx_charging_ratings_user ON charging_ratings(user_id);
-CREATE INDEX idx_charging_ratings_rating ON charging_ratings(rating);
-CREATE INDEX idx_charging_ratings_created ON charging_ratings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_charging_ratings_station ON charging_ratings(station_id);
+CREATE INDEX IF NOT EXISTS idx_charging_ratings_user ON charging_ratings(user_id);
+CREATE INDEX IF NOT EXISTS idx_charging_ratings_rating ON charging_ratings(rating);
+CREATE INDEX IF NOT EXISTS idx_charging_ratings_created ON charging_ratings(created_at DESC);
 
 -- Triggers for updated_at
 CREATE TRIGGER parking_ratings_updated_at_trigger
