@@ -1548,10 +1548,8 @@ function MapPage() {
                   : '#991b1b'
               }}>
                 {station.available_connectors > 0
-                  ? (station.available_connectors / station.total_connectors > 0.5
-                    ? t('charging.manyAvailableConnectors')
-                    : t('charging.fewAvailableConnectors'))
-                  : t('charging.noAvailableConnectors')}
+                  ? 'Available'
+                  : 'Not available'}
               </span>
             </div>
             <div style={{
@@ -1656,7 +1654,7 @@ function MapPage() {
                   marginBottom: '4px'
                 }}>
                   <FaClock style={{ fontSize: '12px', color: '#F59E0B', flexShrink: 0 }} />
-                  <span>Minuta: <strong style={{ color: '#1F2937' }}>{station.price_per_minute} zł</strong></span>
+                  <span>Per minute: <strong style={{ color: '#1F2937' }}>{station.price_per_minute} zł</strong></span>
                 </div>
               )}
               {station.price_per_session && (
@@ -1666,7 +1664,7 @@ function MapPage() {
                   gap: '8px'
                 }}>
                   <FaTicketAlt style={{ fontSize: '12px', color: '#F59E0B', flexShrink: 0 }} />
-                  <span>Sesja: <strong style={{ color: '#1F2937' }}>{station.price_per_session} zł</strong></span>
+                  <span>Per session: <strong style={{ color: '#1F2937' }}>{station.price_per_session} zł</strong></span>
                 </div>
               )}
             </div>
