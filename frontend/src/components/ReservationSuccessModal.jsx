@@ -23,7 +23,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
+    return date.toLocaleDateString('en-US', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -88,10 +88,10 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
             transition={{ delay: 0.3 }}
           >
             <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-              Rezerwacja potwierdzona!
+              Reservation Confirmed!
             </h2>
             <p className="text-gray-600 text-center mb-6">
-              Twoje miejsce parkingowe zostało zarezerwowane
+              Your parking spot has been reserved
             </p>
 
             {/* Reservation Details */}
@@ -105,7 +105,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                     {reservation?.parking_lot_name || 'Parking'}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {reservation?.address || 'Adres parkingu'}
+                    {reservation?.address || 'Parking Address'}
                   </p>
                 </div>
               </div>
@@ -114,9 +114,9 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaCalendar className="text-indigo-500 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500">Od</p>
+                    <p className="text-xs text-gray-500">From</p>
                     <p className="font-medium text-sm">
-                      {reservation?.start_time ? formatDate(reservation.start_time) : 'Brak daty'}
+                      {reservation?.start_time ? formatDate(reservation.start_time) : 'No date'}
                     </p>
                   </div>
                 </div>
@@ -124,9 +124,9 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaCalendar className="text-indigo-500 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500">Do</p>
+                    <p className="text-xs text-gray-500">To</p>
                     <p className="font-medium text-sm">
-                      {reservation?.end_time ? formatDate(reservation.end_time) : 'Brak daty'}
+                      {reservation?.end_time ? formatDate(reservation.end_time) : 'No date'}
                     </p>
                   </div>
                 </div>
@@ -135,7 +135,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   <div className="flex items-center gap-3 text-gray-700 pt-3 border-t border-indigo-200">
                     <span className="text-lg">🚗</span>
                     <div>
-                      <p className="text-xs text-gray-500">Numer rejestracyjny</p>
+                      <p className="text-xs text-gray-500">License Plate</p>
                       <p className="font-bold text-lg tracking-wider">
                         {reservation.license_plate}
                       </p>
@@ -147,7 +147,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   <div className="flex items-center gap-3 text-gray-700 pt-3 border-t border-indigo-200">
                     <span className="text-xl">💰</span>
                     <div>
-                      <p className="text-xs text-gray-500">Koszt</p>
+                      <p className="text-xs text-gray-500">Cost</p>
                       <p className="font-bold text-2xl text-indigo-600">
                         {reservation.price} PLN
                       </p>
@@ -167,7 +167,7 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                   className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
                 >
                   <FaQrcode className="text-xl" />
-                  Pokaż kod QR
+                  Show QR Code
                 </motion.button>
               )}
 
@@ -177,15 +177,15 @@ function ReservationSuccessModal({ reservation, onClose, onViewQR }) {
                 onClick={onClose}
                 className="w-full px-6 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
               >
-                Zamknij
+                Close
               </motion.button>
             </div>
 
             {/* Info */}
             <div className="mt-6 text-center text-xs text-gray-500">
               <p>
-                Szczegóły rezerwacji znajdziesz w sekcji{' '}
-                <span className="font-semibold text-indigo-600">Moje Rezerwacje</span>
+                You can find reservation details in the{' '}
+                <span className="font-semibold text-indigo-600">My Reservations</span> section
               </p>
             </div>
           </motion.div>

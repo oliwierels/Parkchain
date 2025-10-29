@@ -168,7 +168,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     // Validate wallet connection for Solana payments only
     if ((paymentMethod === 'gateway' || paymentMethod === 'solana') && !wallet.connected) {
-      setError('Połącz portfel Solana aby użyć tej metody płatności');
+      setError('Connect your Solana wallet to use this payment method');
       return;
     }
 
@@ -190,13 +190,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       } else if (paymentMethod === 'solana') {
         paymentResult = await processStandardSolanaPayment();
       } else if (paymentMethod === 'card') {
-        console.log('💳 Przetwarzanie płatności kartą (bez Solany)...');
+        console.log('💳 Processing card payment (without Solana)...');
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
-        console.log('🕐 Płatność później (bez Solany)...');
+        console.log('🕐 Payment later (without Solana)...');
         paymentResult = { method: 'later', paid: false };
       } else {
-        throw new Error(`Nieznana metoda płatności: ${paymentMethod}`);
+        throw new Error(`Unknown payment method: ${paymentMethod}`);
       }
 
       // Create reservation in database
@@ -211,17 +211,17 @@ function ReservationModal({ parking, onClose, onSuccess }) {
         payment_status: paymentResult?.paid ? 'paid' : 'pending'
       };
 
-      console.log('🔄 Tworzę rezerwację z płatnością:', reservationData);
+      console.log('🔄 Creating reservation with payment:', reservationData);
 
       const result = await reservationAPI.createReservation(reservationData);
-      console.log('✅ Rezerwacja utworzona:', result);
+      console.log('✅ Reservation created:', result);
 
       // Pass reservation data to success callback
       onSuccess(result);
       onClose(); // Close immediately, success modal will show
     } catch (err) {
-      console.error('❌ Błąd płatności/rezerwacji:', err);
-      setError(err.message || 'Nie udało się przetworzyć płatności');
+      console.error('❌ Payment/reservation error:', err);
+      setError(err.message || 'Failed to process payment');
       setStep('payment'); // Go back to payment selection
     } finally {
       setLoading(false);
@@ -229,11 +229,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   };
 
   const processGatewayPayment = async () => {
-    console.log('⚡ Procesowanie płatności przez Gateway...');
+    console.log('⚡ Processing payment via Gateway...');
 
     // Validate wallet is connected
     if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Portfel Solana nie jest połączony. Połącz portfel aby użyć Gateway.');
+      throw new Error('Solana wallet is not connected. Connect your wallet to use Gateway.');
     }
 
     // Treasury wallet for parking payments (in production, use owner's wallet)
@@ -256,8 +256,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     if (balance < requiredBalance) {
       if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Symulowanie płatności Solana (brak środków w portfelu)');
-        console.log(`   💡 W trybie demo nie potrzebujesz SOL aby przetestować płatności!`);
+        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
+        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
 
         // Simulate delay like real transaction
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -269,14 +269,14 @@ function ReservationModal({ parking, onClose, onSuccess }) {
           paid: true,
           metadata: {
             demo: true,
-            message: 'Płatność symulowana - tryb demo'
+            message: 'Simulated payment - demo mode'
           }
         };
       } else {
         // Production mode - require actual balance
         throw new Error(
-          `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
         );
       }
     }
@@ -312,11 +312,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   };
 
   const processStandardSolanaPayment = async () => {
-    console.log('◎ Procesowanie standardowej płatności Solana...');
+    console.log('◎ Processing standard Solana payment...');
 
     // Validate wallet is connected
     if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Portfel Solana nie jest połączony. Połącz portfel aby użyć płatności Solana.');
+      throw new Error('Solana wallet is not connected. Connect your wallet to use Solana payment.');
     }
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
@@ -336,8 +336,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     if (balance < requiredBalance) {
       if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Symulowanie płatności Solana (brak środków w portfelu)');
-        console.log(`   💡 W trybie demo nie potrzebujesz SOL aby przetestować płatności!`);
+        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
+        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
 
         // Simulate delay like real transaction
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -351,8 +351,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       } else {
         // Production mode - require actual balance
         throw new Error(
-          `Niewystarczające środki. Potrzebujesz ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, masz ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Dodaj co najmniej ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL do portfela.`
+          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
+          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
         );
       }
     }
@@ -382,7 +382,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   };
 
   const processCreditCardPayment = async () => {
-    console.log('💳 Procesowanie płatności kartą...');
+    console.log('💳 Processing credit card payment...');
     // In production, integrate with Stripe or other payment provider
     // For demo, simulate payment
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -596,7 +596,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               fontWeight: '600',
               color: '#111827'
             }}>
-              {parking.price_per_hour || parking.hourly_rate} zł/godz
+              {parking.price_per_hour || parking.hourly_rate} PLN/hr
             </span>
           </div>
         </motion.div>
@@ -773,7 +773,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               textAlign: 'center',
               color: '#6b7280'
             }}>
-              Obliczam cenę...
+              Calculating price...
             </div>
           )}
 
@@ -801,7 +801,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   color: '#111827',
                   letterSpacing: '-0.5px'
                 }}>
-                  {priceCalculation.price} zł
+                  {priceCalculation.price} PLN
                 </div>
                 <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px' }}>
                   {priceCalculation.hours.toFixed(1)} {t('reservations.modal.hours')} • {priceCalculation.days.toFixed(1)} {t('reservations.modal.days')}
@@ -836,7 +836,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                         }}
                       >
                         <span>{option.label}</span>
-                        <span>{option.price} zł</span>
+                        <span>{option.price} PLN</span>
                       </div>
                     )
                   ))}
@@ -1015,13 +1015,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   }}></div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1e40af', margin: '0 0 5px 0' }}>
-                      {gatewayProgress.stage === 'optimize' && '⚡ Optymalizacja transakcji...'}
-                      {gatewayProgress.stage === 'prepare' && '🔧 Przygotowanie transakcji...'}
-                      {gatewayProgress.stage === 'sign' && '✍️ Podpisz transakcję w portfelu...'}
-                      {gatewayProgress.stage === 'send' && '📤 Wysyłanie przez Gateway...'}
-                      {gatewayProgress.stage === 'confirm' && '⏳ Potwierdzanie na blockchainie...'}
-                      {gatewayProgress.stage === 'complete' && '✅ Transakcja ukończona!'}
-                      {gatewayProgress.stage === 'error' && '❌ Błąd transakcji'}
+                      {gatewayProgress.stage === 'optimize' && '⚡ Optimizing transaction...'}
+                      {gatewayProgress.stage === 'prepare' && '🔧 Preparing transaction...'}
+                      {gatewayProgress.stage === 'sign' && '✍️ Sign transaction in wallet...'}
+                      {gatewayProgress.stage === 'send' && '📤 Sending via Gateway...'}
+                      {gatewayProgress.stage === 'confirm' && '⏳ Confirming on blockchain...'}
+                      {gatewayProgress.stage === 'complete' && '✅ Transaction completed!'}
+                      {gatewayProgress.stage === 'error' && '❌ Transaction error'}
                     </p>
                     <p style={{ fontSize: '14px', color: '#60a5fa', margin: 0 }}>
                       {gatewayProgress.message}
@@ -1038,9 +1038,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     fontSize: '12px',
                     color: '#1e40af'
                   }}>
-                    <strong>⚡ Gateway wysyła transakcję przez RPC i Jito jednocześnie!</strong>
+                    <strong>⚡ Gateway sends transaction via RPC and Jito simultaneously!</strong>
                     <br />
-                    Jeśli RPC zakończy się sukcesem, Jito tip zostanie automatycznie zwrócony.
+                    If RPC succeeds, Jito tip will be automatically refunded.
                   </div>
                 )}
               </div>
@@ -1064,10 +1064,10 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                   animation: 'spin 1s linear infinite'
                 }}></div>
                 <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#374151' }}>
-                  Przetwarzanie płatności...
+                  Processing payment...
                 </p>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>
-                  Proszę czekać, nie zamykaj tego okna
+                  Please wait, do not close this window
                 </p>
               </div>
             )}
@@ -1083,10 +1083,10 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               }}>
                 <div style={{ fontSize: '48px', marginBottom: '15px' }}>✅</div>
                 <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#065f46', margin: '0 0 10px 0' }}>
-                  Płatność zakończona sukcesem!
+                  Payment completed successfully!
                 </h3>
                 <p style={{ fontSize: '16px', color: '#047857', marginBottom: '15px' }}>
-                  Twoja rezerwacja została potwierdzona
+                  Your reservation has been confirmed
                 </p>
                 {paymentMethod === 'gateway' && (
                   <div style={{
@@ -1096,15 +1096,15 @@ function ReservationModal({ parking, onClose, onSuccess }) {
                     marginBottom: '15px'
                   }}>
                     <p style={{ fontSize: '14px', color: '#065f46', marginBottom: '8px' }}>
-                      <strong>⚡ Płatność przez Sanctum Gateway</strong>
+                      <strong>⚡ Payment via Sanctum Gateway</strong>
                     </p>
                     <p style={{ fontSize: '12px', color: '#047857', margin: 0 }}>
-                      Transakcja: {txSignature.slice(0, 16)}...
+                      Transaction: {txSignature.slice(0, 16)}...
                     </p>
                   </div>
                 )}
                 <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                  To okno zamknie się automatycznie...
+                  This window will close automatically...
                 </p>
               </div>
             )}
