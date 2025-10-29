@@ -576,6 +576,10 @@
   "modals": {
     "addNewParking": "Add new parking",
     "addChargingStation": "⚡ Add EV charger",
+    "clickMapToAddParking": "Click on the map to add parking",
+    "clickMapToAddCharger": "Click on the map to add charger",
+    "cancelAddParking": "Cancel adding parking",
+    "cancelAddCharger": "Cancel adding charger",
     "editReview": "Edit review",
     "addReview": "Add review",
     "reviewFor": "Review for:",
