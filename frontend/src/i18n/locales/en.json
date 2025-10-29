@@ -303,6 +303,31 @@
       "completed": "Completed",
       "cancelled": "Cancelled",
       "pending_verification": "Awaiting verification"
+    },
+    "modal": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Fast Charger Station",
+      "address": "Address",
+      "addressPlaceholder": "e.g. Main Street 123",
+      "city": "City",
+      "cityPlaceholder": "e.g. Warsaw",
+      "chargerType": "Charger type",
+      "connectorTypes": "Connector types",
+      "maxPower": "Max power (kW)",
+      "maxPowerPlaceholder": "e.g. 50",
+      "totalConnectors": "Number of connectors",
+      "totalConnectorsPlaceholder": "e.g. 2",
+      "pricePerKwh": "Price per kWh (PLN)",
+      "pricePerKwhPlaceholder": "e.g. 1.50",
+      "pricePerMinute": "Price per minute (PLN)",
+      "pricePerMinutePlaceholder": "e.g. 0.20",
+      "pricePerSession": "Price per session (PLN)",
+      "pricePerSessionPlaceholder": "e.g. 5.00",
+      "optional": "optional",
+      "required": "*",
+      "chargerAdded": "Charger added!",
+      "chargerAddedDescription": "Your charging station is now available on the map",
+      "closing": "Closing..."
     }
   },
   "badges": {

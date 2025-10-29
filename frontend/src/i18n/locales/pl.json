@@ -303,6 +303,31 @@
       "completed": "Zakończona",
       "cancelled": "Anulowana",
       "pending_verification": "Oczekuje weryfikacji"
+    },
+    "modal": {
+      "name": "Nazwa",
+      "namePlaceholder": "np. Stacja szybkiego ładowania",
+      "address": "Adres",
+      "addressPlaceholder": "np. Ulica Główna 123",
+      "city": "Miasto",
+      "cityPlaceholder": "np. Warszawa",
+      "chargerType": "Typ ładowarki",
+      "connectorTypes": "Typy złączy",
+      "maxPower": "Moc maksymalna (kW)",
+      "maxPowerPlaceholder": "np. 50",
+      "totalConnectors": "Liczba złączy",
+      "totalConnectorsPlaceholder": "np. 2",
+      "pricePerKwh": "Cena za kWh (zł)",
+      "pricePerKwhPlaceholder": "np. 1.50",
+      "pricePerMinute": "Cena za minutę (zł)",
+      "pricePerMinutePlaceholder": "np. 0.20",
+      "pricePerSession": "Cena za sesję (zł)",
+      "pricePerSessionPlaceholder": "np. 5.00",
+      "optional": "opcjonalne",
+      "required": "*",
+      "chargerAdded": "Ładowarka dodana!",
+      "chargerAddedDescription": "Twoja stacja ładowania jest już dostępna na mapie",
+      "closing": "Zamykanie..."
     }
   },
   "badges": {
