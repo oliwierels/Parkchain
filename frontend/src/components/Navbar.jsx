@@ -84,37 +84,22 @@ function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:block flex-1">
-            <div className="flex items-center justify-center gap-1">
+          <div className="hidden lg:flex flex-1 items-center gap-1 ml-8">
+            <NavLink to="/" className={getLinkClasses} end title={t('nav.home')}>
+              <FaHome />
+              <span>{t('nav.home')}</span>
+            </NavLink>
+            <NavLink to="/map" className={getLinkClasses} title={t('nav.map')}>
+              <FaMap />
+              <span>{t('nav.map')}</span>
+            </NavLink>
 
-              {/* Main Links Group */}
-              <div className="flex items-center gap-1 mr-2">
-                <NavLink to="/" className={getLinkClasses} end title={t('nav.home')}>
-                  <FaHome />
-                  <span>{t('nav.home')}</span>
-                </NavLink>
-                <NavLink to="/map" className={getLinkClasses} title={t('nav.map')}>
-                  <FaMap />
-                  <span>{t('nav.map')}</span>
-                </NavLink>
-              </div>
+            <div className="h-8 w-px bg-gray-700 mx-2"></div>
 
-              {/* Divider */}
-              <div className="h-8 w-px bg-gray-700 mx-2"></div>
-
-              {/* Management Links Group */}
-              <div className="flex items-center gap-1 mr-2">
-                
-
-                {/* "Moje" Dropdown */}
-                
-
-                <NavLink to="/analytics" className={getLinkClasses} title="Analytics i statystyki">
-                  <FaChartLine />
-                  <span>Analytics</span>
-                </NavLink>
-              </div>
-            </div>
+            <NavLink to="/analytics" className={getLinkClasses} title="Analytics i statystyki">
+              <FaChartLine />
+              <span>Analytics</span>
+            </NavLink>
           </div>
 
           {isAuthenticated && user ? (
