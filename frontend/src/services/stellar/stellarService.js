@@ -130,6 +130,67 @@ class StellarService {
   }
 
   /**
+   * Send XLM payment to an address
+   * @param {Object} params - Payment parameters
+   * @param {string} params.destination - Destination Stellar address
+   * @param {string} params.amount - Amount in XLM (e.g., "10.5")
+   * @param {string} params.sourcePublicKey - Sender's public key
+   * @param {Function} params.signTransaction - Wallet sign function
+   * @returns {Promise<Object>} - Transaction result with hash
+   */
+  async sendPayment({ destination, amount, sourcePublicKey, signTransaction }) {
+    try {
+      const account = await this.server.getAccount(sourcePublicKey);
+
+      // Create payment operation
+      const operation = StellarSdk.Operation.payment({
+        destination: destination,
+        asset: StellarSdk.Asset.native(), // XLM
+        amount: amount.toString(),
+      });
+
+      const transaction = new StellarSdk.TransactionBuilder(account, {
+        fee: StellarSdk.BASE_FEE,
+        networkPassphrase: this.networkPassphrase,
+      })
+        .addOperation(operation)
+        .setTimeout(180)
+        .build();
+
+      // Sign transaction with wallet
+      const signedTx = await signTransaction(transaction.toXDR());
+      const tx = StellarSdk.TransactionBuilder.fromXDR(
+        signedTx,
+        this.networkPassphrase
+      );
+
+      // Submit transaction
+      const result = await this.server.sendTransaction(tx);
+
+      // Wait for confirmation
+      if (result.status === 'PENDING') {
+        let txResponse = await this.server.getTransaction(result.hash);
+        while (txResponse.status === 'NOT_FOUND') {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          txResponse = await this.server.getTransaction(result.hash);
+        }
+
+        if (txResponse.status === 'SUCCESS') {
+          console.log('✅ Payment successful:', result.hash);
+          return { success: true, hash: result.hash, result: txResponse };
+        } else {
+          throw new Error(`Payment failed: ${txResponse.status}`);
+        }
+      }
+
+      return { success: true, hash: result.hash, result };
+    } catch (error) {
+      console.error('Error sending payment:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Invoke contract function
    * With Scaffold Stellar, you'd use auto-generated clients instead!
    *

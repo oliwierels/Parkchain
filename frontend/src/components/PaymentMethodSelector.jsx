@@ -1,56 +1,40 @@
 import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useStellarWallet } from '../context/StellarWalletContext';
 
 /**
  * Payment Method Selector for Parkchain Reservations
- * Shows different payment options with Gateway as the recommended method
+ * Shows different payment options with Stellar as the recommended method
  *
  * Payment Methods:
- * 1. Gateway (Solana) - Fastest, cheapest, 99% success rate ⚡ RECOMMENDED
- * 2. Standard Solana - Slower, more expensive, 85% success rate
- * 3. Credit Card - Traditional, 2.9% + 0.30 PLN fee
- * 4. Pay Later - For registered users only
+ * 1. Stellar (XLM) - Fastest, cheapest, <1% failure rate ⚡ RECOMMENDED
+ * 2. Credit Card - Traditional, 2.9% + 0.30 PLN fee
+ * 3. Pay Later - For registered users only
  */
 function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, connect, getSupportedWallets } = useStellarWallet();
 
   // Calculate fees for different payment methods
   const calculateFees = () => {
     const amountPLN = amount; // Amount in PLN
 
-    // Convert PLN to SOL (rough estimate: 1 SOL = ~600 PLN)
-    const amountSOL = amountPLN / 600;
+    // Convert PLN to XLM (rough estimate: 1 XLM = ~2 PLN)
+    const amountXLM = amountPLN / 2;
 
     return {
-      gateway: {
-        baseCost: amountSOL,
-        transactionFee: 0.0001, // Gateway fee: 0.0001 SOL
-        totalSOL: amountSOL + 0.0001,
-        totalPLN: (amountSOL + 0.0001) * 600,
-        savingsVsStandard: 0.0009 * 600, // Save ~0.54 PLN
+      stellar: {
+        baseCost: amountXLM,
+        transactionFee: 0.00001, // Stellar fee: 0.00001 XLM
+        totalXLM: amountXLM + 0.00001,
+        totalPLN: (amountXLM + 0.00001) * 2,
+        savingsVsCard: (amountPLN * 0.029) - (0.00001 * 2), // Save vs card fees
         successRate: 99,
-        confirmTime: '3-5s',
+        confirmTime: '2-5s',
         features: [
-          'Multi-channel routing (RPC + Jito)',
-          'Auto-refund Jito tips',
+          'Stellar network - ultra-low fees',
+          '<1% failure rate',
           '99%+ success rate',
           'Instant confirmation',
-          '10x cheaper than alternatives'
-        ]
-      },
-      solana: {
-        baseCost: amountSOL,
-        transactionFee: 0.001, // Standard Solana fee + tips
-        totalSOL: amountSOL + 0.001,
-        totalPLN: (amountSOL + 0.001) * 600,
-        successRate: 85,
-        confirmTime: '8-15s',
-        features: [
-          'Standard Solana RPC',
-          'No optimization',
-          '~15% failure rate',
-          'Manual retry needed'
+          '98% cheaper than credit cards'
         ]
       },
       card: {

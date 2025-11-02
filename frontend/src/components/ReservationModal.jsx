@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { useStellarWallet } from '../context/StellarWalletContext';
+import stellarService from '../services/stellar/stellarService';
 import { reservationAPI } from '../services/api';
-import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
   const { t } = useTranslation();
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  const wallet = useStellarWallet();
 
   const [step, setStep] = useState('details'); // 'details' | 'payment' | 'processing'
   const [paymentMethod, setPaymentMethod] = useState(null);
@@ -166,9 +164,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       return;
     }
 
-    // Validate wallet connection for Solana payments only
-    if ((paymentMethod === 'gateway' || paymentMethod === 'solana') && !wallet.connected) {
-      setError('Connect your Solana wallet to use this payment method');
+    // Validate wallet connection for Stellar payments only
+    if ((paymentMethod === 'stellar' || paymentMethod === 'xlm') && !wallet.connected) {
+      setError('Connect your Stellar wallet to use this payment method');
       return;
     }
 
@@ -185,15 +183,13 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
       console.log('💳 Wybrana metoda płatności:', paymentMethod);
 
-      if (paymentMethod === 'gateway') {
-        paymentResult = await processGatewayPayment();
-      } else if (paymentMethod === 'solana') {
-        paymentResult = await processStandardSolanaPayment();
+      if (paymentMethod === 'stellar' || paymentMethod === 'xlm') {
+        paymentResult = await processStellarPayment();
       } else if (paymentMethod === 'card') {
-        console.log('💳 Processing card payment (without Solana)...');
+        console.log('💳 Processing card payment (without blockchain)...');
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
-        console.log('🕐 Payment later (without Solana)...');
+        console.log('🕐 Payment later (without blockchain)...');
         paymentResult = { method: 'later', paid: false };
       } else {
         throw new Error(`Unknown payment method: ${paymentMethod}`);
@@ -228,158 +224,90 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     }
   };
 
-  const processGatewayPayment = async () => {
-    console.log('⚡ Processing payment via Gateway...');
+  const processStellarPayment = async () => {
+    console.log('🌟 Processing payment via Stellar...');
 
     // Validate wallet is connected
     if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Solana wallet is not connected. Connect your wallet to use Gateway.');
+      throw new Error('Stellar wallet is not connected. Connect your wallet to use Stellar payment.');
     }
 
     // Treasury wallet for parking payments (in production, use owner's wallet)
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
+    const TREASURY_WALLET = 'GDKIJJIKXLOM2NRMPNQZUUYK24ZPVFC6426GZAEP3KUK6KEJLACCWNMX'; // Example Stellar address
 
-    // Convert PLN to SOL (rough estimate: 1 SOL = ~600 PLN)
-    const priceSOL = priceCalculation.price / 600;
-    const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
+    // Convert PLN to XLM (rough estimate: 1 XLM = ~2 PLN)
+    const priceXLM = priceCalculation.price / 2;
+    const stroops = Math.floor(priceXLM * 10_000_000); // 1 XLM = 10,000,000 stroops
 
     // Check user balance
-    const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 SOL minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
-    const requiredBalance = lamports + minRent + estimatedFee;
+    const balanceXLM = await wallet.getBalance();
+    const balance = parseFloat(balanceXLM);
+    const estimatedFee = 0.00001; // ~0.00001 XLM estimated transaction fee
+    const requiredBalance = priceXLM + estimatedFee;
 
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+    console.log(`💰 Balance check: ${balance} XLM available, ${requiredBalance.toFixed(6)} XLM required`);
 
     // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
     const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
 
     if (balance < requiredBalance) {
       if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
+        console.log('🎭 DEMO MODE: Simulating Stellar payment (insufficient wallet funds)');
+        console.log(`   💡 In demo mode you don't need XLM to test payments!`);
 
         // Simulate delay like real transaction
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Return simulated successful payment
         return {
-          method: 'gateway',
-          signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
+          method: 'stellar',
+          signature: `DEMO_${Date.now()}_${wallet.publicKey.slice(0, 8)}`,
           paid: true,
           metadata: {
             demo: true,
-            message: 'Simulated payment - demo mode'
+            message: 'Simulated Stellar payment - demo mode'
           }
         };
       } else {
         // Production mode - require actual balance
         throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
+          `Insufficient funds. You need ${requiredBalance.toFixed(6)} XLM, you have ${balance.toFixed(6)} XLM. ` +
+          `Add at least ${(requiredBalance - balance).toFixed(6)} XLM to your wallet.`
         );
       }
     }
 
-    // Create transaction
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
+    // Create and send Stellar payment transaction
+    try {
+      setGatewayProgress({ stage: 'building', message: 'Building Stellar transaction...' });
 
-    // Execute via Gateway
-    const result = await gatewayService.executeTransaction({
-      transaction,
-      connection,
-      wallet,
-      onProgress: (progress) => {
-        console.log(`[Gateway] ${progress.stage}: ${progress.message}`);
-        setGatewayProgress(progress);
-      }
-    });
+      // Build payment operation using Stellar SDK
+      const result = await stellarService.sendPayment({
+        destination: TREASURY_WALLET,
+        amount: priceXLM.toString(),
+        sourcePublicKey: wallet.publicKey,
+        signTransaction: wallet.signTransaction,
+      });
 
-    setTxSignature(result.signature);
+      setTxSignature(result.hash);
+      setGatewayProgress({ stage: 'confirmed', message: 'Payment confirmed on Stellar!' });
 
-    return {
-      method: 'gateway',
-      signature: result.signature,
-      paid: true,
-      metadata: result.metadata
-    };
+      return {
+        method: 'stellar',
+        signature: result.hash,
+        paid: true,
+        metadata: {
+          network: 'stellar',
+          amount: priceXLM,
+          currency: 'XLM'
+        }
+      };
+    } catch (error) {
+      console.error('Stellar payment failed:', error);
+      throw new Error(`Stellar payment failed: ${error.message}`);
+    }
   };
 
-  const processStandardSolanaPayment = async () => {
-    console.log('◎ Processing standard Solana payment...');
-
-    // Validate wallet is connected
-    if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Solana wallet is not connected. Connect your wallet to use Solana payment.');
-    }
-
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
-    const priceSOL = priceCalculation.price / 600;
-    const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
-
-    // Check user balance
-    const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 SOL minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
-    const requiredBalance = lamports + minRent + estimatedFee;
-
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
-
-    // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
-    const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
-
-    if (balance < requiredBalance) {
-      if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
-
-        // Simulate delay like real transaction
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Return simulated successful payment
-        return {
-          method: 'solana',
-          signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
-          paid: true
-        };
-      } else {
-        // Production mode - require actual balance
-        throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
-        );
-      }
-    }
-
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
-
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallet.publicKey;
-
-    const signed = await wallet.signTransaction(transaction);
-    const signature = await connection.sendRawTransaction(signed.serialize());
-
-    await connection.confirmTransaction(signature);
-
-    return {
-      method: 'solana',
-      signature,
-      paid: true
-    };
-  };
 
   const processCreditCardPayment = async () => {
     console.log('💳 Processing credit card payment...');
