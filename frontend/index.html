@@ -25,6 +25,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Polyfill for Node.js globals in browser -->
+    <script>
+      window.global = window;
+      window.process = { env: {} };
+      window.Buffer = window.Buffer || undefined;
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
