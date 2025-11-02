@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { useStellar } from '../context/StellarWalletContext';
 import { reservationAPI } from '../services/api';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -11,8 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function ReservationModal({ parking, onClose, onSuccess }) {
   const { t } = useTranslation();
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  const { connected, publicKey, kit } = useStellar();
 
   const [step, setStep] = useState('details'); // 'details' | 'payment' | 'processing'
   const [paymentMethod, setPaymentMethod] = useState(null);

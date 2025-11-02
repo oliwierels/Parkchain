@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useStellar } from '../context/StellarWalletContext';
+
 import { QRCodeSVG } from 'qrcode.react';
 import BigNumber from 'bignumber.js';
 import gatewayService from '../services/gatewayService';
@@ -17,9 +16,9 @@ import { checkAndNotifyAchievements } from '../utils/achievementNotifier';
 const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
 
 function PointsMarketplacePage() {
-  const wallet = useWallet();
+  const { publicKey, connected, connect, kit } = useStellar();
   const { publicKey, connected, sendTransaction } = wallet;
-  const { connection } = useConnection();
+  
   const [pointsStats, setPointsStats] = useState({
     totalPointsAvailable: 0,
     topEarners: [],

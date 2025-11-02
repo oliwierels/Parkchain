@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useStellar } from '../context/StellarWalletContext';
+
 import { motion } from 'framer-motion';
 import {
   Card,
@@ -18,7 +18,7 @@ import {
 } from 'react-icons/fa';
 
 function LiveFeedPage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, connect } = useStellar();
   const [liveSessions, setLiveSessions] = useState([]);
   const [stats, setStats] = useState({
     activeSessions: 0,

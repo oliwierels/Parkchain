@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useStellar } from '../context/StellarWalletContext';
 import { motion } from 'framer-motion';
 import { Card, Badge, Button, SkeletonCard, EmptyStateNoBadges, useToast, ToastContainer } from '../components/ui';
 
@@ -54,7 +53,7 @@ const BADGES = [
 ];
 
 function BadgesPage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, connect } = useStellar();
   const [userStats, setUserStats] = useState({
     totalKwh: 0,
     sessionsCount: 0,
@@ -169,7 +168,19 @@ function BadgesPage() {
               Earn NFT badges for your EV charging milestones
             </p>
           </div>
-          <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700" />
+          {!connected && (
+            <button
+              onClick={connect}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Connect Stellar Wallet
+            </button>
+          )}
+          {connected && publicKey && (
+            <div className="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg font-mono text-sm">
+              {publicKey.slice(0, 8)}...{publicKey.slice(-8)}
+            </div>
+          )}
         </motion.div>
 
         {/* Stats Overview */}

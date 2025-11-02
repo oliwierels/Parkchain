@@ -3,12 +3,12 @@
 //
 // Key Features:
 // - Automatic transaction optimization (compute units, priority fees)
-// - Multi-channel delivery (RPC + Jito bundles)
-// - Auto-refund Jito tips if RPC succeeds
+// - Multi-channel delivery (RPC + Stellar Horizon)
 // - Real-time observability and metrics
 // - 0.0001 XLM per transaction (10x cheaper than alternatives)
 
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
+// TODO: Replace with Stellar SDK transaction types
+// import { Transaction, VersionedTransaction } from '@stellar/stellar-sdk';
 import GATEWAY_CONFIG from '../config/gateway.js';
 import { premiumTierService } from './premiumTierService.js';
 import { smartRoutingService } from './smartRoutingService.js';

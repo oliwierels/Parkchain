@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useStellar } from '../context/StellarWalletContext';
 import {
   FiDollarSign,
   FiTrendingUp,
@@ -16,7 +16,7 @@ import api from '../services/api';
 
 const InstitutionalOperatorDashboard = () => {
   const { user } = useAuth();
-  const wallet = useWallet();
+  const { publicKey, connected, connect, kit } = useStellar();
 
   const [operatorProfile, setOperatorProfile] = useState(null);
   const [tokenizedAssets, setTokenizedAssets] = useState([]);

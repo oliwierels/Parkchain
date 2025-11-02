@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useStellar } from '../context/StellarWalletContext';
 import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
 
 function EndChargingSessionModal({ session, onClose, onSuccess }) {
   const { t } = useTranslation();
-  const wallet = useWallet();
-  const { connection } = useConnection();
+  const { publicKey, connected, connect, kit } = useStellar();
+  
 
   const [step, setStep] = useState('details'); // 'details' | 'payment' | 'processing'
   const [paymentMethod, setPaymentMethod] = useState(null);
