@@ -8,6 +8,23 @@ import gatewayService from '../services/gatewayService';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Stellar constants (equivalent to Solana's LAMPORTS_PER_SOL)
+const STROOPS_PER_XLM = 10000000; // 1 XLM = 10 million stroops
+const LAMPORTS_PER_SOL = STROOPS_PER_XLM; // Alias for compatibility
+
+// TODO: Replace with Stellar SDK Transaction and operations
+// Temporary stubs for compilation - these need to be replaced with actual Stellar SDK
+class Transaction {
+  add() { return this; }
+  toJSON() { return {}; }
+}
+const SystemProgram = {
+  transfer: () => ({})
+};
+
+// Helper for Stellar addresses (replaces Solana's PublicKey class)
+const PublicKey = (address) => address; // In Stellar, addresses are strings
+
 function ReservationModal({ parking, onClose, onSuccess }) {
   const { t } = useTranslation();
   const { connected, publicKey, kit } = useStellar();

@@ -12,12 +12,26 @@ import { notify } from '../components/LiveNotifications';
 import BatchTransactionModal from '../components/BatchTransactionModal';
 import { checkAndNotifyAchievements } from '../utils/achievementNotifier';
 
+// Stellar constants (equivalent to Solana's LAMPORTS_PER_SOL)
+const STROOPS_PER_XLM = 10000000; // 1 XLM = 10 million stroops
+const LAMPORTS_PER_SOL = STROOPS_PER_XLM; // Alias for compatibility
+
+// TODO: Replace with Stellar SDK Transaction and operations
+// Temporary stubs for compilation - these need to be replaced with actual Stellar SDK
+class Transaction {
+  add() { return this; }
+  toJSON() { return {}; }
+}
+const SystemProgram = {
+  transfer: () => ({})
+};
+
 // Treasury wallet dla odbierania płatności (w produkcji użyj bezpiecznego multi-sig)
-const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH'); // Devnet test wallet
+// TODO: Replace with actual Stellar public key
+const TREASURY_WALLET = 'GDXXXXXXXXXXXXXXXXXXXXXEXAMPLESTELLARADDRESSXXXXXXXXXXXXXXX'; // Testnet wallet
 
 function PointsMarketplacePage() {
   const { publicKey, connected, connect, kit } = useStellar();
-  const { publicKey, connected, sendTransaction } = wallet;
   
   const [pointsStats, setPointsStats] = useState({
     totalPointsAvailable: 0,
