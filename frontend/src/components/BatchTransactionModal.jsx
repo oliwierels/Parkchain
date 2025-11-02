@@ -285,16 +285,16 @@ const BatchTransactionModal = ({ isOpen, onClose, onExecute }) => {
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
                     <div className="text-gray-400">Individual Cost</div>
-                    <div className="text-lg font-bold text-red-400">{efficiency.individualCost} SOL</div>
+                    <div className="text-lg font-bold text-red-400">{efficiency.individualCost} XLM</div>
                   </div>
                   <div>
                     <div className="text-gray-400">Batch Cost</div>
-                    <div className="text-lg font-bold text-green-400">{efficiency.batchCost} SOL</div>
+                    <div className="text-lg font-bold text-green-400">{efficiency.batchCost} XLM</div>
                   </div>
                   <div>
                     <div className="text-gray-400">You Save</div>
                     <div className="text-lg font-bold text-blue-400">
-                      {efficiency.savings} SOL ({efficiency.savingsPercent})
+                      {efficiency.savings} XLM ({efficiency.savingsPercent})
                     </div>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ const BatchTransactionModal = ({ isOpen, onClose, onExecute }) => {
               {currentBatch && (
                 <>
                   Estimated savings: <span className="text-green-400 font-semibold">
-                    {currentBatch.estimatedSavings.toFixed(6)} SOL
+                    {currentBatch.estimatedSavings.toFixed(6)} XLM
                   </span>
                 </>
               )}

@@ -74,7 +74,7 @@ function GatewayDashboardPage() {
     console.log('📊 Generated demo data:', result.summary);
     alert(`✅ Generated ${result.transactions.length} demo transactions!\n\n` +
           `Success Rate: ${result.summary.successRate}\n` +
-          `Gateway Savings: ${result.summary.savings.totalSavings} SOL ($${result.summary.savings.savingsUSD})\n\n` +
+          `Gateway Savings: ${result.summary.savings.totalSavings} XLM ($${result.summary.savings.savingsUSD})\n\n` +
           `Check console for detailed report.`);
     refreshData();
   };
@@ -148,7 +148,7 @@ function GatewayDashboardPage() {
     labels: timeSeriesData.labels,
     datasets: [
       {
-        label: 'Savings (SOL)',
+        label: 'Savings (XLM)',
         data: timeSeriesData.savings,
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.2)',
@@ -301,19 +301,19 @@ function GatewayDashboardPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Standard RPC Cost:</span>
-                    <span className="text-white font-bold">{savings.standardMonthlyCost} SOL/mo</span>
+                    <span className="text-white font-bold">{savings.standardMonthlyCost} XLM/mo</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Gateway Cost (net):</span>
-                    <span className="text-white font-bold">{savings.gatewayMonthlyCost} SOL/mo</span>
+                    <span className="text-white font-bold">{savings.gatewayMonthlyCost} XLM/mo</span>
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t border-gray-700">
                     <span className="text-green-400 font-bold">Monthly Savings:</span>
-                    <span className="text-green-400 font-bold text-xl">{savings.monthlySavings} SOL</span>
+                    <span className="text-green-400 font-bold text-xl">{savings.monthlySavings} XLM</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-green-400 font-bold">Yearly Savings:</span>
-                    <span className="text-green-400 font-bold text-xl">{savings.yearlySavings} SOL</span>
+                    <span className="text-green-400 font-bold text-xl">{savings.yearlySavings} XLM</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Savings Percent:</span>
@@ -378,11 +378,11 @@ function GatewayDashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-white">{metrics.totalSavings.toFixed(6)}</div>
-                <div className="text-sm text-gray-400">Total Savings (SOL)</div>
+                <div className="text-sm text-gray-400">Total Savings (XLM)</div>
               </div>
             </div>
             <div className="text-xs text-gray-500">
-              Jito tips refunded: {metrics.totalJitoTipsRefunded.toFixed(6)} SOL
+              Jito tips refunded: {metrics.totalJitoTipsRefunded.toFixed(6)} XLM
             </div>
           </motion.div>
 
@@ -528,7 +528,7 @@ function GatewayDashboardPage() {
                         {(tx.confirmationTime / 1000).toFixed(2)}s
                       </td>
                       <td className="py-3 px-4 text-green-400 text-sm font-medium">
-                        {tx.jitoTipRefunded > 0 ? `+${tx.jitoTipRefunded.toFixed(6)} SOL` : '-'}
+                        {tx.jitoTipRefunded > 0 ? `+${tx.jitoTipRefunded.toFixed(6)} XLM` : '-'}
                       </td>
                     </tr>
                   ))

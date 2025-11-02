@@ -474,7 +474,7 @@ function AnalyticsPage() {
                 <FaCheckCircle className="text-amber-400 text-lg flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-white">Blockchain Integration</p>
-                  <p>All transactions recorded on Solana for transparency and verifiability</p>
+                  <p>All transactions recorded on Stellar for transparency and verifiability</p>
                 </div>
               </div>
             </div>
@@ -491,7 +491,7 @@ function AnalyticsPage() {
           <Card variant="gradient" className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-600">
             <p className="text-purple-100 text-sm text-center flex items-center justify-center gap-2">
               <FaLink className="text-purple-400" />
-              <strong>Powered by Solana:</strong> This analytics dashboard demonstrates real-time insights
+              <strong>Powered by Stellar:</strong> This analytics dashboard demonstrates real-time insights
               into the DeCharge network. All metrics are derived from on-chain verified charging sessions.
             </p>
           </Card>

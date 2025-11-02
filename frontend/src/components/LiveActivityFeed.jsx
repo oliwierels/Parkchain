@@ -58,7 +58,7 @@ const LiveActivityFeed = ({ transactions, limit = 15 }) => {
       return {
         title: 'Batch Transaction Completed',
         description: `${tx.amount} DCP tokens via batch delivery`,
-        details: `Saved ${(tx.jitoTipRefunded || 0).toFixed(6)} SOL in fees`
+        details: `Saved ${(tx.jitoTipRefunded || 0).toFixed(6)} XLM in fees`
       };
     }
 
@@ -201,7 +201,7 @@ const LiveActivityFeed = ({ transactions, limit = 15 }) => {
                           </a>
                           {activity.data.gatewayFee > 0 && (
                             <span className="text-yellow-400">
-                              💰 {activity.data.gatewayFee.toFixed(6)} SOL
+                              💰 {activity.data.gatewayFee.toFixed(6)} XLM
                             </span>
                           )}
                         </div>

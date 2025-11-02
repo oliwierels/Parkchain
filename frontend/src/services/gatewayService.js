@@ -6,7 +6,7 @@
 // - Multi-channel delivery (RPC + Jito bundles)
 // - Auto-refund Jito tips if RPC succeeds
 // - Real-time observability and metrics
-// - 0.0001 SOL per transaction (10x cheaper than alternatives)
+// - 0.0001 XLM per transaction (10x cheaper than alternatives)
 
 import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import GATEWAY_CONFIG from '../config/gateway.js';
@@ -15,7 +15,7 @@ import { smartRoutingService } from './smartRoutingService.js';
 
 /**
  * Gateway Transaction Service
- * Wraps standard Solana transactions with Gateway optimization and delivery
+ * Wraps standard Stellar transactions with Gateway optimization and delivery
  */
 class GatewayService {
   constructor() {
@@ -33,7 +33,7 @@ class GatewayService {
    * Build Gateway Transaction
    * Optimizes transaction with compute units and priority fees
    *
-   * @param {Transaction} transaction - Standard Solana transaction
+   * @param {Transaction} transaction - Standard Stellar transaction
    * @param {Object} options - Additional options
    * @returns {Promise<Object>} Optimized gateway transaction
    */
@@ -176,7 +176,7 @@ class GatewayService {
    * Routes transaction through optimal delivery channels
    *
    * @param {Transaction} transaction - Signed transaction
-   * @param {Connection} connection - Solana connection
+   * @param {Connection} connection - Stellar connection
    * @param {Object} options - Additional options
    * @returns {Promise<string>} Transaction signature
    */
@@ -321,7 +321,7 @@ class GatewayService {
     if (data.result.jitoTipRefunded) {
       const refundAmount = data.result.jitoTipAmount || 0.001;
       this.metrics.totalJitoTipsRefunded += refundAmount;
-      this.log('send', `💰 Jito tip refunded: ${refundAmount} SOL saved!`);
+      this.log('send', `💰 Jito tip refunded: ${refundAmount} XLM saved!`);
     }
 
     // Log delivery method used
@@ -336,7 +336,7 @@ class GatewayService {
    * Send transaction via standard RPC (fallback)
    */
   async _sendWithStandardRPC(transaction, connection, options) {
-    // Use standard Solana RPC
+    // Use standard Stellar RPC
     const signature = await connection.sendRawTransaction(
       transaction.serialize(),
       {

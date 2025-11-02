@@ -43,7 +43,7 @@ export const useSolana = () => {
     // Ale @solana/wallet-adapter-react nie eksportuje swojego Contextu łatwo
     // Zwrócimy pusty obiekt lub podstawowe wartości, aby uniknąć crashu
     // Lepszym rozwiązaniem byłoby użycie hooków z @solana/wallet-adapter-react bezpośrednio
-    console.warn("Attempted to use Solana context outside of provider, returning minimal values.");
+    console.warn("Attempted to use Stellar context outside of provider, returning minimal values.");
     return { publicKey: null, wallet: null, sendTransaction: async () => {} }; 
   }
   return context;

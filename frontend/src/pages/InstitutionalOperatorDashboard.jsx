@@ -70,7 +70,7 @@ const InstitutionalOperatorDashboard = () => {
 
   const handleTokenizeAsset = async () => {
     if (!wallet.connected) {
-      alert('Please connect your Solana wallet first');
+      alert('Please connect your Stellar wallet first');
       return;
     }
 

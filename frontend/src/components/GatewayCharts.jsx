@@ -173,7 +173,7 @@ const GatewayCharts = ({ transactionStorage, batchStats, routingStats }) => {
     labels: timeSeriesData.labels,
     datasets: [
       {
-        label: 'Daily Savings (SOL)',
+        label: 'Daily Savings (XLM)',
         data: timeSeriesData.savings,
         backgroundColor: 'rgba(251, 191, 36, 0.8)',
         borderColor: 'rgb(251, 191, 36)',
@@ -332,7 +332,7 @@ const GatewayCharts = ({ transactionStorage, batchStats, routingStats }) => {
             >
               <h3 className="font-bold mb-4 flex items-center gap-2">
                 <FaChartBar className="text-yellow-400" />
-                Daily Savings (SOL)
+                Daily Savings (XLM)
               </h3>
               <div className="h-64">
                 {savingsChartData && (

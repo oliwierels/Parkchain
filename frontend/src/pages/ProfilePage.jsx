@@ -326,7 +326,7 @@ function ProfilePage() {
                   {user.wallet_address && (
                     <>
                       <h2 className="text-2xl font-bold text-white mb-4 mt-8">
-                        Portfel Solana
+                        Portfel Stellar
                       </h2>
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}

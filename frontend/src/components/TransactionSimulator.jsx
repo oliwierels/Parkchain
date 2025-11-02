@@ -30,7 +30,7 @@ const TransactionSimulator = () => {
 
     // Calculate costs
     const tokenAmount = parseFloat(amount);
-    const pricePerToken = 0.001; // SOL per DCP
+    const pricePerToken = 0.001; // XLM per DCP
     const totalValue = tokenAmount * count * pricePerToken;
 
     let estimatedFees;
@@ -202,13 +202,13 @@ const TransactionSimulator = () => {
             <div className="bg-gray-700/30 rounded-lg p-3 border border-gray-600">
               <div className="text-xs text-gray-400 mb-1">Estimated Fees</div>
               <div className="text-xl font-bold text-yellow-400">
-                {simulation.estimatedFees.toFixed(6)} SOL
+                {simulation.estimatedFees.toFixed(6)} XLM
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-3 border border-gray-600">
               <div className="text-xs text-gray-400 mb-1">Total Cost</div>
               <div className="text-xl font-bold text-purple-400">
-                {simulation.estimatedCost.toFixed(6)} SOL
+                {simulation.estimatedCost.toFixed(6)} XLM
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@ const TransactionSimulator = () => {
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Total Value:</span>
               <span className="font-semibold text-white">
-                {simulation.totalValue.toFixed(6)} SOL
+                {simulation.totalValue.toFixed(6)} XLM
               </span>
             </div>
             <div className="flex items-center justify-between">

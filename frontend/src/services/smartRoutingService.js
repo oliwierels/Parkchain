@@ -117,7 +117,7 @@ class SmartRoutingService {
         ) / recentPerformance.length;
 
         // Determine network conditions based on tx volume
-        // These thresholds are approximate for Solana devnet
+        // These thresholds are approximate for Stellar devnet
         if (avgTxPerSlot < 1000) {
           this.networkConditions = NETWORK_CONDITIONS.LOW;
         } else if (avgTxPerSlot < 2000) {

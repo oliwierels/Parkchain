@@ -1,5 +1,5 @@
 // Sanctum Gateway Configuration for Parkchain
-// Gateway provides optimized transaction delivery for Solana with:
+// Gateway provides optimized transaction delivery for Stellar with:
 // - Auto compute unit calculation
 // - Priority fee optimization
 // - Multi-channel routing (RPC + Jito)
@@ -61,8 +61,8 @@ export const GATEWAY_CONFIG = {
 
   // Cost settings
   costs: {
-    // Gateway fee per transaction (SOL)
-    gatewayFee: 0.0001, // 0.0001 SOL per tx (10x cheaper than competitors!)
+    // Gateway fee per transaction (XLM)
+    gatewayFee: 0.0001, // 0.0001 XLM per tx (10x cheaper than competitors!)
 
     // Show cost savings in UI
     showSavings: true,
@@ -98,7 +98,7 @@ export const getGatewayStatus = () => {
   if (!GATEWAY_CONFIG.apiKey) {
     return {
       enabled: false,
-      message: 'Gateway API key not configured. Using standard Solana RPC.'
+      message: 'Gateway API key not configured. Using standard Stellar RPC.'
     };
   }
 

@@ -380,7 +380,7 @@
       "transaction": "Transakcja:",
       "autoClose": "Okno zamknie się automatycznie...",
       "processingGatewayLog": "⚡ Procesowanie płatności za ładowanie przez Gateway...",
-      "processingSolanaLog": "◎ Procesowanie standardowej płatności Solana...",
+      "processingStellarLog": "⭐ Procesowanie standardowej płatności Stellar...",
       "processingCardLog": "💳 Procesowanie płatności kartą..."
     }
   },

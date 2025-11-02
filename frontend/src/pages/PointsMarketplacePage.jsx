@@ -72,7 +72,7 @@ function PointsMarketplacePage() {
 
   const handleBuyPoints = async () => {
     if (!connected || !publicKey) {
-      alert('❌ Please connect your Solana wallet first!');
+      alert('❌ Please connect your Stellar wallet first!');
       return;
     }
 
@@ -88,15 +88,15 @@ function PointsMarketplacePage() {
     setGatewayMetrics(null);
 
     try {
-      // Oblicz cenę w SOL (zakładamy 1 DCP = 0.5 PLN, 1 SOL = ~$150, 1 PLN = ~$0.25)
-      // Więc: 1 DCP = 0.5 PLN = ~$0.125 = ~0.00083 SOL
-      // Dla uproszczenia: 100 DCP = 0.1 SOL (można dostosować)
-      const priceInSOL = new BigNumber(amount).dividedBy(1000); // 100 DCP = 0.1 SOL
+      // Oblicz cenę w XLM (zakładamy 1 DCP = 0.5 PLN, 1 XLM = ~$150, 1 PLN = ~$0.25)
+      // Więc: 1 DCP = 0.5 PLN = ~$0.125 = ~0.00083 XLM
+      // Dla uproszczenia: 100 DCP = 0.1 XLM (można dostosować)
+      const priceInSOL = new BigNumber(amount).dividedBy(1000); // 100 DCP = 0.1 XLM
       const lamports = priceInSOL.multipliedBy(LAMPORTS_PER_SOL).toNumber();
 
-      console.log(`💰 Buying ${amount} DCP for ${priceInSOL.toFixed(4)} SOL (${lamports} lamports)`);
+      console.log(`💰 Buying ${amount} DCP for ${priceInSOL.toFixed(4)} XLM (${lamports} lamports)`);
 
-      // Utwórz transakcję transferu SOL do treasury
+      // Utwórz transakcję transferu XLM do treasury
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
@@ -132,8 +132,8 @@ function PointsMarketplacePage() {
         });
 
       } else {
-        // Standard Solana RPC (without Gateway)
-        console.log('📤 Sending via standard Solana RPC...');
+        // Standard Stellar RPC (without Gateway)
+        console.log('📤 Sending via standard Stellar RPC...');
 
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
         transaction.recentBlockhash = blockhash;
@@ -201,7 +201,7 @@ function PointsMarketplacePage() {
       // Show success notification
       notify.success(
         'Transaction Successful!',
-        `Bought ${amount} DCP tokens for ${priceInSOL.toFixed(4)} SOL`,
+        `Bought ${amount} DCP tokens for ${priceInSOL.toFixed(4)} XLM`,
         [
           useGateway ? '⚡ Delivered via Sanctum Gateway' : '📤 Standard RPC delivery',
           `Confirmation: ${((Date.now() - transactionStartTime) / 1000).toFixed(1)}s`,
@@ -231,7 +231,7 @@ function PointsMarketplacePage() {
 
       // Show success with Gateway info
       const gatewayInfo = useGateway ? '\n⚡ Delivered via Sanctum Gateway' : '';
-      alert(`🎉 Purchase Successful!\n\n✓ Bought: ${amount} DCP tokens\n✓ Paid: ${priceInSOL.toFixed(4)} SOL (50% discount)\n✓ Transaction: ${signature.slice(0, 16)}...${gatewayInfo}\n\n🔗 View on Solana Explorer:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+      alert(`🎉 Purchase Successful!\n\n✓ Bought: ${amount} DCP tokens\n✓ Paid: ${priceInSOL.toFixed(4)} XLM (50% discount)\n✓ Transaction: ${signature.slice(0, 16)}...${gatewayInfo}\n\n🔗 View on Stellar Explorer:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
       // Refresh stats
       fetchPointsData();
@@ -257,7 +257,7 @@ function PointsMarketplacePage() {
         }
       });
 
-      alert(`❌ Transaction Failed\n\n${err.message}\n\nPlease ensure you have enough SOL for the transaction and fees.`);
+      alert(`❌ Transaction Failed\n\n${err.message}\n\nPlease ensure you have enough XLM for the transaction and fees.`);
     } finally {
       setLoading(false);
     }
@@ -284,7 +284,7 @@ function PointsMarketplacePage() {
             💎 DeCharge Points Marketplace
           </h1>
           <p className="text-gray-400 text-sm">
-            Buy DCP tokens at 50% discount • Support green energy on Solana
+            Buy DCP tokens at 50% discount • Support green energy on Stellar
           </p>
         </div>
         <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700" />
@@ -315,7 +315,7 @@ function PointsMarketplacePage() {
             <div className="text-2xl">🔗</div>
             <div>
               <p className="font-bold text-white mb-1">Blockchain Verified</p>
-              <p>All transactions recorded on Solana for transparency</p>
+              <p>All transactions recorded on Stellar for transparency</p>
             </div>
           </div>
         </div>
@@ -331,7 +331,7 @@ function PointsMarketplacePage() {
           {!connected ? (
             <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-6 text-center">
               <p className="text-yellow-200 mb-4">
-                Connect your Solana wallet to buy DCP tokens
+                Connect your Stellar wallet to buy DCP tokens
               </p>
               <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 mx-auto" />
             </div>
@@ -363,8 +363,8 @@ function PointsMarketplacePage() {
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
                   {useGateway
-                    ? '🚀 Optimized delivery via RPC + Jito bundles • Auto-refund tips • 0.0001 SOL/tx'
-                    : '📡 Standard Solana RPC (Gateway disabled for comparison)'}
+                    ? '🚀 Optimized delivery via RPC + Jito bundles • Auto-refund tips • 0.0001 XLM/tx'
+                    : '📡 Standard Stellar RPC (Gateway disabled for comparison)'}
                 </p>
               </div>
 
@@ -419,7 +419,7 @@ function PointsMarketplacePage() {
                   <span className="text-purple-400 font-bold text-2xl">{pricing.discounted} PLN</span>
                 </div>
                 <p className="text-xs text-gray-400 text-center pt-2">
-                  Payment processed via Solana Pay
+                  Payment processed via Stellar Pay
                 </p>
               </div>
 
@@ -433,7 +433,7 @@ function PointsMarketplacePage() {
                       : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
                   }`}
                 >
-                  {loading ? '⏳ Processing Transaction...' : `💎 Buy ${buyAmount} DCP (${new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL)`}
+                  {loading ? '⏳ Processing Transaction...' : `💎 Buy ${buyAmount} DCP (${new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} XLM)`}
                 </button>
 
                 {/* Batch Purchase Button */}
@@ -475,7 +475,7 @@ function PointsMarketplacePage() {
                         {gatewayMetrics.totalJitoTipsRefunded > 0 && (
                           <div className="bg-gray-800/50 rounded p-2 col-span-2">
                             <p className="text-gray-400">💰 Jito Tips Refunded</p>
-                            <p className="text-amber-400 font-bold">{gatewayMetrics.totalJitoTipsRefunded} SOL saved</p>
+                            <p className="text-amber-400 font-bold">{gatewayMetrics.totalJitoTipsRefunded} XLM saved</p>
                           </div>
                         )}
                       </div>
@@ -488,7 +488,7 @@ function PointsMarketplacePage() {
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 underline text-sm block"
                   >
-                    🔗 View on Solana Explorer
+                    🔗 View on Stellar Explorer
                   </a>
                 </div>
               )}
@@ -507,7 +507,7 @@ function PointsMarketplacePage() {
 
               {showQR && (
                 <div className="mt-4 p-4 bg-gray-700 rounded-lg text-center">
-                  <p className="text-sm text-gray-300 mb-3">Scan with Solana Pay compatible wallet</p>
+                  <p className="text-sm text-gray-300 mb-3">Scan with Stellar Pay compatible wallet</p>
                   <div className="flex justify-center">
                     <QRCodeSVG
                       value={`solana:${TREASURY_WALLET.toString()}?amount=${new BigNumber(buyAmount).dividedBy(1000).toFixed(6)}&label=DeCharge%20Points&message=Buy%20${buyAmount}%20DCP`}
@@ -518,7 +518,7 @@ function PointsMarketplacePage() {
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-3">
-                    Amount: {new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} SOL
+                    Amount: {new BigNumber(buyAmount).dividedBy(1000).toFixed(4)} XLM
                   </p>
                 </div>
               )}
@@ -561,7 +561,7 @@ function PointsMarketplacePage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">✓</span>
-                <span>Participate in green energy economy on Solana</span>
+                <span>Participate in green energy economy on Stellar</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-400 mt-0.5">✓</span>
@@ -583,8 +583,8 @@ function PointsMarketplacePage() {
       {/* Blockchain Notice */}
       <div className="mt-8 bg-gradient-to-r from-purple-900 to-blue-900 border-2 border-purple-600 rounded-xl p-5 text-center space-y-3">
         <p className="text-purple-100 text-sm">
-          <strong>⛓️ Real Blockchain Transactions:</strong> All purchases are executed as actual SOL transfers on Solana Devnet.
-          Each transaction is recorded on-chain and can be verified on Solana Explorer. This demonstrates real Web3 integration for the DeCharge economy.
+          <strong>⛓️ Real Blockchain Transactions:</strong> All purchases are executed as actual XLM transfers on Stellar Devnet.
+          Each transaction is recorded on-chain and can be verified on Stellar Explorer. This demonstrates real Web3 integration for the DeCharge economy.
         </p>
         <div className="pt-3 border-t border-purple-600/30">
           <p className="text-blue-200 text-sm">
@@ -621,7 +621,7 @@ function PointsMarketplacePage() {
             'Batch Transaction Complete!',
             `Successfully processed ${batch.transactions.length} transactions`,
             [
-              `Saved ${batch.estimatedSavings.toFixed(6)} SOL in fees`,
+              `Saved ${batch.estimatedSavings.toFixed(6)} XLM in fees`,
               `Total: ${batch.transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)} DCP`,
               `Tier: ${currentTier?.name || 'Unknown'}`
             ]

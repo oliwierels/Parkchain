@@ -159,13 +159,13 @@ function LiveFeedPage() {
               Live Charging Feed
             </h1>
             <p className="text-gray-400 text-sm">
-              Real-time EV charging sessions on Solana • Powered by DeCharge
+              Real-time EV charging sessions on Stellar • Powered by DeCharge
             </p>
           </div>
           <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700" />
         </motion.div>
 
-        {/* Solana Connection Status */}
+        {/* Stellar Connection Status */}
         {connected && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -176,7 +176,7 @@ function LiveFeedPage() {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div>
-                  <p className="text-green-200 font-bold text-sm">Connected to Solana</p>
+                  <p className="text-green-200 font-bold text-sm">Connected to Stellar</p>
                   <p className="text-green-300 text-xs font-mono">
                     {publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}
                   </p>
@@ -471,10 +471,10 @@ function LiveFeedPage() {
                 • <strong>Web3 Users</strong> can buy DCP at 50% discount to support green energy
               </p>
               <p>
-                • All transactions are recorded on Solana for complete transparency
+                • All transactions are recorded on Stellar for complete transparency
               </p>
               <p className="mt-4 text-purple-300">
-                🔗 Connect your Solana wallet to participate in the DeCharge ecosystem!
+                🔗 Connect your Stellar wallet to participate in the DeCharge ecosystem!
               </p>
             </div>
           </Card>

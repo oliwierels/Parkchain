@@ -117,8 +117,8 @@ class BatchTransactionService {
     batch.transactions.push(txData);
 
     // Calculate savings
-    // Individual transactions: N * 0.0001 SOL
-    // Batch transaction: 1 * 0.0001 SOL + small batch overhead
+    // Individual transactions: N * 0.0001 XLM
+    // Batch transaction: 1 * 0.0001 XLM + small batch overhead
     const individualCost = batch.transactions.length * 0.0001;
     const batchCost = 0.0001 + (batch.transactions.length * 0.00001); // Small overhead per tx
     batch.estimatedSavings = individualCost - batchCost;

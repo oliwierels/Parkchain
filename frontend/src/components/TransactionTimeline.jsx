@@ -125,12 +125,12 @@ const TransactionTimeline = ({ transactions, limit = 10 }) => {
                     )}
                     {tx.gatewayFee !== undefined && (
                       <span>
-                        💰 {tx.gatewayFee.toFixed(6)} SOL
+                        💰 {tx.gatewayFee.toFixed(6)} XLM
                       </span>
                     )}
                     {tx.jitoTipRefunded > 0 && (
                       <span className="text-green-400">
-                        ↩️ {tx.jitoTipRefunded.toFixed(6)} SOL refunded
+                        ↩️ {tx.jitoTipRefunded.toFixed(6)} XLM refunded
                       </span>
                     )}
                   </div>

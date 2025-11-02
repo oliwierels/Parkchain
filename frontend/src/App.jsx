@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { SolanaWalletProvider } from './context/SolanaWalletContext';
+import { StellarWalletProvider } from './context/StellarWalletContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
@@ -80,13 +80,13 @@ function AppContent() {
 
 function App() {
   return (
-    <SolanaWalletProvider>
+    <StellarWalletProvider>
       <AuthProvider>
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
       </AuthProvider>
-    </SolanaWalletProvider>
+    </StellarWalletProvider>
   );
 }
 

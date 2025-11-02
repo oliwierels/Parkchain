@@ -146,7 +146,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
   };
 
   const processStandardSolanaPayment = async () => {
-    console.log('◎ Procesowanie standardowej płatności Solana...');
+    console.log('◎ Procesowanie standardowej płatności Stellar...');
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
     const costPLN = parseFloat(calculateEstimatedCost());

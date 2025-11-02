@@ -330,7 +330,7 @@ const ParkingMarketplacePage = () => {
             Institutional-Grade Parking Asset Tokenization
           </p>
           <p className="text-lg text-blue-300">
-            Trade Real-World Parking Assets as Tokens on Solana
+            Trade Real-World Parking Assets as Tokens on Stellar
           </p>
         </motion.div>
 
@@ -776,7 +776,7 @@ const ParkingMarketplacePage = () => {
                   className="w-full bg-white/10 border border-white/30 rounded-lg py-2 px-4 text-white"
                 >
                   <option value="USDC">USDC - USD Coin</option>
-                  <option value="SOL">SOL - Solana</option>
+                  <option value="XLM">XLM - Stellar</option>
                   <option value="EUROC">EUROC - Euro Coin</option>
                 </select>
               </div>

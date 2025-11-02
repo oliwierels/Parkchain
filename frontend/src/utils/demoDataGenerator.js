@@ -84,7 +84,7 @@ class DemoDataGenerator {
         // Random time during the day
         const txTimestamp = dayTimestamp + Math.random() * dayMs;
 
-        // 70% Gateway, 20% Standard Solana, 10% Card/Later
+        // 70% Gateway, 20% Standard Stellar, 10% Card/Later
         const rand = Math.random();
         const method = rand < 0.7 ? 'gateway' : rand < 0.9 ? 'rpc' : 'card';
 
@@ -124,7 +124,7 @@ class DemoDataGenerator {
       successRate = 0.99; // 99% success rate
       confirmTime = 3 + Math.random() * 2; // 3-5 seconds
     } else if (method === 'rpc') {
-      transactionFee = 0.001; // Standard Solana fee
+      transactionFee = 0.001; // Standard Stellar fee
       gatewayFee = 0;
       jitoTipRefunded = 0;
       successRate = 0.85; // 85% success rate
@@ -187,9 +187,9 @@ class DemoDataGenerator {
     const rpcTotalFees = rpcStats.totalFees;
     const cardTotalFees = cardStats.totalFees;
 
-    // What would it cost if everything was Standard Solana?
+    // What would it cost if everything was Standard Stellar?
     const allSuccessful = transactions.filter(tx => tx.status === 'success');
-    const hypotheticalRPCCost = allSuccessful.length * 0.001; // 0.001 SOL per tx
+    const hypotheticalRPCCost = allSuccessful.length * 0.001; // 0.001 XLM per tx
 
     const actualGatewayCost = gatewayStats.totalFees;
     const savings = hypotheticalRPCCost - actualGatewayCost;
@@ -225,7 +225,7 @@ class DemoDataGenerator {
         actualGatewayCost: actualGatewayCost.toFixed(6),
         totalSavings: savings.toFixed(6),
         savingsPercent: ((savings / hypotheticalRPCCost) * 100).toFixed(2) + '%',
-        savingsUSD: (savings * 150).toFixed(2) // @ $150/SOL
+        savingsUSD: (savings * 150).toFixed(2) // @ $150/XLM
       }
     };
   }
@@ -279,18 +279,18 @@ class DemoDataGenerator {
       console.log(`  Transactions: ${stats.count}`);
       console.log(`  Success Rate: ${stats.successRate}`);
       console.log(`  Avg Confirm: ${stats.avgConfirmTime}`);
-      console.log(`  Total Fees: ${stats.totalFees.toFixed(6)} SOL`);
+      console.log(`  Total Fees: ${stats.totalFees.toFixed(6)} XLM`);
       if (stats.jitoRefunded) {
-        console.log(`  Jito Refunded: ${stats.jitoRefunded.toFixed(6)} SOL 💰`);
+        console.log(`  Jito Refunded: ${stats.jitoRefunded.toFixed(6)} XLM 💰`);
       }
     });
 
     console.log('\n💰 COST SAVINGS:');
     console.log('─'.repeat(60));
-    console.log(`If all txs used Standard RPC: ${summary.savings.hypotheticalRPCCost} SOL`);
-    console.log(`Actual Gateway cost: ${summary.savings.actualGatewayCost} SOL`);
-    console.log(`Total Savings: ${summary.savings.totalSavings} SOL (${summary.savings.savingsPercent})`);
-    console.log(`USD Value: $${summary.savings.savingsUSD} @ $150/SOL`);
+    console.log(`If all txs used Standard RPC: ${summary.savings.hypotheticalRPCCost} XLM`);
+    console.log(`Actual Gateway cost: ${summary.savings.actualGatewayCost} XLM`);
+    console.log(`Total Savings: ${summary.savings.totalSavings} XLM (${summary.savings.savingsPercent})`);
+    console.log(`USD Value: $${summary.savings.savingsUSD} @ $150/XLM`);
     console.log('═'.repeat(60));
 
     return result;

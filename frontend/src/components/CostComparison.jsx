@@ -157,13 +157,13 @@ const CostComparison = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-sm">Total Cost:</span>
                   <span className="font-bold text-white">
-                    {comparison.standard.totalCost.toFixed(6)} SOL
+                    {comparison.standard.totalCost.toFixed(6)} XLM
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-sm">Per Transaction:</span>
                   <span className="text-gray-300">
-                    {comparison.standard.perTransaction.toFixed(6)} SOL
+                    {comparison.standard.perTransaction.toFixed(6)} XLM
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -191,13 +191,13 @@ const CostComparison = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-sm">Total Cost:</span>
                   <span className="font-bold text-white">
-                    {comparison.gateway.totalCostWithRefunds.toFixed(6)} SOL
+                    {comparison.gateway.totalCostWithRefunds.toFixed(6)} XLM
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-sm">Per Transaction:</span>
                   <span className="text-gray-300">
-                    {comparison.gateway.perTransaction.toFixed(6)} SOL
+                    {comparison.gateway.perTransaction.toFixed(6)} XLM
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -215,7 +215,7 @@ const CostComparison = () => {
                     <div className="flex justify-between text-green-400">
                       <span className="text-sm">Jito Refunds:</span>
                       <span className="font-bold">
-                        {comparison.gateway.refunds.toFixed(6)} SOL
+                        {comparison.gateway.refunds.toFixed(6)} XLM
                       </span>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ const CostComparison = () => {
             <div className="text-center mb-4">
               <div className="text-sm text-gray-400 mb-1">Total Savings with Gateway</div>
               <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400">
-                {comparison.savings.amount.toFixed(6)} SOL
+                {comparison.savings.amount.toFixed(6)} XLM
               </div>
               <div className="text-xl text-green-400 mt-2">
                 ({comparison.savings.percent.toFixed(1)}% cheaper)

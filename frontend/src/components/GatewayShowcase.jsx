@@ -86,7 +86,7 @@ function GatewayShowcase() {
     labels: ['Standard RPC', 'Gateway'],
     datasets: [
       {
-        label: 'Cost per 1000 Transactions (SOL)',
+        label: 'Cost per 1000 Transactions (XLM)',
         data: [savingsCalc.standardCost, savingsCalc.gatewayCost],
         backgroundColor: ['rgba(239, 68, 68, 0.8)', 'rgba(34, 197, 94, 0.8)'],
         borderColor: ['rgb(239, 68, 68)', 'rgb(34, 197, 94)'],
@@ -182,7 +182,7 @@ function GatewayShowcase() {
               {(metrics.totalSavings || 0).toFixed(4)}
             </div>
             <div className="text-amber-300 text-xs">
-              SOL auto-refunded
+              XLM auto-refunded
             </div>
           </div>
 
@@ -192,7 +192,7 @@ function GatewayShowcase() {
               {(metrics.totalGatewayFees || 0).toFixed(4)}
             </div>
             <div className="text-purple-300 text-xs">
-              SOL total (0.0001/tx)
+              XLM total (0.0001/tx)
             </div>
           </div>
         </div>
@@ -238,15 +238,15 @@ function GatewayShowcase() {
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg">
                 <span className="text-gray-300">Standard RPC + Jito</span>
-                <span className="text-red-400 font-bold">{savingsCalc.standardCost.toFixed(4)} SOL</span>
+                <span className="text-red-400 font-bold">{savingsCalc.standardCost.toFixed(4)} XLM</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-green-900/30 rounded-lg border border-green-600/30">
                 <span className="text-gray-300">Gateway + Auto-Refund</span>
-                <span className="text-green-400 font-bold">{savingsCalc.gatewayCost.toFixed(4)} SOL</span>
+                <span className="text-green-400 font-bold">{savingsCalc.gatewayCost.toFixed(4)} XLM</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-amber-900/30 rounded-lg border border-amber-600/30">
                 <span className="text-amber-300 font-bold">Daily Savings</span>
-                <span className="text-amber-400 font-bold">{savingsCalc.savings.toFixed(4)} SOL</span>
+                <span className="text-amber-400 font-bold">{savingsCalc.savings.toFixed(4)} XLM</span>
               </div>
             </div>
           </div>
@@ -276,14 +276,14 @@ function GatewayShowcase() {
                 <div className="p-4 bg-gray-700/50 rounded-lg">
                   <div className="text-xs text-gray-400 mb-1">Standard Cost</div>
                   <div className="text-xl font-bold text-red-400">
-                    {savingsCalc.standardCost.toFixed(4)} SOL
+                    {savingsCalc.standardCost.toFixed(4)} XLM
                   </div>
                   <div className="text-xs text-gray-500">per day</div>
                 </div>
                 <div className="p-4 bg-green-900/30 rounded-lg border border-green-600/30">
                   <div className="text-xs text-gray-400 mb-1">Gateway Cost</div>
                   <div className="text-xl font-bold text-green-400">
-                    {savingsCalc.gatewayCost.toFixed(4)} SOL
+                    {savingsCalc.gatewayCost.toFixed(4)} XLM
                   </div>
                   <div className="text-xs text-gray-500">per day</div>
                 </div>
@@ -293,20 +293,20 @@ function GatewayShowcase() {
                 <div className="text-center">
                   <div className="text-sm text-green-300 mb-1">Annual Savings</div>
                   <div className="text-4xl font-bold text-white mb-2">
-                    {savingsCalc.annualSavings.toFixed(2)} SOL
+                    {savingsCalc.annualSavings.toFixed(2)} XLM
                   </div>
                   <div className="text-lg text-green-200">
                     ≈ ${(savingsCalc.annualSavings * 150).toFixed(0)} USD
                   </div>
                   <div className="text-xs text-green-400 mt-2">
-                    @ $150 per SOL
+                    @ $150 per XLM
                   </div>
                 </div>
               </div>
 
               <div className="text-xs text-gray-400 space-y-1">
-                <p>• Standard: 0.002 SOL/tx (RPC + full Jito tips)</p>
-                <p>• Gateway: 0.0001 SOL/tx + 30% Jito (50% refunded)</p>
+                <p>• Standard: 0.002 XLM/tx (RPC + full Jito tips)</p>
+                <p>• Gateway: 0.0001 XLM/tx + 30% Jito (50% refunded)</p>
                 <p>• Savings increase with higher transaction volume</p>
               </div>
             </div>

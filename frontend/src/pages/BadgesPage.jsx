@@ -102,7 +102,7 @@ function BadgesPage() {
 
   const handleMintNFT = async (badge) => {
     if (!connected) {
-      addToast({ message: 'Połącz portfel Solana aby mintować NFT!', type: 'warning' });
+      addToast({ message: 'Połącz portfel Stellar aby mintować NFT!', type: 'warning' });
       return;
     }
 
@@ -322,7 +322,7 @@ function BadgesPage() {
               {[
                 { num: '1️⃣', title: 'Charge Your EV', desc: 'Use DeCharge network to charge your vehicle and earn kWh milestones' },
                 { num: '2️⃣', title: 'Unlock Achievements', desc: 'Reach milestones (100 kWh, 500 kWh, etc.) to unlock badges' },
-                { num: '3️⃣', title: 'Mint as NFT', desc: 'Connect Solana wallet and mint your badges as NFTs using Metaplex' },
+                { num: '3️⃣', title: 'Mint as NFT', desc: 'Connect Stellar wallet and mint your badges as NFTs using Metaplex' },
                 { num: '4️⃣', title: 'Show Off & Trade', desc: 'Display your achievements on-chain, trade with collectors, or keep as memorabilia' }
               ].map((step, i) => (
                 <div key={i} className="flex gap-3">
@@ -347,7 +347,7 @@ function BadgesPage() {
           <Card variant="glass" className="bg-blue-900/20 border-blue-600 text-center">
             <p className="text-blue-200 text-sm">
               <strong>🔧 NFT Minting:</strong> Badge tracking is fully functional.
-              Metaplex NFT minting will be implemented in production using Solana's standard NFT protocol.
+              Metaplex NFT minting will be implemented in production using Stellar's standard NFT protocol.
               Each badge would become a unique, tradable NFT in your wallet.
             </p>
           </Card>

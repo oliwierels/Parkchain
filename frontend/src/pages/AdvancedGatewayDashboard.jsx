@@ -350,7 +350,7 @@ const AdvancedGatewayDashboard = () => {
               <StatCard
                 icon={FaCoins}
                 label="Total Savings"
-                value={`${parseFloat(batchStats?.totalSavings || 0).toFixed(4)} SOL`}
+                value={`${parseFloat(batchStats?.totalSavings || 0).toFixed(4)} XLM`}
                 color="#F59E0B"
                 subtext="From batching & optimization"
               />
@@ -569,7 +569,7 @@ const AdvancedGatewayDashboard = () => {
                 <StatCard
                   icon={FaCoins}
                   label="Total Saved"
-                  value={`${batchStats?.totalSavings || 0} SOL`}
+                  value={`${batchStats?.totalSavings || 0} XLM`}
                   color="#F59E0B"
                 />
               </div>

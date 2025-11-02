@@ -166,9 +166,9 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       return;
     }
 
-    // Validate wallet connection for Solana payments only
+    // Validate wallet connection for Stellar payments only
     if ((paymentMethod === 'gateway' || paymentMethod === 'solana') && !wallet.connected) {
-      setError('Connect your Solana wallet to use this payment method');
+      setError('Connect your Stellar wallet to use this payment method');
       return;
     }
 
@@ -190,10 +190,10 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       } else if (paymentMethod === 'solana') {
         paymentResult = await processStandardSolanaPayment();
       } else if (paymentMethod === 'card') {
-        console.log('💳 Processing card payment (without Solana)...');
+        console.log('💳 Processing card payment (without Stellar)...');
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
-        console.log('🕐 Payment later (without Solana)...');
+        console.log('🕐 Payment later (without Stellar)...');
         paymentResult = { method: 'later', paid: false };
       } else {
         throw new Error(`Unknown payment method: ${paymentMethod}`);
@@ -233,31 +233,31 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     // Validate wallet is connected
     if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Solana wallet is not connected. Connect your wallet to use Gateway.');
+      throw new Error('Stellar wallet is not connected. Connect your wallet to use Gateway.');
     }
 
     // Treasury wallet for parking payments (in production, use owner's wallet)
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
 
-    // Convert PLN to SOL (rough estimate: 1 SOL = ~600 PLN)
+    // Convert PLN to XLM (rough estimate: 1 XLM = ~600 PLN)
     const priceSOL = priceCalculation.price / 600;
     const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
 
     // Check user balance
     const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 SOL minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const minRent = 5000; // 0.000005 XLM minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 XLM estimated transaction fee
     const requiredBalance = lamports + minRent + estimatedFee;
 
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} XLM available, ${requiredBalance / LAMPORTS_PER_SOL} XLM required`);
 
     // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
     const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
 
     if (balance < requiredBalance) {
       if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
+        console.log('🎭 DEMO MODE: Simulating Stellar payment (insufficient wallet funds)');
+        console.log(`   💡 In demo mode you don't need XLM to test payments!`);
 
         // Simulate delay like real transaction
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -275,8 +275,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       } else {
         // Production mode - require actual balance
         throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
+          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} XLM, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} XLM. ` +
+          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} XLM to your wallet.`
         );
       }
     }
@@ -312,11 +312,11 @@ function ReservationModal({ parking, onClose, onSuccess }) {
   };
 
   const processStandardSolanaPayment = async () => {
-    console.log('◎ Processing standard Solana payment...');
+    console.log('◎ Processing standard Stellar payment...');
 
     // Validate wallet is connected
     if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Solana wallet is not connected. Connect your wallet to use Solana payment.');
+      throw new Error('Stellar wallet is not connected. Connect your wallet to use Stellar payment.');
     }
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
@@ -325,19 +325,19 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
     // Check user balance
     const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 SOL minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 SOL estimated transaction fee
+    const minRent = 5000; // 0.000005 XLM minimum rent exemption
+    const estimatedFee = 5000; // ~0.000005 XLM estimated transaction fee
     const requiredBalance = lamports + minRent + estimatedFee;
 
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} SOL available, ${requiredBalance / LAMPORTS_PER_SOL} SOL required`);
+    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} XLM available, ${requiredBalance / LAMPORTS_PER_SOL} XLM required`);
 
     // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
     const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
 
     if (balance < requiredBalance) {
       if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Solana payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need SOL to test payments!`);
+        console.log('🎭 DEMO MODE: Simulating Stellar payment (insufficient wallet funds)');
+        console.log(`   💡 In demo mode you don't need XLM to test payments!`);
 
         // Simulate delay like real transaction
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -351,8 +351,8 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       } else {
         // Production mode - require actual balance
         throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} SOL, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} SOL to your wallet.`
+          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} XLM, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} XLM. ` +
+          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} XLM to your wallet.`
         );
       }
     }
@@ -1046,7 +1046,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Standard Solana/Card Processing */}
+            {/* Standard Stellar/Card Processing */}
             {paymentMethod !== 'gateway' && loading && (
               <div style={{
                 textAlign: 'center',

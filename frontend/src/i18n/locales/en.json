@@ -380,7 +380,7 @@
       "transaction": "Transaction:",
       "autoClose": "Window will close automatically...",
       "processingGatewayLog": "⚡ Processing charging payment via Gateway...",
-      "processingSolanaLog": "◎ Processing standard Solana payment...",
+      "processingStellarLog": "⭐ Processing standard Stellar payment...",
       "processingCardLog": "💳 Processing card payment..."
     }
   },

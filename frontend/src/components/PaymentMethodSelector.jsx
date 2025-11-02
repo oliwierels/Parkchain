@@ -1,56 +1,55 @@
 import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useStellar } from '../context/StellarWalletContext';
 
 /**
  * Payment Method Selector for Parkchain Reservations
  * Shows different payment options with Gateway as the recommended method
  *
  * Payment Methods:
- * 1. Gateway (Solana) - Fastest, cheapest, 99% success rate ⚡ RECOMMENDED
- * 2. Standard Solana - Slower, more expensive, 85% success rate
+ * 1. Gateway (Stellar) - Fastest, cheapest, 99% success rate ⚡ RECOMMENDED
+ * 2. Standard Stellar - Slower, more expensive, 85% success rate
  * 3. Credit Card - Traditional, 2.9% + 0.30 PLN fee
  * 4. Pay Later - For registered users only
  */
 function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, connect } = useStellar();
 
   // Calculate fees for different payment methods
   const calculateFees = () => {
     const amountPLN = amount; // Amount in PLN
 
-    // Convert PLN to SOL (rough estimate: 1 SOL = ~600 PLN)
-    const amountSOL = amountPLN / 600;
+    // Convert PLN to XLM (rough estimate: 1 XLM = ~2 PLN)
+    const amountXLM = amountPLN / 2;
 
     return {
       gateway: {
-        baseCost: amountSOL,
-        transactionFee: 0.0001, // Gateway fee: 0.0001 SOL
-        totalSOL: amountSOL + 0.0001,
-        totalPLN: (amountSOL + 0.0001) * 600,
-        savingsVsStandard: 0.0009 * 600, // Save ~0.54 PLN
+        baseCost: amountXLM,
+        transactionFee: 0.0001, // Gateway fee: 0.0001 XLM
+        totalXLM: amountXLM + 0.0001,
+        totalPLN: (amountXLM + 0.0001) * 2,
+        savingsVsStandard: 0.0009 * 2, // Save ~0.0018 PLN
         successRate: 99,
         confirmTime: '3-5s',
         features: [
-          'Multi-channel routing (RPC + Jito)',
-          'Auto-refund Jito tips',
+          'Multi-channel routing',
+          'Auto-refund tips',
           '99%+ success rate',
           'Instant confirmation',
           '10x cheaper than alternatives'
         ]
       },
-      solana: {
-        baseCost: amountSOL,
-        transactionFee: 0.001, // Standard Solana fee + tips
-        totalSOL: amountSOL + 0.001,
-        totalPLN: (amountSOL + 0.001) * 600,
-        successRate: 85,
-        confirmTime: '8-15s',
+      stellar: {
+        baseCost: amountXLM,
+        transactionFee: 0.00001, // Standard Stellar fee (0.00001 XLM = 100 stroops)
+        totalXLM: amountXLM + 0.00001,
+        totalPLN: (amountXLM + 0.00001) * 2,
+        successRate: 99,
+        confirmTime: '3-5s',
         features: [
-          'Standard Solana RPC',
-          'No optimization',
-          '~15% failure rate',
-          'Manual retry needed'
+          'Standard Stellar Network',
+          'Low fees (100 stroops)',
+          'Fast confirmation (~5s)',
+          'Decentralized'
         ]
       },
       card: {
@@ -92,7 +91,7 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
       badge: 'POLECANE',
       badgeColor: 'bg-green-500',
       description: 'Najszybsza i najtańsza opcja',
-      provider: 'Solana + Gateway',
+      provider: 'Stellar + Gateway',
       fee: fees.gateway.transactionFee,
       total: fees.gateway.totalPLN,
       savings: fees.gateway.savingsVsStandard,
@@ -104,17 +103,17 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
       requiresWallet: true
     },
     {
-      id: 'solana',
-      name: 'Standard Solana',
-      icon: '◎',
+      id: 'stellar',
+      name: 'Standard Stellar',
+      icon: '⭐',
       badge: null,
-      description: 'Standardowa transakcja Solana',
-      provider: 'Solana RPC',
-      fee: fees.solana.transactionFee * 600,
-      total: fees.solana.totalPLN,
-      successRate: fees.solana.successRate,
-      confirmTime: fees.solana.confirmTime,
-      features: fees.solana.features,
+      description: 'Standardowa transakcja Stellar',
+      provider: 'Stellar Network',
+      fee: fees.stellar.transactionFee * 2,
+      total: fees.stellar.totalPLN,
+      successRate: fees.stellar.successRate,
+      confirmTime: fees.stellar.confirmTime,
+      features: fees.stellar.features,
       color: 'border-blue-500 bg-blue-50',
       disabled: !connected,
       requiresWallet: true
@@ -172,9 +171,14 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
             <div className="text-2xl">💡</div>
             <div className="flex-1">
               <p className="text-sm text-blue-900 font-medium mb-2">
-                Połącz portfel Solana aby odblokowaować najlepsze opcje płatności!
+                Połącz portfel Stellar aby odblokować najlepsze opcje płatności!
               </p>
-              <WalletMultiButton className="!bg-blue-600 hover:!bg-blue-700 !text-sm !py-2 !px-4" />
+              <button
+                onClick={connect}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors"
+              >
+                Połącz portfel Stellar
+              </button>
             </div>
           </div>
         </div>
@@ -256,7 +260,7 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
             {/* Savings Badge for Gateway */}
             {method.id === 'gateway' && method.savings > 0 && (
               <div className="bg-green-100 text-green-800 text-xs font-bold px-3 py-2 rounded-lg mb-3 text-center">
-                💰 Oszczędzasz {method.savings.toFixed(2)} PLN vs Standard Solana!
+                💰 Oszczędzasz {method.savings.toFixed(2)} PLN vs Standard Stellar!
               </div>
             )}
 
@@ -295,7 +299,7 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
             {/* Requires Wallet Message */}
             {method.requiresWallet && method.disabled && (
               <div className="mt-3 text-xs text-gray-500 text-center">
-                Wymagane połączenie portfela Solana
+                Wymagane połączenie portfela Stellar
               </div>
             )}
           </button>
@@ -333,7 +337,7 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 font-bold">✓</span>
                   <span>
-                    <strong>10x taniej:</strong> 0.0001 SOL fee vs 0.001 SOL standardowo
+                    <strong>10x taniej:</strong> 0.0001 XLM fee vs 0.001 XLM standardowo
                   </span>
                 </li>
               </ul>
