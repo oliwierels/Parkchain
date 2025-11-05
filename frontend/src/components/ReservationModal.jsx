@@ -182,7 +182,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     }
 
     // Validate wallet connection for Stellar payments only
-    if ((paymentMethod === 'gateway' || paymentMethod === 'solana') && !wallet.connected) {
+    if (paymentMethod === 'stellar' && !connected) {
       setError('Connect your Stellar wallet to use this payment method');
       return;
     }
@@ -198,17 +198,16 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       // Process payment based on selected method
       let paymentResult = null;
 
-      console.log('💳 Wybrana metoda płatności:', paymentMethod);
+      console.log('💳 Selected payment method:', paymentMethod);
 
-      if (paymentMethod === 'gateway') {
-        paymentResult = await processGatewayPayment();
-      } else if (paymentMethod === 'solana') {
-        paymentResult = await processStandardSolanaPayment();
+      if (paymentMethod === 'stellar') {
+        console.log('⭐ Processing Stellar payment...');
+        paymentResult = await processStellarPayment();
       } else if (paymentMethod === 'card') {
-        console.log('💳 Processing card payment (without Stellar)...');
+        console.log('💳 Processing card payment...');
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
-        console.log('🕐 Payment later (without Stellar)...');
+        console.log('🕐 Payment later...');
         paymentResult = { method: 'later', paid: false };
       } else {
         throw new Error(`Unknown payment method: ${paymentMethod}`);
@@ -243,12 +242,12 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     }
   };
 
-  const processGatewayPayment = async () => {
-    console.log('⚡ Processing payment via Gateway...');
+  const processStellarPayment = async () => {
+    console.log('⭐ Processing Stellar payment...');
 
     // Validate wallet is connected
-    if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Stellar wallet is not connected. Connect your wallet to use Gateway.');
+    if (!connected || !publicKey) {
+      throw new Error('Stellar wallet is not connected. Please connect your wallet.');
     }
 
     // Treasury wallet for parking payments (in production, use owner's wallet)
@@ -279,7 +278,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
         // Return simulated successful payment
         return {
-          method: 'gateway',
+          method: 'stellar',
           signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
           paid: true,
           metadata: {
@@ -319,7 +318,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     setTxSignature(result.signature);
 
     return {
-      method: 'gateway',
+      method: 'stellar',
       signature: result.signature,
       paid: true,
       metadata: result.metadata
@@ -359,7 +358,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
 
         // Return simulated successful payment
         return {
-          method: 'solana',
+          method: 'stellar',
           signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
           paid: true
         };
@@ -390,7 +389,7 @@ function ReservationModal({ parking, onClose, onSuccess }) {
     await connection.confirmTransaction(signature);
 
     return {
-      method: 'solana',
+      method: 'stellar',
       signature,
       paid: true
     };

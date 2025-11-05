@@ -79,10 +79,10 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
       // Process payment based on selected method
       let paymentResult = null;
 
-      if (paymentMethod === 'gateway') {
-        paymentResult = await processGatewayPayment();
-      } else if (paymentMethod === 'solana') {
-        paymentResult = await processStandardSolanaPayment();
+      if (paymentMethod === 'stellar') {
+        paymentResult = await processStellarPayment();
+      } else if (paymentMethod === 'stellar') {
+        paymentResult = await processStellarPayment();
       } else if (paymentMethod === 'card') {
         paymentResult = await processCreditCardPayment();
       } else if (paymentMethod === 'later') {
@@ -124,7 +124,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
     }
   };
 
-  const processGatewayPayment = async () => {
+  const processStellarPayment = async () => {
     console.log('⚡ Procesowanie płatności za ładowanie przez Gateway...');
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
@@ -154,14 +154,14 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
     setTxSignature(result.signature);
 
     return {
-      method: 'gateway',
+      method: 'stellar',
       signature: result.signature,
       paid: true,
       metadata: result.metadata
     };
   };
 
-  const processStandardSolanaPayment = async () => {
+  const processStellarPayment = async () => {
     console.log('◎ Procesowanie standardowej płatności Stellar...');
 
     const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
@@ -186,7 +186,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
     await connection.confirmTransaction(signature);
 
     return {
-      method: 'solana',
+      method: 'stellar',
       signature,
       paid: true
     };
@@ -399,7 +399,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
         {step === 'processing' && (
           <div>
             {/* Gateway Progress */}
-            {gatewayProgress && paymentMethod === 'gateway' && (
+            {gatewayProgress && paymentMethod === 'stellar' && (
               <div className="bg-blue-900 bg-opacity-30 border-2 border-blue-600 rounded-xl p-5 mb-5">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -445,7 +445,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
                 <p className="text-base text-green-300 mb-4">
                   Sesja ładowania zakończona i opłacona
                 </p>
-                {paymentMethod === 'gateway' && (
+                {paymentMethod === 'stellar' && (
                   <div className="bg-gray-800 rounded-lg p-4 mb-4">
                     <p className="text-sm font-bold text-green-400 mb-2">
                       ⚡ Płatność przez Sanctum Gateway
