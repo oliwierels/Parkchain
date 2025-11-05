@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { StellarWalletsKit, WalletNetwork, allowAllModules, FREIGHTER_ID } from '@creit.tech/stellar-wallets-kit';
+import { StellarWalletsKit, WalletNetwork, allowAllModules } from '@creit.tech/stellar-wallets-kit';
 
 const StellarWalletContext = createContext(null);
 
@@ -8,11 +8,11 @@ export function StellarWalletProvider({ children }) {
     // Initialize kit immediately in state
     console.log('🚀 Initializing Stellar Wallet Kit...');
     const walletKit = new StellarWalletsKit({
-      network: WalletNetwork.TESTNET,
-      selectedWalletId: FREIGHTER_ID,
-      modules: allowAllModules(),
+      network: WalletNetwork.PUBLIC, // Use PUBLIC network (Mainnet) - Freighter default
+      modules: allowAllModules(), // Allow all wallet types
     });
     console.log('✅ Stellar Wallet Kit initialized:', walletKit);
+    console.log('📡 Network: PUBLIC (Mainnet)');
     return walletKit;
   });
 
@@ -60,7 +60,22 @@ export function StellarWalletProvider({ children }) {
             setIsConnecting(false);
           } catch (error) {
             console.error('❌ Error getting address:', error);
-            alert('Failed to get wallet address: ' + error.message);
+
+            // Better error messages for common issues
+            let errorMsg = error.message;
+            if (errorMsg.includes('not available') || errorMsg.includes('Not installed')) {
+              errorMsg = `
+                Freighter wallet is not installed or not available.
+
+                Please:
+                1. Install Freighter: https://www.freighter.app/
+                2. Create/import a wallet
+                3. Make sure Freighter is unlocked
+                4. Refresh this page and try again
+              `;
+            }
+
+            alert(errorMsg);
             setIsConnecting(false);
           }
         },
@@ -73,7 +88,20 @@ export function StellarWalletProvider({ children }) {
       console.log('📱 Modal opened successfully');
     } catch (error) {
       console.error('❌ Error opening wallet modal:', error);
-      alert('Failed to open wallet selector: ' + error.message);
+
+      // Check if it's a "not installed" error
+      if (error.message && error.message.toLowerCase().includes('freighter')) {
+        alert(`
+          Freighter wallet extension is required but not found.
+
+          Install it from: https://www.freighter.app/
+
+          Then refresh this page.
+        `);
+      } else {
+        alert('Failed to open wallet selector: ' + error.message);
+      }
+
       setIsConnecting(false);
     }
   };

@@ -61,30 +61,36 @@ body {
   100% { background-position: 200% 50%; } /* Przesuń daleko w prawo */
 }
 /* Stellar Wallet Kit Modal Styles */
-.stellar-wallets-kit-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(4px);
+.stellar-wallets-kit-modal-overlay,
+[class*="stellar"][class*="modal"][class*="overlay"],
+[class*="swk-modal-overlay"] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 999999 !important;
+  backdrop-filter: blur(4px) !important;
 }
 
-.stellar-wallets-kit-modal {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 480px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalFadeIn 0.2s ease-out;
+.stellar-wallets-kit-modal,
+[class*="stellar"][class*="modal"]:not([class*="overlay"]),
+[class*="swk-modal"] {
+  background: white !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  max-width: 480px !important;
+  width: 90% !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  animation: modalFadeIn 0.2s ease-out !important;
+  z-index: 1000000 !important;
+  position: relative !important;
 }
 
 @keyframes modalFadeIn {
