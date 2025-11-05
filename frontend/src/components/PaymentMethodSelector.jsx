@@ -85,29 +85,12 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
 
   const paymentMethods = [
     {
-      id: 'gateway',
-      name: 'Sanctum Gateway',
-      icon: '⚡',
-      badge: 'POLECANE',
-      badgeColor: 'bg-green-500',
-      description: 'Najszybsza i najtańsza opcja',
-      provider: 'Stellar + Gateway',
-      fee: fees.gateway.transactionFee,
-      total: fees.gateway.totalPLN,
-      savings: fees.gateway.savingsVsStandard,
-      successRate: fees.gateway.successRate,
-      confirmTime: fees.gateway.confirmTime,
-      features: fees.gateway.features,
-      color: 'border-green-500 bg-green-50',
-      disabled: !connected,
-      requiresWallet: true
-    },
-    {
       id: 'stellar',
-      name: 'Standard Stellar',
+      name: 'Stellar Payment',
       icon: '⭐',
-      badge: null,
-      description: 'Standardowa transakcja Stellar',
+      badge: 'RECOMMENDED',
+      badgeColor: 'bg-green-500',
+      description: 'Fast and low-cost blockchain payment',
       provider: 'Stellar Network',
       fee: fees.stellar.transactionFee * 2,
       total: fees.stellar.totalPLN,
@@ -120,7 +103,7 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
     },
     {
       id: 'card',
-      name: 'Karta płatnicza',
+      name: 'Credit Card',
       icon: '💳',
       badge: null,
       description: 'Visa, Mastercard, Apple Pay',
@@ -136,10 +119,10 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
     },
     {
       id: 'later',
-      name: 'Zapłać później',
+      name: 'Pay Later',
       icon: '🕐',
       badge: null,
-      description: 'Płatność po zakończeniu parkowania',
+      description: 'Payment after parking completion',
       provider: 'Parkchain',
       fee: 0,
       total: fees.later.totalPLN,
@@ -157,10 +140,10 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
       {/* Header */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-2">
-          Wybierz metodę płatności
+          Choose Payment Method
         </h3>
         <p className="text-sm text-gray-600">
-          Cena rezerwacji: <span className="font-bold text-gray-900">{amount.toFixed(2)} PLN</span>
+          Reservation price: <span className="font-bold text-gray-900">{amount.toFixed(2)} PLN</span>
         </p>
       </div>
 
@@ -171,13 +154,13 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
             <div className="text-2xl">💡</div>
             <div className="flex-1">
               <p className="text-sm text-blue-900 font-medium mb-2">
-                Połącz portfel Stellar aby odblokować najlepsze opcje płatności!
+                Connect your Stellar wallet to unlock blockchain payments!
               </p>
               <button
                 onClick={connect}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors"
               >
-                Połącz portfel Stellar
+                Connect Wallet
               </button>
             </div>
           </div>

@@ -101,7 +101,7 @@ function BadgesPage() {
 
   const handleMintNFT = async (badge) => {
     if (!connected) {
-      addToast({ message: 'Połącz portfel Stellar aby mintować NFT!', type: 'warning' });
+      addToast({ message: 'Connect your Stellar wallet to mint NFT!', type: 'warning' });
       return;
     }
 
@@ -110,11 +110,11 @@ function BadgesPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       addToast({
-        message: `NFT Badge "${badge.name}" został zmintowany! 🎉`,
+        message: `NFT Badge "${badge.name}" has been minted! 🎉`,
         type: 'success'
       });
     } catch (err) {
-      addToast({ message: 'Nie udało się zmintować NFT', type: 'error' });
+      addToast({ message: 'Failed to mint NFT', type: 'error' });
     } finally {
       setMintingBadge(null);
     }

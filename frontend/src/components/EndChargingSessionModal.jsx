@@ -210,9 +210,9 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
         <div className="flex justify-between items-center mb-5">
           <div>
             <h2 className="m-0 text-xl font-bold text-white flex items-center gap-2">
-              {step === 'details' && '⚡ Zakończ sesję ładowania'}
-              {step === 'payment' && '💳 Wybierz metodę płatności'}
-              {step === 'processing' && '⏳ Przetwarzanie płatności...'}
+              {step === 'details' && '⚡ End Charging Session'}
+              {step === 'payment' && '💳 Choose Payment Method'}
+              {step === 'processing' && '⏳ Processing Payment...'}
             </h2>
             {/* Step indicator */}
             <div className="flex gap-2 mt-2 text-xs">
@@ -253,13 +253,13 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
             📍 {session.address}
           </p>
           <p className="text-sm text-gray-300 mb-3">
-            🕐 Rozpoczęto: {new Date(session.startTime).toLocaleString('pl-PL')}
+            🕐 Started: {new Date(session.startTime).toLocaleString('pl-PL')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs text-gray-400 mb-1">Cena za kWh</p>
+              <p className="text-xs text-gray-400 mb-1">Price per kWh</p>
               <p className="text-sm font-bold text-green-400">
-                {session.originalData?.charging_stations?.price_per_kwh} zł
+                {session.originalData?.charging_stations?.price_per_kwh} PLN
               </p>
             </div>
             <div>
@@ -326,7 +326,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
             <div className="bg-indigo-900 bg-opacity-30 p-4 rounded-lg mb-5 border border-indigo-700">
               <p className="text-xs text-gray-400 mb-1">Szacowany koszt</p>
               <p className="text-2xl font-bold text-indigo-400">
-                {calculateEstimatedCost()} zł
+                {calculateEstimatedCost()} PLN
               </p>
             </div>
           )}
@@ -407,7 +407,7 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
                     <p className="text-lg font-bold text-blue-300 mb-1">
                       {gatewayProgress.stage === 'optimize' && '⚡ Optymalizacja transakcji...'}
                       {gatewayProgress.stage === 'prepare' && '🔧 Przygotowanie...'}
-                      {gatewayProgress.stage === 'sign' && '✍️ Podpisz w portfelu...'}
+                      {gatewayProgress.stage === 'sign' && '✍️ Sign in wallet...'}
                       {gatewayProgress.stage === 'send' && '📤 Wysyłanie przez Gateway...'}
                       {gatewayProgress.stage === 'confirm' && '⏳ Potwierdzanie...'}
                       {gatewayProgress.stage === 'complete' && '✅ Gotowe!'}

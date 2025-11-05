@@ -17,28 +17,38 @@ export function StellarWalletProvider({ children }) {
     });
 
     setKit(walletKit);
+    console.log('✅ Stellar Wallet Kit initialized');
   }, []);
 
   const connect = async () => {
-    if (kit) {
-      try {
-        await kit.openModal({
-          onWalletSelected: async (option) => {
-            kit.setWallet(option.id);
-            const { address } = await kit.getAddress();
-            setPublicKey(address);
-            setConnected(true);
-          }
-        });
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-      }
+    console.log('🔌 Connect button clicked, kit:', kit);
+
+    if (!kit) {
+      console.error('❌ Wallet kit not initialized yet');
+      return;
+    }
+
+    try {
+      console.log('📱 Opening wallet modal...');
+      await kit.openModal({
+        onWalletSelected: async (option) => {
+          console.log('✅ Wallet selected:', option.id);
+          kit.setWallet(option.id);
+          const { address } = await kit.getAddress();
+          console.log('✅ Got address:', address);
+          setPublicKey(address);
+          setConnected(true);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error connecting wallet:', error);
     }
   };
 
   const disconnect = () => {
     setPublicKey(null);
     setConnected(false);
+    console.log('🔌 Wallet disconnected');
   };
 
   const value = {
