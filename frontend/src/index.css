@@ -60,3 +60,92 @@ body {
   0% { background-position: 0% 50%; }     /* Start z lewej */
   100% { background-position: 200% 50%; } /* Przesuń daleko w prawo */
 }
+/* Stellar Wallet Kit Modal Styles */
+.stellar-wallets-kit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.stellar-wallets-kit-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.stellar-wallets-kit-modal h2 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.stellar-wallets-kit-wallet-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f5f5f5;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.stellar-wallets-kit-wallet-button:hover {
+  background: #e8e8e8;
+  border-color: #4F46E5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.stellar-wallets-kit-wallet-button img {
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+}
+
+.stellar-wallets-kit-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 8px;
+  line-height: 1;
+}
+
+.stellar-wallets-kit-close-button:hover {
+  color: #000;
+}
