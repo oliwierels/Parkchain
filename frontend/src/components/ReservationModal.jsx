@@ -250,150 +250,30 @@ function ReservationModal({ parking, onClose, onSuccess }) {
       throw new Error('Stellar wallet is not connected. Please connect your wallet.');
     }
 
-    // Treasury wallet for parking payments (in production, use owner's wallet)
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
+    const pricePLN = priceCalculation.price;
+    const priceXLM = pricePLN / 2; // 1 XLM ≈ 2 PLN
 
-    // Convert PLN to XLM (rough estimate: 1 XLM = ~600 PLN)
-    const priceSOL = priceCalculation.price / 600;
-    const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
+    console.log(`💰 Payment amount: ${pricePLN} PLN = ${priceXLM.toFixed(4)} XLM`);
 
-    // Check user balance
-    const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 XLM minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 XLM estimated transaction fee
-    const requiredBalance = lamports + minRent + estimatedFee;
+    // DEMO MODE: Simulate Stellar payment
+    console.log('🎭 DEMO MODE: Simulating Stellar payment');
+    console.log(`   💡 Connected wallet: ${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`);
+    console.log(`   💡 In demo mode you don't need real XLM to test!`);
 
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} XLM available, ${requiredBalance / LAMPORTS_PER_SOL} XLM required`);
+    // Simulate transaction delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
-    const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
-
-    if (balance < requiredBalance) {
-      if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Stellar payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need XLM to test payments!`);
-
-        // Simulate delay like real transaction
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Return simulated successful payment
-        return {
-          method: 'stellar',
-          signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
-          paid: true,
-          metadata: {
-            demo: true,
-            message: 'Simulated payment - demo mode'
-          }
-        };
-      } else {
-        // Production mode - require actual balance
-        throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} XLM, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} XLM. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} XLM to your wallet.`
-        );
-      }
-    }
-
-    // Create transaction
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
-
-    // Execute via Gateway
-    const result = await gatewayService.executeTransaction({
-      transaction,
-      connection,
-      wallet,
-      onProgress: (progress) => {
-        console.log(`[Gateway] ${progress.stage}: ${progress.message}`);
-        setGatewayProgress(progress);
-      }
-    });
-
-    setTxSignature(result.signature);
+    const demoSignature = `STELLAR_DEMO_${Date.now()}_${publicKey.slice(0, 8)}`;
+    console.log(`✅ Demo transaction signature: ${demoSignature}`);
 
     return {
       method: 'stellar',
-      signature: result.signature,
+      signature: demoSignature,
       paid: true,
-      metadata: result.metadata
+      demo: true
     };
   };
 
-  const processStandardSolanaPayment = async () => {
-    console.log('◎ Processing standard Stellar payment...');
-
-    // Validate wallet is connected
-    if (!wallet.connected || !wallet.publicKey) {
-      throw new Error('Stellar wallet is not connected. Connect your wallet to use Stellar payment.');
-    }
-
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
-    const priceSOL = priceCalculation.price / 600;
-    const lamports = Math.floor(priceSOL * LAMPORTS_PER_SOL);
-
-    // Check user balance
-    const balance = await connection.getBalance(wallet.publicKey);
-    const minRent = 5000; // 0.000005 XLM minimum rent exemption
-    const estimatedFee = 5000; // ~0.000005 XLM estimated transaction fee
-    const requiredBalance = lamports + minRent + estimatedFee;
-
-    console.log(`💰 Balance check: ${balance / LAMPORTS_PER_SOL} XLM available, ${requiredBalance / LAMPORTS_PER_SOL} XLM required`);
-
-    // DEMO MODE: If balance is 0 or insufficient, simulate successful payment
-    const isDemoMode = process.env.NODE_ENV === 'development' || balance === 0;
-
-    if (balance < requiredBalance) {
-      if (isDemoMode) {
-        console.log('🎭 DEMO MODE: Simulating Stellar payment (insufficient wallet funds)');
-        console.log(`   💡 In demo mode you don't need XLM to test payments!`);
-
-        // Simulate delay like real transaction
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Return simulated successful payment
-        return {
-          method: 'stellar',
-          signature: `DEMO_${Date.now()}_${wallet.publicKey.toString().slice(0, 8)}`,
-          paid: true
-        };
-      } else {
-        // Production mode - require actual balance
-        throw new Error(
-          `Insufficient funds. You need ${(requiredBalance / LAMPORTS_PER_SOL).toFixed(6)} XLM, you have ${(balance / LAMPORTS_PER_SOL).toFixed(6)} XLM. ` +
-          `Add at least ${((requiredBalance - balance) / LAMPORTS_PER_SOL).toFixed(6)} XLM to your wallet.`
-        );
-      }
-    }
-
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
-
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallet.publicKey;
-
-    const signed = await wallet.signTransaction(transaction);
-    const signature = await connection.sendRawTransaction(signed.serialize());
-
-    await connection.confirmTransaction(signature);
-
-    return {
-      method: 'stellar',
-      signature,
-      paid: true
-    };
-  };
 
   const processCreditCardPayment = async () => {
     console.log('💳 Processing credit card payment...');
