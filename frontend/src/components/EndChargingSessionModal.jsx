@@ -125,70 +125,33 @@ function EndChargingSessionModal({ session, onClose, onSuccess }) {
   };
 
   const processStellarPayment = async () => {
-    console.log('⚡ Procesowanie płatności za ładowanie przez Gateway...');
+    console.log('⭐ Processing Stellar payment...');
 
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
+    if (!connected || !publicKey) {
+      throw new Error('Stellar wallet not connected');
+    }
 
     const costPLN = parseFloat(calculateEstimatedCost());
-    const costSOL = costPLN / 600; // Rough conversion
-    const lamports = Math.floor(costSOL * LAMPORTS_PER_SOL);
+    const costXLM = costPLN / 2; // 1 XLM ≈ 2 PLN
 
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
+    console.log(`💰 Payment amount: ${costPLN} PLN = ${costXLM.toFixed(4)} XLM`);
 
-    const result = await gatewayService.executeTransaction({
-      transaction,
-      connection,
-      wallet,
-      onProgress: (progress) => {
-        console.log(`[Gateway] ${progress.stage}: ${progress.message}`);
-        setGatewayProgress(progress);
-      }
-    });
+    // DEMO MODE: Simulate Stellar payment
+    console.log('🎭 DEMO MODE: Simulating Stellar payment');
+    console.log(`   💡 Connected wallet: ${publicKey.slice(0, 8)}...${publicKey.slice(-8)}`);
+    console.log(`   💡 In demo mode you don't need real XLM to test!`);
 
-    setTxSignature(result.signature);
+    // Simulate transaction delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const demoSignature = `STELLAR_DEMO_${Date.now()}_${publicKey.slice(0, 8)}`;
+    console.log(`✅ Demo transaction signature: ${demoSignature}`);
 
     return {
       method: 'stellar',
-      signature: result.signature,
+      signature: demoSignature,
       paid: true,
-      metadata: result.metadata
-    };
-  };
-
-  const processStellarPayment = async () => {
-    console.log('◎ Procesowanie standardowej płatności Stellar...');
-
-    const TREASURY_WALLET = new PublicKey('HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH');
-    const costPLN = parseFloat(calculateEstimatedCost());
-    const costSOL = costPLN / 600;
-    const lamports = Math.floor(costSOL * LAMPORTS_PER_SOL);
-
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: TREASURY_WALLET,
-        lamports: lamports,
-      })
-    );
-
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallet.publicKey;
-
-    const signed = await wallet.signTransaction(transaction);
-    const signature = await connection.sendRawTransaction(signed.serialize());
-    await connection.confirmTransaction(signature);
-
-    return {
-      method: 'stellar',
-      signature,
-      paid: true
+      demo: true
     };
   };
 
