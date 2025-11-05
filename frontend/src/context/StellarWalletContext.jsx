@@ -1,47 +1,57 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { StellarWalletsKit, WalletNetwork, allowAllModules, FREIGHTER_ID } from '@creit.tech/stellar-wallets-kit';
 
 const StellarWalletContext = createContext(null);
 
 export function StellarWalletProvider({ children }) {
-  const [kit, setKit] = useState(null);
-  const [publicKey, setPublicKey] = useState(null);
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    // Initialize Stellar Wallet Kit
+  const [kit] = useState(() => {
+    // Initialize kit immediately in state
+    console.log('🚀 Initializing Stellar Wallet Kit...');
     const walletKit = new StellarWalletsKit({
-      network: WalletNetwork.TESTNET, // Use TESTNET for development
+      network: WalletNetwork.TESTNET,
       selectedWalletId: FREIGHTER_ID,
       modules: allowAllModules(),
     });
+    console.log('✅ Stellar Wallet Kit initialized:', walletKit);
+    return walletKit;
+  });
 
-    setKit(walletKit);
-    console.log('✅ Stellar Wallet Kit initialized');
-  }, []);
+  const [publicKey, setPublicKey] = useState(null);
+  const [connected, setConnected] = useState(false);
 
   const connect = async () => {
-    console.log('🔌 Connect button clicked, kit:', kit);
+    console.log('🔌 Connect button clicked');
+    console.log('🔍 Kit available:', !!kit);
 
     if (!kit) {
-      console.error('❌ Wallet kit not initialized yet');
+      console.error('❌ Wallet kit is null!');
+      alert('Wallet kit not initialized. Please refresh the page.');
       return;
     }
 
     try {
-      console.log('📱 Opening wallet modal...');
+      console.log('📱 Calling kit.openModal()...');
+
       await kit.openModal({
         onWalletSelected: async (option) => {
-          console.log('✅ Wallet selected:', option.id);
-          kit.setWallet(option.id);
-          const { address } = await kit.getAddress();
-          console.log('✅ Got address:', address);
-          setPublicKey(address);
-          setConnected(true);
+          console.log('✅ Wallet selected:', option);
+          try {
+            kit.setWallet(option.id);
+            const { address } = await kit.getAddress();
+            console.log('✅ Got address:', address);
+            setPublicKey(address);
+            setConnected(true);
+          } catch (error) {
+            console.error('❌ Error getting address:', error);
+            alert('Failed to get wallet address: ' + error.message);
+          }
         }
       });
+
+      console.log('📱 Modal opened successfully');
     } catch (error) {
-      console.error('❌ Error connecting wallet:', error);
+      console.error('❌ Error opening wallet modal:', error);
+      alert('Failed to open wallet selector: ' + error.message);
     }
   };
 
