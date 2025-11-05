@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@creit.tech/stellar-wallets-kit": "^1.0.4",
     "@stellar/stellar-sdk": "^12.1.0",
     "axios": "^1.12.2",
     "bignumber.js": "^9.1.2",
