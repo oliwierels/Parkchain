@@ -60,3 +60,22 @@ body {
   0% { background-position: 0% 50%; }     /* Start z lewej */
   100% { background-position: 200% 50%; } /* Przesuń daleko w prawo */
 }
+
+/* Fix z-index for Solana Wallet Modal - ensure it appears above all other modals */
+.wallet-adapter-modal-wrapper {
+  z-index: 99999 !important;
+}
+
+.wallet-adapter-modal-overlay {
+  z-index: 99998 !important;
+}
+
+.wallet-adapter-modal {
+  z-index: 99999 !important;
+}
+
+/* Ensure wallet button is clickable */
+.wallet-adapter-button {
+  position: relative;
+  z-index: 10;
+}
