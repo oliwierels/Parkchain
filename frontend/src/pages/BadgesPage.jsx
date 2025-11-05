@@ -53,7 +53,7 @@ const BADGES = [
 ];
 
 function BadgesPage() {
-  const { publicKey, connected, connect } = useStellar();
+  const { publicKey, connected, connect, isConnecting } = useStellar();
   const [userStats, setUserStats] = useState({
     totalKwh: 0,
     sessionsCount: 0,
@@ -171,9 +171,10 @@ function BadgesPage() {
           {!connected && (
             <button
               onClick={connect}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              disabled={isConnecting}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Connect Stellar Wallet
+              {isConnecting ? '⏳ Connecting...' : 'Connect Wallet'}
             </button>
           )}
           {connected && publicKey && (

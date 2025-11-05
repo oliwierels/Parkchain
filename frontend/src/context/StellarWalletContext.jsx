@@ -18,8 +18,14 @@ export function StellarWalletProvider({ children }) {
 
   const [publicKey, setPublicKey] = useState(null);
   const [connected, setConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const connect = async () => {
+    if (isConnecting) {
+      console.log('⏳ Already connecting, please wait...');
+      return;
+    }
+
     console.log('🔌 Connect button clicked');
     console.log('🔍 Kit available:', !!kit);
 
@@ -29,7 +35,17 @@ export function StellarWalletProvider({ children }) {
       return;
     }
 
+    setIsConnecting(true);
+
     try {
+      // Close modal first if it's somehow already open
+      try {
+        await kit.closeModal();
+        console.log('🔄 Closed any existing modal');
+      } catch (e) {
+        // Ignore errors from closing non-existent modal
+      }
+
       console.log('📱 Calling kit.openModal()...');
 
       await kit.openModal({
@@ -41,10 +57,16 @@ export function StellarWalletProvider({ children }) {
             console.log('✅ Got address:', address);
             setPublicKey(address);
             setConnected(true);
+            setIsConnecting(false);
           } catch (error) {
             console.error('❌ Error getting address:', error);
             alert('Failed to get wallet address: ' + error.message);
+            setIsConnecting(false);
           }
+        },
+        onClosed: () => {
+          console.log('🚪 Modal closed by user');
+          setIsConnecting(false);
         }
       });
 
@@ -52,6 +74,7 @@ export function StellarWalletProvider({ children }) {
     } catch (error) {
       console.error('❌ Error opening wallet modal:', error);
       alert('Failed to open wallet selector: ' + error.message);
+      setIsConnecting(false);
     }
   };
 
@@ -67,6 +90,7 @@ export function StellarWalletProvider({ children }) {
     connected,
     connect,
     disconnect,
+    isConnecting,
   };
 
   return (

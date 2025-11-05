@@ -12,7 +12,7 @@ import { useStellar } from '../context/StellarWalletContext';
  * 4. Pay Later - For registered users only
  */
 function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
-  const { connected, publicKey, connect } = useStellar();
+  const { connected, publicKey, connect, isConnecting } = useStellar();
 
   // Calculate fees for different payment methods
   const calculateFees = () => {
@@ -158,9 +158,10 @@ function PaymentMethodSelector({ amount, onSelect, selectedMethod }) {
               </p>
               <button
                 onClick={connect}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors"
+                disabled={isConnecting}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-sm py-2 px-4 rounded-lg transition-colors"
               >
-                Connect Wallet
+                {isConnecting ? '⏳ Connecting...' : 'Connect Wallet'}
               </button>
             </div>
           </div>
